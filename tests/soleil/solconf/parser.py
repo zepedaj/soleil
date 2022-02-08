@@ -1,4 +1,4 @@
-from xerializer.cli_tools import parser as mdl
+from soleil.solconf import parser as mdl
 import numpy as np
 from unittest import TestCase
 import re

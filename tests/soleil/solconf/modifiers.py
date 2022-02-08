@@ -1,9 +1,9 @@
 from unittest import TestCase
-from xerializer.cli_tools.ast_parser import Parser
-from xerializer.cli_tools.nodes import ParsedNode
-from xerializer.cli_tools.dict_container import KeyNode
-from xerializer.cli_tools.solconf import SolConf
-from xerializer.cli_tools import modifiers as mdl
+from soleil.solconf.ast_parser import Parser
+from soleil.solconf.nodes import ParsedNode
+from soleil.solconf.dict_container import KeyNode
+from soleil.solconf.solconf import SolConf
+from soleil.solconf import modifiers as mdl
 from tempfile import TemporaryDirectory
 from pathlib import Path
 import yaml

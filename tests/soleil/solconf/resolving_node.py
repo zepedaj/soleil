@@ -1,5 +1,5 @@
-from xerializer.cli_tools import solconf as mdl
-from xerializer.cli_tools.exceptions import ResolutionCycleError
+from soleil.solconf import solconf as mdl
+from soleil.solconf.exceptions import ResolutionCycleError
 
 from unittest import TestCase
 

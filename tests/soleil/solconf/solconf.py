@@ -1,4 +1,4 @@
-from xerializer.cli_tools import solconf as mdl
+from soleil.solconf import solconf as mdl
 from .modifiers import build_config_files
 
 from unittest import TestCase

@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from inspect import stack
 from typing import Optional
-from xerializer.cli_tools.exceptions import ResolutionCycleError
+from soleil.solconf.exceptions import ResolutionCycleError
 
 
 @dataclass
 class ResolvingNode:
     """
-    This class is a special marker class used as part of the node resolution cycle detection mechanism.  For this mechanism to work correctly, this class should only be used inside method :meth:`~xerializer.cli_tools.nodes.Node.resolve`. Classes overloading that method should take care to call the super method or instantiate this object in a similar manner.
+    This class is a special marker class used as part of the node resolution cycle detection mechanism.  For this mechanism to work correctly, this class should only be used inside method :meth:`~soleil.solconf.nodes.Node.resolve`. Classes overloading that method should take care to call the super method or instantiate this object in a similar manner.
     """
     node: Optional  # : Optional['Node']
 

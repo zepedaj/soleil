@@ -1,12 +1,12 @@
-from xerializer.cli_tools import dict_container as mdl
+from soleil.solconf import dict_container as mdl
 
 import re
 from unittest import TestCase
 from pglib.py import setdefaultattr
-from xerializer.cli_tools.ast_parser import Parser
-from xerializer.cli_tools.nodes import ParsedNode
+from soleil.solconf.ast_parser import Parser
+from soleil.solconf.nodes import ParsedNode
 
-from xerializer.cli_tools.solconf import SolConf
+from soleil.solconf.solconf import SolConf
 
 # Test modifiers
 

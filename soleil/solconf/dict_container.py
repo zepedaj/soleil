@@ -240,7 +240,7 @@ class KeyNode(ParsedNode):
 
         .. test-code::
 
-          from xerializer.cli_tools.solconf import SolConf
+          from soleil.solconf.solconf import SolConf
 
           ac = SolConf({'node0': {'node1': 1}})
 

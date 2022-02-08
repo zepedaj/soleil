@@ -39,7 +39,7 @@ def namespace(namespace_name):
 
     .. test-code::
 
-      from xerializer.cli_tools import Parser
+      from soleil.solconf import Parser
 
       numpy_ns = namespace('numpy')
 

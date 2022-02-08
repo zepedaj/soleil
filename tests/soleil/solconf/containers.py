@@ -1,8 +1,8 @@
-from xerializer.cli_tools import containers as mdl
+from soleil.solconf import containers as mdl
 
-from xerializer.cli_tools.ast_parser import Parser
+from soleil.solconf.ast_parser import Parser
 from unittest import TestCase
-from xerializer.cli_tools.nodes import ParsedNode
+from soleil.solconf.nodes import ParsedNode
 
 
 class TestListContainer(TestCase):

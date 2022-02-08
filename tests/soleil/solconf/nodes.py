@@ -1,9 +1,9 @@
-from xerializer.cli_tools import nodes as mdl
-from xerializer.cli_tools.nodes import ParsedNode
-from xerializer.cli_tools.dict_container import KeyNode, DictContainer
-from xerializer.cli_tools.containers import ListContainer
-from xerializer.cli_tools.ast_parser import Parser
-from xerializer.cli_tools.solconf import SolConf
+from soleil.solconf import nodes as mdl
+from soleil.solconf.nodes import ParsedNode
+from soleil.solconf.dict_container import KeyNode, DictContainer
+from soleil.solconf.containers import ListContainer
+from soleil.solconf.ast_parser import Parser
+from soleil.solconf.solconf import SolConf
 
 from unittest import TestCase
 from .modifiers import build_config_files
