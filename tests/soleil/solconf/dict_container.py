@@ -3,7 +3,7 @@ from soleil.solconf import dict_container as mdl
 import re
 from unittest import TestCase
 from pglib.py import setdefaultattr
-from soleil.solconf.ast_parser import Parser
+from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
 
 from soleil.solconf.solconf import SolConf

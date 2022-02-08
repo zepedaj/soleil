@@ -1,5 +1,4 @@
 from soleil.solconf import autonamed_pattern as mdl
-import numpy as np
 from unittest import TestCase
 import re
 

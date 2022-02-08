@@ -1,4 +1,4 @@
-from .ast_parser import register
+from .parser import register
 from pathlib import Path
 from typing import Union
 import numpy as np

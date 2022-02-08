@@ -2,7 +2,7 @@ import yaml
 from .containers import ListContainer
 from .dict_container import DictContainer, KeyNode
 from .nodes import ParsedNode, Node
-from .ast_parser import Parser
+from .parser import Parser
 from . import varnames
 
 

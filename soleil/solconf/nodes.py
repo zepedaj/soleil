@@ -4,7 +4,7 @@ from threading import RLock
 from .exceptions import InvalidRefStr, InvalidRefStrComponent
 from dataclasses import dataclass, field
 import abc
-from .ast_parser import Parser
+from .parser import Parser
 from typing import Any, Set, Optional
 from enum import Enum, auto
 from . import varnames

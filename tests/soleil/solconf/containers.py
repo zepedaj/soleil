@@ -1,6 +1,6 @@
 from soleil.solconf import containers as mdl
 
-from soleil.solconf.ast_parser import Parser
+from soleil.solconf.parser import Parser
 from unittest import TestCase
 from soleil.solconf.nodes import ParsedNode
 

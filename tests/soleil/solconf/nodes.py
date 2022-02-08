@@ -2,7 +2,7 @@ from soleil.solconf import nodes as mdl
 from soleil.solconf.nodes import ParsedNode
 from soleil.solconf.dict_container import KeyNode, DictContainer
 from soleil.solconf.containers import ListContainer
-from soleil.solconf.ast_parser import Parser
+from soleil.solconf.parser import Parser
 from soleil.solconf.solconf import SolConf
 
 from unittest import TestCase

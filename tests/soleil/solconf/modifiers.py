@@ -1,5 +1,5 @@
 from unittest import TestCase
-from soleil.solconf.ast_parser import Parser
+from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
 from soleil.solconf.dict_container import KeyNode
 from soleil.solconf.solconf import SolConf

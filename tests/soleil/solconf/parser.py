@@ -1,4 +1,4 @@
-from soleil.solconf import ast_parser as mdl
+from soleil.solconf import parser as mdl
 import yaml
 from pathlib import Path
 from unittest import TestCase

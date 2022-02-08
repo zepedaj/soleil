@@ -6,7 +6,7 @@ from contextlib import contextmanager, nullcontext
 from typing import Union, Dict, Optional
 import re
 from .autonamed_pattern import pxs, AutonamedPattern
-from .ast_parser import Parser
+from .parser import Parser
 from .containers import Container
 from .nodes import Node, ParsedNode, FLAGS
 from threading import RLock

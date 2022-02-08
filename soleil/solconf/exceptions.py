@@ -1,5 +1,4 @@
-from typing import Optional
-from .utils2 import _Unassigned
+from .utils import _Unassigned
 
 
 class NotAChildOfError(Exception):
@@ -17,7 +16,6 @@ class ResolutionCycleError(Exception):
 
 class InvalidRefStr(Exception):
     def __init__(self, ref: str, ref_component: str = _Unassigned):
-
         if ref_component is not _Unassigned:
             super().__init__(f'Invalid component `{ref_component}` in reference string `{ref}`.')
         else:
