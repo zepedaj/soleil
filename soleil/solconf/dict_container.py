@@ -5,7 +5,7 @@
 from contextlib import contextmanager, nullcontext
 from typing import Union, Dict, Optional
 import re
-from .parser import pxs, AutonamePattern
+from .autonamed_pattern import pxs, AutonamedPattern
 from .ast_parser import Parser
 from .containers import Container
 from .nodes import Node, ParsedNode, FLAGS
@@ -21,7 +21,7 @@ class _RawKeyPatterns:
     """
 
     # Matches a single type/signature
-    SINGLE_TYPE_PATTERN = AutonamePattern(
+    SINGLE_TYPE_PATTERN = AutonamedPattern(
         '('
         # Matches a type
         '{VARNAME}' '|'
@@ -34,7 +34,7 @@ class _RawKeyPatterns:
 
     # Matches a single type/signature or a tuple of mixed types/signatures.
     # Tuples may be optionally parentheses-enclosed.
-    TYPE_PATTERN = AutonamePattern(
+    TYPE_PATTERN = AutonamedPattern(
         r'(?P<paren>\(\s*)?'
         r'{SINGLE_TYPE_PATTERN}(\s*,\s*{SINGLE_TYPE_PATTERN})*'
         r'(?(paren)\s*\))',

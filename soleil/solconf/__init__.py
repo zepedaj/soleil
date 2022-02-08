@@ -1,10 +1,8 @@
-
-from . import base_functions, numpy_functions  # noqa - Registers the base functions.
-from .utils import register, namespace  # noqa
 from . import modifiers, functions  # noqa: Register base modifiers and functions
 
+from .solconf import SolConf
 
-# __all__ = ['register', 'namespace']
+__all__ = ['SolConf']
 
 """
 Motivation
