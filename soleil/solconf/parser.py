@@ -15,7 +15,7 @@ class UndefinedFunction(KeyError):
     pass
 
 
-class UnsupportedGrammarComponent(TypeError):
+class UnsupportedPythonGrammarComponent(TypeError):
     pass
 
 
@@ -56,6 +56,8 @@ class register:
 
     .. testcode::
 
+      from soleil import register
+
       my_var = 'my variable'
 
       # As a stand-alone call
@@ -63,7 +65,7 @@ class register:
 
       # As a function decorator
       @register('my_function')
-      def my_function: pass
+      def my_function(): pass
 
     """
 
@@ -129,37 +131,51 @@ class Parser:
         return self._eval(ast.parse(expr, mode='eval').body, extended_context)
 
     def _eval(self, node, context=None):
+
+        # Bind _eval to context, if any.
+        if context:
+            def eval_ctx(node): return self._eval(node, context=context)
+        else:
+            eval_ctx = self._eval
+
+        # Evaluate the node.
         if isinstance(node, ast.Num):  # <number>
             return node.n
         elif isinstance(node, ast.BinOp):  # <left> <operator> <right>
             return self._operators[type(node.op)](
-                self._eval(node.left, context),
-                self._eval(node.right, context))
+                eval_ctx(node.left),
+                eval_ctx(node.right))
         elif isinstance(node, ast.UnaryOp):  # <operator> <operand> e.g., -1
-            return self._operators[type(node.op)](self._eval(node.operand, context))
+            return self._operators[type(node.op)](eval_ctx(node.operand))
         elif isinstance(node, ast.Call):
-            func = self._eval(node.func, context)
+            func = eval_ctx(node.func)
             return func(
-                *[self._eval(x, context) for x in node.args],
-                *[self._eval(x, context) for x in getattr(node, 'starargs', [])],
-                **{x.arg: self._eval(x.value, context) for x in node.keywords},
-                **{x.arg: self._eval(x.value, context) for x in getattr(node, 'kwargs', [])})
+                *[eval_ctx(x) for x in node.args],
+                *[eval_ctx(x) for x in getattr(node, 'starargs', [])],
+                **{x.arg: eval_ctx(x.value) for x in node.keywords},
+                **{x.arg: eval_ctx(x.value) for x in getattr(node, 'kwargs', [])})
         elif isinstance(node, ast.Subscript):
-            obj = self._eval(node.value, context)
-            ref = self._eval(node.slice, context)
+            obj = eval_ctx(node.value)
+            ref = eval_ctx(node.slice)
             return obj[ref]
         elif isinstance(node, ast.Name):
             return self.get_from_context(node.id, context)
         elif isinstance(node, ast.Constant):
             return node.value
         elif isinstance(node, ast.Tuple):
-            return tuple(self._eval(x, context) for x in node.elts)
+            return tuple(eval_ctx(x) for x in node.elts)
         elif isinstance(node, ast.Slice):
             return slice(
-                self._eval(node.lower, context) if node.lower else node.lower,
-                self._eval(node.upper, context) if node.upper else node.upper,
-                self._eval(node.step, context)) if node.step else node.step,
+                None if node.lower is None else eval_ctx(node.lower),
+                None if node.upper is None else eval_ctx(node.upper),
+                None if node.step is None else eval_ctx(node.step))
         elif isinstance(node, ast.Index):
-            return self._eval(node.value, context)
+            return eval_ctx(node.value)
+        elif isinstance(node, ast.Dict):
+            return dict(
+                (eval_ctx(_key), eval_ctx(_val))
+                for _key, _val in zip(node.keys, node.values))
+        elif isinstance(node, ast.List):
+            return [eval_ctx(_elt) for _elt in node.elts]
         else:
-            raise UnsupportedGrammarComponent(node)
+            raise UnsupportedPythonGrammarComponent(node)

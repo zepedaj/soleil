@@ -15,7 +15,10 @@ def cwd():
 
     .. testcode::
 
-      my_sub_dir = cwd() / 'my' / 'sub' / 'dir'
+      from soleil.solconf.parser import Parser
+
+      parser = Parser()
+      my_sub_dir = parser.eval("cwd()/'my'/'sub'/'dir'")
 
     """
     return Path.cwd().absolute()
@@ -27,3 +30,6 @@ def datetime64(val: Union[str, np.datetime64]):
     Takes an ISO-8601 string (e.g., '2014-03-07T17:52:00.000' or parts thereof) (or numpy.datetime64) and converts it numpy.datetime64.
     """
     return np.datetime64(val)
+
+
+register('range', range)

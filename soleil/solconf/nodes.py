@@ -28,10 +28,6 @@ class FLAGS(Enum):
     HIDDEN = auto()
 
 
-# Add sphinx replacements.
-__doc__ += f"\n{varnames.SPHINX_DEFS}"
-
-
 def _propagate(node, prop_name, hidden_prop_name=None, default=None):
     """
     Returns the value of the hidden property, if it is not None, or the parent's property, if available, else the default value.

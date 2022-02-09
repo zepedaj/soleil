@@ -16,6 +16,7 @@ class TestParsedNode(TestCase):
                 #
                 (r"\:'abc'", r"'abc'"),
                 (r"\:$:abc", r"$:abc"),
+                (r"\: abc", r" abc"),  # White space not ignored
                 #
                 (1, 1),
                 (1.234e-6, 1.234e-6),
@@ -23,6 +24,7 @@ class TestParsedNode(TestCase):
                 #
                 ("$:True", True),
                 ("$:(1+3)/4", (1+3)/4),
+                ("$: (1+3)/4 ", (1+3)/4),  # White space ignored
         ]:
 
             node = mdl.ParsedNode(raw_value=raw_value, parser=Parser())

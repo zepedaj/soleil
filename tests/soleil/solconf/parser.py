@@ -45,6 +45,21 @@ class TestParser(TestCase):
         with self.assertRaisesRegex(mdl.UndefinedFunction, '.*`non_existing_fxn`.*'):
             parser.eval('non_existing_fxn("abc")')
 
+    def test_supported_language_components(self):
+        parser = Parser()
+
+        for str_val in [
+                # Lists, Dicts
+                '{1:[0,1], 2:[2,3]}',  # Lists, dicts
+                # Indexing
+                '[0,1,2][0]',
+                '[0,1,2][::2]',
+                '[0,1,2,3][:3:2]',
+                # Names
+                'list(range(5))',
+        ]:
+            self.assertEqual(parser.eval(str_val), eval(str_val))
+
     # def test_unsupported_grammar_component(self):
     #     with self.assertRaises(mdl.UnsupportedGrammarComponent):
     #         mdl.eval_expr()
