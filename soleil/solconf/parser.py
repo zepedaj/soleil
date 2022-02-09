@@ -54,7 +54,7 @@ class register:
 
     Example:
 
-    .. test-code::
+    .. testcode::
 
       my_var = 'my variable'
 

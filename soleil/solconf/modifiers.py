@@ -1,3 +1,6 @@
+"""
+Base node modifiers included by default in :class:`soleil.solconf.parser.Parser` contexts.
+"""
 from .parser import register
 from functools import partial
 import yaml
@@ -41,7 +44,7 @@ def hidden(node):
 @register('load')
 def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
     """
-    Resolves ``node.value`` and treats the resolved value as a file path whose data will be used to replace the ``node.value``node. If the path is relative, two possibilities exist:
+    Resolves ``node.value`` and treats the resolved value as a file path whose data will be used to replace the ``node.value`` node. If the path is relative, two possibilities exist:
 
     1. An ancestor node was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the ancestor file folder.
     2. No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.

@@ -238,20 +238,20 @@ class KeyNode(ParsedNode):
 
         .. rubric:: Example
 
-        .. test-code::
+        .. testcode::
 
           from soleil.solconf.solconf import SolConf
 
-          ac = SolConf({'node0': {'node1': 1}})
+          sc = SolConf({'node0': {'node1': 1}})
 
           # Refer to the value node.
-          node = ac['node0']['node1']
-          assert node==ac.children['node0'].children['node1'].value
+          node = sc['node0']['node1']
+          assert node==sc.node_tree['node0'].children['node1'].value
           assert node.qual_name == 'node0.node1'
 
           # Refer to the key node.
-          node = ac['node0']['*node1']
-          assert node==ac.children['node0'].children['node1']
+          node = sc['node0']['*node1']
+          assert node==sc.node_tree['node0'].children['node1']
           assert node.qual_name == 'node0.*node1'
 
         """

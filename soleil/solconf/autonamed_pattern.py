@@ -16,48 +16,53 @@ class AutonamedPattern:
     """
     Represents a pattern with named groups that have sequential numbers automatically attached to them as suffixes. The numbers are guaranteed to be the same for tags that appear at the same nesting level. Other than that, no guarantees are provided about their order, except that it should be sequential. **Example:**
 
-    .. testcode::
+    .. testcode:: autonamed_pattern
 
-        NESTED = mdl.AutonamedPattern('(?P<addend>[0-9])')
+        from soleil.solconf.autonamed_pattern import AutonamedPattern
+        import re
+
+        NESTED = AutonamedPattern('(?P<addend>[0-9])')
         str(NESTED)  # Advance the counter for illustration purposes.
 
         # 'my_letter' and 'my_value' are at the same nesting level; 'addend' is one level down.
-        ap = mdl.AutonamedPattern(
+        ap = AutonamedPattern(
             r'(?P<my_letter>[a-z]) \\= (?P<my_value>[0-9]) \\+ {NESTED}', vars())
         match = re.match(str(ap), 'a = 1 + 2')
 
         # Tags at the same nesting level have the same suffix identifier
         assert match.groupdict() == {'my_letter_0': 'a', 'my_value_0': '1', 'addend_1': '2'}
 
-    The pattern can also contain placeholders for other :class:`AutoName` patterns using a syntax similar to the ``str.format`` syntax.
+    The pattern can also contain placeholders for other :class:`AutonamedPattern` patterns using a syntax similar to the ``str.format`` syntax.
 
-    .. warning:: Calling the meth:`__str__` method of this object (even implicitly through ``print(obj)``) will modify the object by advancing the counter. This enables support for situations where the same nested pattern is used more than once in the same expression, e.g., ``'{pattern}{pattern}'``
+    .. warning::
 
-    .. testcode::
+      Calling the :meth:`AutonamedPattern.__str__` method (even implicitly through ``print(obj)``) will modify the object by advancing the counter. This enables support for situations where the same nested pattern is used more than once in the same expression, e.g., ``'{pattern}{pattern}'``. 
 
-        # Simple auto-name pattern
-        sp = mdl.AutonamedPattern('(?P<htag>Hello)', ['htag'])
+      Use :meth:`AutonamedPattern.view` instead if you want to view the rendered auto-named pattern string without modifying the object.
 
-        # Composed auto-name pattern
-        cp = mdl.AutonamedPattern('{x} {x} {x} (?P<wtag>World)', ['wtag'], {'x': sp})
+    .. testcode:: autonamed_pattern
 
-        # Match only the first pattern
-        assert sp.view() == (sp0_expected := '(?P<htag_0>Hello)')
-        assert re.match(sp0_actual := str(sp), 'Hello')
-        assert sp0_actual == sp0_expected
+        # Simple auto-named pattern
+        sp = AutonamedPattern('(?P<htag>Hello)')
 
-        # Match composed pattern
+        # Match simple pattern
+        assert sp.view() == '(?P<htag_0>Hello)' # View the pattern w/o modifying the object
+        assert re.match(str(sp), 'Hello') # Modifies the object
+        assert sp.view() == '(?P<htag_1>Hello)'
+
+        # Composite auto-named pattern
+        cp = AutonamedPattern('{x} {x} {x} (?P<wtag>World)', {'x': sp})
+
+        # Match composite pattern
         assert(
             cp.view() ==
-            (cp0_expected :=
-             '(?P<htag_1>Hello) (?P<htag_2>Hello) (?P<htag_3>Hello) (?P<wtag_0>World)'))
+            '(?P<htag_1>Hello) (?P<htag_2>Hello) (?P<htag_3>Hello) (?P<wtag_0>World)')
         assert re.match(
-            cp0_actual := str(cp), 'Hello Hello Hello World')
-        assert cp0_actual == cp0_expected
-        assert sp.view() == '(?P<htag_4>Hello)'
+            str(cp), 'Hello Hello Hello World')
         assert (
             cp.view() ==
             '(?P<htag_4>Hello) (?P<htag_5>Hello) (?P<htag_6>Hello) (?P<wtag_1>World)')
+
     """
 
     pattern: str
@@ -76,7 +81,7 @@ class AutonamedPattern:
     @classmethod
     def name_builder(cls, name, identifier):
         """
-        Generates the name derived from ``name`` for the given ``identifier``.
+        Generates the name derived from ``name`` for the given ``identifier``. Derived classes wishing to modify the auto-named string format should overload this method.
         """
         return f'{name}_{identifier}'
 

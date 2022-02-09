@@ -13,6 +13,8 @@ def cwd():
 
     .. rubric:: Example
 
+    .. testcode::
+
       my_sub_dir = cwd() / 'my' / 'sub' / 'dir'
 
     """
