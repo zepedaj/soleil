@@ -14,14 +14,15 @@ class TestParsedNode(TestCase):
     def test_resolve(self):
         for raw_value, expected_resolved_value in [
                 #
-                (r"\'abc'", r"'abc'"),
+                (r"\:'abc'", r"'abc'"),
+                (r"\:$:abc", r"$:abc"),
                 #
                 (1, 1),
                 (1.234e-6, 1.234e-6),
                 (True, True),
                 #
-                ("$True", True),
-                ("$(1+3)/4", (1+3)/4),
+                ("$:True", True),
+                ("$:(1+3)/4", (1+3)/4),
         ]:
 
             node = mdl.ParsedNode(raw_value=raw_value, parser=Parser())
@@ -33,17 +34,18 @@ class TestParsedNode(TestCase):
         parser = Parser()
 
         #
-        node = KeyNode('my_name', value_node := mdl.ParsedNode('$n_', parser=parser), parser=parser)
+        node = KeyNode('my_name', value_node := mdl.ParsedNode(
+            '$:n_', parser=parser), parser=parser)
         self.assertEqual(resolved := node.resolve(), ('my_name', value_node))
         self.assertIs(resolved[1], value_node)
 
     def test_file_root_node_special_var_eval(self):
         with build_config_files(
                 #
-                file1_updates={'file1_0': "$f_['file1_1']()"},
+                file1_updates={'file1_0': "$:f_['file1_1']()"},
                 file1_expected_updates={'file1_0': 1},
                 #
-                file2_updates={'file2_6': {'dict3': "$f_['file2_0']()"}},
+                file2_updates={'file2_6': {'dict3': "$:f_['file2_0']()"}},
                 file2_expected_updates={'file2_6': {'dict3': 0}},
                 #
         ) as (path, expected):
@@ -54,7 +56,8 @@ class TestParsedNode(TestCase):
         parser = Parser()
 
         #
-        node = KeyNode('my_name', value_node := mdl.ParsedNode('$n_', parser=parser), parser=parser)
+        node = KeyNode('my_name', value_node := mdl.ParsedNode(
+            '$:n_', parser=parser), parser=parser)
         self.assertEqual(node(), ('my_name', value_node))
 
     def test_qual_name(self):

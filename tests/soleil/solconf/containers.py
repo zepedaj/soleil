@@ -8,14 +8,14 @@ from soleil.solconf.nodes import ParsedNode
 class TestListContainer(TestCase):
 
     @classmethod
-    def get_node(cls, value='$"abc"'):
+    def get_node(cls, value='$:"abc"'):
         parser = Parser()
         return ParsedNode(value, parser)
 
     def test_all(self):
 
         for (values, expected) in [
-                (('$"abc"', '$1+3'), ['abc', 4]),
+                (('$:"abc"', '$:1+3'), ['abc', 4]),
                 (tuple(), []),
         ]:
 

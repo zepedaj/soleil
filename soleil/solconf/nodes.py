@@ -227,7 +227,7 @@ class ParsedNode(Node):
 
     For string raw values, the node's resolved content will depend on the raw value's first character:
 
-    2. The string starts with `'$'`: the remainder of the string will be evaluated as a safe python expression returning the resolved value.
+    2. The string starts with `'$:'`: the remainder of the string will be evaluated as a safe python expression returning the resolved value.
     3. The string starts with `'\'`: that character will be stripped and the remainder used as the resolved value.
     4. For any other character, the string itself will be the resolved value.
 
@@ -262,10 +262,10 @@ class ParsedNode(Node):
 
     def _unsafe_resolve(self) -> Any:
         if isinstance(self.raw_value, str):
-            if self.raw_value[0] == '$':
-                return self.eval(self.raw_value[1:])
-            elif self.raw_value[0] == '\\':
-                return self.raw_value[1:]
+            if self.raw_value[:2] == '$:':
+                return self.eval(self.raw_value[2:].strip())
+            elif self.raw_value[:2] == r'\:':
+                return self.raw_value[2:]
             else:
                 return self.raw_value
         else:

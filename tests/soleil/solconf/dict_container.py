@@ -62,7 +62,7 @@ class TestKeyNode(TestCase):
         parser = Parser({'add_val': add_val_modif})
         node = mdl.KeyNode(
             f'{key}:int:add_val(0, "abc"),add_val(1,2),add_val(2,True)',
-            ParsedNode('$10+1', parser),
+            ParsedNode('$:10+1', parser),
             parser=parser)
         return node
 

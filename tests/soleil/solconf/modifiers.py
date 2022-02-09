@@ -61,7 +61,7 @@ class TestModifiers(TestCase):
         parser = Parser()
         key_node = KeyNode(
             'my_name',
-            value_node := ParsedNode('$(n_, parent(n_))', parser=parser),
+            value_node := ParsedNode('$:(n_, parent(n_))', parser=parser),
             parser=parser)
         self.assertEqual(resolved := key_node.resolve(), ('my_name', (value_node, key_node)))
         self.assertIs(resolved[1][0], value_node)
