@@ -9,10 +9,12 @@ Soleil: Lucid configuration
 .. toctree::
    :maxdepth: 2
 
-   content/intro.rst
+   content/intro
+   content/parser
+   content/glossary
    content/modules
-   content/todo
-   content/examples.rst
+   content/todo   
+   content/examples.rst   
    
 
 Indices and tables

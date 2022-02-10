@@ -17,6 +17,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 # from better import better_theme_path
+from soleil.solconf.varnames import SPHINX_DEFS
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
@@ -48,6 +49,7 @@ release = '0.1.beta'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.graphviz',
     # 'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -212,13 +214,18 @@ todo_include_todos = True
 # -- Extension configuration -------------------------------------------------
 #
 rst_prolog = '\n'.join([
-    constants.prolog_replacements])
+    SPHINX_DEFS,
+    '.. |dstring| replace:: **$-string**',
+    '.. |dstrings| replace:: **$-strings**',
+    '.. |soleil| replace:: **Soleil**',
+])
 
 autoclass_content = 'both'
 autodoc_default_options = {
     'member-order': 'bysource',
     'members': True,
     'special-members': '__call__,__getitem__,__len__',
-    'ignore-module-all': True
+    'ignore-module-all': True,
 }
 autosummary_generate = True
+graphviz_output_format = 'svg'
