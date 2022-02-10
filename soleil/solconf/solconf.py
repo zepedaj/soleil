@@ -17,6 +17,10 @@ class SolConf:
     The root node.
     """
 
+    @property
+    def root(self):
+        return self.node_tree
+
     def __init__(self, raw_data, context: dict = {}, parser=None, modify=True):
         """
         :param raw_data: The data to convert to an :class:`SolConf` object.
@@ -96,7 +100,7 @@ class SolConf:
         return out
 
     def __call__(self, *args):
-        return self.node_tree.resolve(*args)
+        return self.node_tree(*args)
 
     def resolve(self):
         return self.node_tree.resolve()
