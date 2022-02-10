@@ -313,18 +313,27 @@ A reference string can also be passed directly to a node's :meth:`~Node.__call__
 .. testcode:: SolConf
 
    # From the root   
-   assert sc('var2.2..0') == 2
-   assert sc('var2.0') == 2
+   assert root('var2.2..0') == 2
+   assert root('var2.0') == 2
+
+   # From node
+   node = root.node_from_ref('var2')
+   assert node('2..0') == 2
+   assert node('0') == 2
+
+Note that, similarly to index refernces, reference strings skip nodes of type :class:`KeyNode`:
+
+.. todo:: Example
  
 ... with qualified names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Nodes expose a :ref:`qualified name <qualified name>` in attribute :attr:`~Node.qual_name` that contains the node's reference string relative to the root node. Qualified names offer a compact way to refer to the node:
 
-.. testcode: SolConf
+.. testcode:: SolConf
 
-   node = sc('var2.2..0')
+   node = root.node_from_ref('var2.2..0')
    assert node.qual_name == 'var2.0'
-   assert sc(node.qual_name) is node
+   assert root(node.qual_name) is node
 
 Note that qualified names contain no consecutive ``'.'`` characters.
