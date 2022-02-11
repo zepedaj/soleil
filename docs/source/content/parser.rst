@@ -3,7 +3,7 @@
 Restricted Python Parser
 =========================
 
-..todo :: Finish specifying what is supported.
+.. todo :: Finish specifying what is supported.
 
 Supported Grammar Components
 ------------------------------

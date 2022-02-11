@@ -1,7 +1,11 @@
 
+.. currentmodule:: soleil.solconf
+
 |soleil| is *(1)* a **configuration manager** that is templated, hierarchical, and cross-referential; *(2)* a **CLI builder** ; and *(3)* **experiment launcher** inspired by Facebook's `Hydra <https://hydra.cc/docs/intro/>`_.
 
-The main aim of |soleil| is to minimize the amount of glue code, effort, technical debt buildup and related cognitive load associated with managing machine learning model training experiments.
+The main aim of |soleil| is to increase flexibility while reducing the amount of glue code, effort, technical debt buildup and related researcher cognitive load associated with managing machine learning model development and training experiments. |soleil| achieves this by enabling separation of concerns between the purely task-related code such as model definition and training scripts, and the configuration and launching code, while minizing the glue code between these two main components to ease modification and experimentation.
+
+Soleil is part of a family of packages that share this aim and includes :mod:`xerializer` and :mod:`ploteries`.
 
 Motivation
 ==========
@@ -53,7 +57,7 @@ Soleil configuration objects
 Basic configuration objects
 ----------------------------------
 
-Soleil configuration objects (:class:`SolConf` objects) are built from compositions of *native serializable types* (i.e., those types that can be represented natively in **YAML** or **JSON** format):
+Soleil configuration objects (:class:`solconf.SolConf` objects) are built from compositions of *native serializable types* (i.e., those types that can be represented natively in **YAML** or **JSON** format):
 
    * ``int``, ``float``, ``str``, ``bool``, 
    * ``None``, 
@@ -61,6 +65,8 @@ Soleil configuration objects (:class:`SolConf` objects) are built from compositi
    * ``dict`` (with string keys that are valid variable names).
 
 This makes it possible to represent these objects in human-readable **YAML** or **JSON** files stored in directory hierarchies.
+
+.. rubric:: Basic examples
 
 A :class:`SolConf` object is built by passing raw content directly to the initializer:
 
@@ -110,7 +116,8 @@ The power of :class:`SolConf` objects comes from their ability to interpret |dst
 
 See :ref:`Restricted Python Parser` for more information on supported Python grammar components, the default variable context and ways to extend it.
 
-.. rubric:: Escaping strings
+Escaping strings
+^^^^^^^^^^^^^^^^^
 
 All strings in raw content that begin with ``'$: '`` are evaluated as Python expressions when the node containing the content is resolved. This behavior can be overriden by instead prefixing the string with ``'\:'``:
 
@@ -119,6 +126,29 @@ All strings in raw content that begin with ``'$: '`` are evaluated as Python exp
    assert SolConf('\:  $: 1+2')() == '  $: 1+2' # White space after '\:' is not ignored
    assert SolConf('\\:  $: 1+2')() == '  $: 1+2' # Equivalent, with escaped backslash
    assert SolConf(r'\:  $: 1+2')() == '  $: 1+2' # Equivalent, with Python raw string
+
+Evaluation context
+^^^^^^^^^^^^^^^^^^^^
+
+.. todo:: Missing
+
+Registering new names -- decorator syntax, function syntax.
+
+Included context.
+
+.. _Dictionaries with arbitrary keys:
+
+Dictionaries with arbitrary keys
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Currently, soleil only supports :class:`DictContainer` nodes with string keys that are valid variable names. However, arbitrary dictionaries can be built using |dstrings|:
+
+.. doctest:: SolConf
+   
+   >>> print(SolConf("$: {True: 'abc', 2: 'def', 3.0: 'ghi', None: 'jkl'}")())
+   {True: 'abc', 2: 'def', 3.0: 'ghi', None: 'jkl'}
+
+.. todo:: Missing
 
 .. _xr:
 
@@ -158,21 +188,21 @@ Any of these variables described above can be used to create cross-references us
 Node system
 ============
 
-:class:`SolConf` objects construct  a node-tree from raw input content. Understanding the structure of this tree is useful for advanced use. 
+:class:`solconf.SolConf` objects construct  a node-tree from raw input content. Understanding the structure of this tree is useful for advanced use. 
 
 Node types
 -----------
 
-:class:`SolConf`  node trees can have nodes of the following types:
+:class:`solconf.SolConf`  node trees can have nodes of the following types:
 
 DictContainer
-     :class:`DictContainer` nodes represent Python dictionaries with keys that are valid variable names. Their children nodes must be of type :attr:`KeyNode`.
+     :class:`dict_container.DictContainer` nodes represent Python dictionaries with keys that are valid variable names. Their children nodes must be of type :class:`dict_container.KeyNode`. Currently, dictionary containers only support string keys that are valid variable names. But arbitrary Python dictionaries can be built using |dstrings| -- see :ref:`Dictionaries with arbitrary keys`.
 KeyNode
-     :class:`KeyNode`  nodes contain a string key that is a valid variable name and a child node :attr:`KeyNode.value` that is of any of the three other node types. :class:`KeyNode` nodes always have a parent that is a :class:`DictContainer`. Key nodes play a special role discussed :ref:`here <Key nodes>`.
+     :class:`~dict_container.KeyNode`  nodes contain a string key that is a valid variable name and a child node :attr:`dict_container.KeyNode.value` that is of any of the three other node types. :class:`~dict_container.KeyNode` nodes always have a parent that is a :class:`~dict_container.DictContainer`. Key nodes play a special role discussed :ref:`here <Key nodes>`.
 ListContainer
-     :class:`ListContainer` nodes represent Python lists and can contain nodes of any type except for type :class:`KeyNode`.
+     :class:`ListContainer` nodes represent Python lists and can contain nodes of any type except for type :class:`~dict_container.KeyNode`.
 ParsedNode
-     :class:`ParsedNode` nodes represent tree leafs -- they must always be either the root node, or a child of a :class:`KeyNode` or :class:`ListContainer` node. When the :class:`ParsedNode`'s raw content is a string, |dstring| evaluation rules are applied to it. Otherwise, the raw value is passed on directly when resolving the node.
+     :class:`ParsedNode` nodes represent tree leafs -- they must always be either the root node, or a child of a :class:`~dict_container.KeyNode` or :class:`ListContainer` node. When the :class:`ParsedNode`'s raw content is a string, |dstring| evaluation rules are applied to it. Otherwise, the raw value is passed on directly when resolving the node.
 
 The types of nodes are designed to cover all :ref:`native serializable types <NST>`.
 
@@ -192,9 +222,6 @@ As an example, consider the following :class:`SolConf` object:
    sc = SolConf(raw_content)
 
 The object's node tree will have the following structure:
-
-.. root [label="DictContainer@'' qual name: ''"]
-
 
 .. _example graph:
 
@@ -237,15 +264,80 @@ The object's node tree will have the following structure:
 Key nodes
 ----------
 
-Modifiers
-^^^^^^^^^^
-Missing
+Key nodes offer special functionality that enables **node typing** with automatic type-checking, and special node behavior through **node modifiers**. A  **node modifier** is a callable that takes a :class:`Node`-derived input and has an optional :class:`Node`-derived output.
+
+One example application of node modifiers is to mark a node as **hidden**, meaning that it is visible to the parser and hence |dstrings|, but its resolved content is not included in the :class:`SolConf` object's final resolved content. This behavior is useful to define meta-data used to create the configuration that is however not part of the configuration.
+
+Another useful application of node modifiers is to **promote** value nodes inside single-key :class:`DictContainer` nodes -- i.e., to replace the container node by its single value node, in effect extending typing and modifier support to non-:class:`~dict_container.KeyNode` nodes. See :ref:`Decorating non-key nodes`.
+
+
+.. rubric:: Syntax
+
+Node types and modifiers -- collectively node decorators -- are specified in raw content using string keys with one of the following special syntaxes:
+
+.. code-block::
+
+   '{key}'                     # Non-decorated key
+   '{key}:{types}'             # Type-only decorated key
+   '{key}::{modifiers}'        # Modifier-only decorated key
+   '{key}:{types}:{modifiers}' # Type and modifier decorated key.
+
+**Key** must contain a valid python variable name. **Types** and **modifiers**, on the other hand, must be valid python expressions returning 
+
+  * a type or type tuple and 
+  * a modifier or modifier tuple, 
+
+respectively. Both expressions will be evaluted using the :attr:`~soleil.solconf.SolConf.parser` object, hence using the same variable context as used for |dstrings|.
+
 
 Type checking
 ^^^^^^^^^^^^^^
-Missing
 
-.. todo:: Discuss xerializable types
+As an example, the following dictionary has an ``int``-typed entry and a ``str`` typed entry:
+
+.. doctest:: SolConf
+
+   >>> print(SolConf({'val1:int':1, 'val2:str':'abc'})())
+   {'val1': 1, 'val2': 'abc'}
+
+Attempting to resolve a :class:`SolConf` object that would return a value of an invalid type raises an exception:
+
+.. doctest:: SolConf
+
+   >>> SolConf({'val1:int' : 1.0})()
+   Traceback (most recent call last):
+      ...
+   TypeError: Invalid type <class 'float'>. Expected one of (<class 'int'>,).
+
+Type tuples are also valid:
+
+.. doctest:: SolConf
+
+   >>> print(SolConf({'val1:int,float,bool' : False})())
+   {'val1': False}
+
+   >>> SolConf({'val1:int,float,bool' : 'abc'})()
+   Traceback (most recent call last):
+      ...
+   TypeError: Invalid type <class 'str'>. Expected one of (<class 'int'>, <class 'float'>, <class 'bool'>).
+
+.. todo:: The above examples do not check the error message strictly enough. Only the exception type is checked.
+
+
+
+.. todo:: Add docs for typing with xerializer string signatures.
+
+Modifiers
+^^^^^^^^^^
+.. todo:: Missing
+
+.. _Decorating non-key nodes:
+
+Docorating non-key nodes
+-------------------------
+
+.. todo:: missing
+
 
 Referencing nodes
 -------------------
@@ -259,15 +351,15 @@ Container nodes expose a :meth:`~Node.__getitem__` method that enables natural, 
 
 .. testcode:: SolConf
 
-   root = sc.root
-   root['var2'][2]
+   r_ = sc.root # This assignment is done automatically in $-string contexts.
+   r_['var2'][2]
 
 :class:`SolConf` further exposes a :meth:`~SolConf.__getitem__` that is an alias to the root node's :meth:`~Node.__getitem__` method:
 
 .. testcode:: SolConf
 
    assert (
-     root['var2'][2] is 
+     r_['var2'][2] is 
      sc['var2'][2]
    )
 
@@ -276,64 +368,139 @@ Note that accessing children nodes in this manner will return another node. As u
 
 .. testcode:: SolConf
 
-   assert root['var2'][2]() == 4
+   assert r_['var2'][2]() == 4
 
 .. rubric:: Key vs. value node indexing syntax
 
-Accessing a dictionary container's node using the key string produces not the :class:`KeyNode` that is a direct child of the container, but rather the :class:`KeyNode.value` attribute. The key node can be accessed instead by pre-pending the key string with ``'*'``:
+Accessing a dictionary container's node using the key string produces not the :class:`~dict_container.KeyNode` that is a direct child of the container, but rather the node contained in the :class:`KeyNode.value` attribute. 
+
+The key node can be accessed instead by pre-pending the key string with ``'*'``:
 
 .. testcode:: SolConf
 
    from soleil.solconf.dict_container import KeyNode
 
-   assert type(sc['var2']) is not KeyNode
-   assert type(sc['*var2']) is KeyNode
+   assert type(r_['var2']) is not KeyNode
+   assert type(r_['*var2']) is KeyNode
 
-   assert sc['var2'].parent is sc['*var2']
-   assert sc['*var2'].parent is sc.root
+   assert r_['var2'].parent is r_['*var2']
+   assert r_['*var2'].parent is r_
 
-This indexing syntax is meant to make node access behave like standard dictionary indexing.
+This indexing syntax is meant to make node indexing behave like standard dictionary indexing.
 
 .. _with reference strings :
 
 ... with reference strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Reference strings offer another, more compact way to refer to nodes in the node tree. Reference strings consist of a sequence of container indices separated by one or more ``'.'`` characters. Using :math:`N>1` characters will refer to the node's :math:`(N-1)`-th ancestor.
+Reference strings offer another way to refer to nodes in the node tree. Reference strings consist of a sequence of container indices separated by one or more ``'.'`` characters. 
+
+Using :math:`N>1` ``'.''`` characters will refer to the node's :math:`(N-1)`-th ancestor.
 
 .. testcode:: SolConf
 
-   # From the root
    assert (
-     root.node_from_ref('var2.2..0') is 
-     root.node_from_ref('var2.0') )
+     r_.node_from_ref('var2.2..0') is 
+     r_.node_from_ref('var2.0') )
 
-A reference string can also be passed directly to a node's :meth:`~Node.__call__` method in order to resolve the referenced node:
+A reference string can also be passed directly to a node's :meth:`~Node.__call__` method in order to resolve the referenced node using more compact syntax:
 
 .. testcode:: SolConf
 
    # From the root   
-   assert root('var2.2..0') == 2
-   assert root('var2.0') == 2
+   assert r_('var2.2..0') == 2
+   assert r_('var2.0') == 2
+   assert r_['var2'][0]() == 2 # Equivalent index-based syntax.
 
    # From node
-   node = root.node_from_ref('var2')
+   node = r_.node_from_ref('var2')
    assert node('2..0') == 2
    assert node('0') == 2
+   assert node[0]() == 2 # Equivalent index-based syntax.
 
-Note that, similarly to index refernces, reference strings skip nodes of type :class:`KeyNode`:
+Note that, similarly to index references, reference strings skip nodes of type :class:`~dict_container.KeyNode`. To access a key node, prepend the node's name with a ``'*'`` character :
+
+.. doctest:: SolConf
+
+  >>> key_node = r_.node_from_ref('*var2')  # Access the key node.
+  >>> value_node = r_.node_from_ref('var2') # Access the key node's value node.
+
+  >>> print(key_node, '|', value_node)
+  KeyNode@'*var2' | ListContainer@'var2'
+  >>> print(value_node.parent) # The value node's parent is the key node.
+  KeyNode@'*var2'
+
+Key node skipping also happens when accessing ancestors using dot sequences:
+
+.. doctest:: SolConf
+
+  >>> print(value_node.parent)
+  KeyNode@'*var2'
+  >>> print(value_node.node_from_ref('..'))
+  DictContainer@''    
+
 
 .. todo:: Example
  
 ... with qualified names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Nodes expose a :ref:`qualified name <qualified name>` in attribute :attr:`~Node.qual_name` that contains the node's reference string relative to the root node. Qualified names offer a compact way to refer to the node:
+Nodes expose a :ref:`qualified name <qualified name>` in attribute :attr:`~Node.qual_name` that is a reference string relative to the root node and with no consecutive ``'.'`` characters:
 
-.. testcode:: SolConf
+.. doctest:: SolConf
 
-   node = root.node_from_ref('var2.2..0')
-   assert node.qual_name == 'var2.0'
-   assert root(node.qual_name) is node
+   >>> node = r_.node_from_ref('var2.2..0')
+   >>> print(node)
+   ParsedNode@'var2.0'
+   >>> assert node.qual_name == 'var2.0'
+   >>> print(r_.node_from_ref(node.qual_name))
+   ParsedNode@'var2.0'
 
-Note that qualified names contain no consecutive ``'.'`` characters.
+Being root-relative reference strings in canonical form, qualified names can also be used to conveniently refer to a node's resolved value:
+
+.. doctest:: SolConf
+
+   >>> print(r_('var2.0'))
+   2
+
+Note that a node's string representation consists of the node's type, followed by an ``'@'`` character and the single quote-quoted qualified name for the node:
+
+.. doctest:: SolConf
+
+   >>> print(r_)
+   DictContainer@''
+
+   >>> print(r_['var2'][0])
+   ParsedNode@'var2.0'
+
+
+Discussion on supporting non-variable name key :class:`~dict_container.DictContainer` objects
+===============================================================================================
+
+Pros and cons of extending dictionary support to non-variable name keys
+
+.. rubric:: Cons
+
+* Qualified names and ref strings would not be valid anymore.
+* Would loss simple syntax for from-CLI value modifications.
+* Might complicate or invalidate the '{key}:{types}:{modifiers}' syntax - how would type and modifier decorations be applied to non-string nodes?
+
+.. rubric:: Pros
+	    
+* Would be able to convert any python dictionary can be converted to a :class:`~solconf.SolConf` object.
+* Can fix lack of support for some YAML dictionaries. E.g., the following YAML string would fail. '{-1: 1, -2 : 2, null : 3, 3.0 : 4, True : 5, False : 6}'
+* Can fix lack of support for some JSON dictionaries. E.g., '{"0" : 1, "1" : 2}'
+* Possible support for |dstring| keys -- but what's the use?
+
+.. rubric:: Possible implementations
+
+* Only support YAML-support dictionary keys (ints, floats, None, bool, string).
+* Support promoted KeyNodes that are replaced by their value node with the ``promote`` modifier:
+
+  ..  doctest:: SolConf
+
+      >>> SolConf({':int:promote' : 0})() # The key is the empty string here; the promoted node will be type-checked as `int` upon resolution.
+      0
+      >>> SolConf({0: {':bool:promote' : False}})() # The `load` modifier is applied to the parent KeyNode of key 0.
+	 
+	 

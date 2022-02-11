@@ -3,6 +3,8 @@ TODO List
 
 .. todo::
 
+   * Add xerializable type support.
+
    * ``protected`` modifier that allows passing dictionaries with non-var-name keys as input.
 
    * AST Parser
