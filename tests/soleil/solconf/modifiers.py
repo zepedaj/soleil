@@ -99,11 +99,11 @@ class TestModifiers(TestCase):
 
     def test_promote(self):
 
-        # sc = SolConf({'x:int:promote': 0})
-        # assert sc() == 0
+        sc = SolConf({'x:int:promote': 0})
+        assert sc() == 0
 
-        # sc = SolConf([{'x:int:promote': 0}])
-        # self.assertEqual(sc(), [0])
+        sc = SolConf([{'x:int:promote': 0}])
+        self.assertEqual(sc(), [0])
 
         sc = SolConf(
             [{'x:int:promote': 0},
