@@ -105,7 +105,8 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
     node.replace(node.value, new_node)
 
     # Modify the new node sub-tree
-    ac.modify(new_node)
+    if hasattr(new_node, 'modify'):
+        new_node.modify()
 
     # Since the modifier is applied to the KeyNode, and the KeyNode has not changed, return that node and not new_node.
     return node

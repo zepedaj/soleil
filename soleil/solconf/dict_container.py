@@ -126,16 +126,18 @@ class KeyNode(ParsedNode):
         # Check if the modifiers have been applied.
         if self.modified:
             return
+        else:
+            self.modified = True
 
-        # Parse types and modifiers.
-        #self.types = self._parse_raw_key_component(self.raw_types)
-        #self.modifiers = self._parse_raw_key_component(self.raw_modifiers)
-
-        # Apply modifiers.
+        # Apply node modifiers.
         node = self
         if self.modifiers:
             for modifier in self.modifiers:
                 node = modifier(node) or node
+
+        # Modify value
+        if hasattr(self.value, 'modify'):
+            self.value.modify()
 
     def remove(self, node: Node):
         """

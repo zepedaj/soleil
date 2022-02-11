@@ -12,7 +12,13 @@ class Container(Node):
 
     @property
     @abc.abstractmethod
-    def children(self): return {}
+    def children(self):
+        """
+        Returns an iterable over the container's children
+        """
+
+    def __len__(self):
+        return len(self.children)
 
     @abc.abstractmethod
     def add(self, node: Node):
@@ -50,6 +56,15 @@ class Container(Node):
         """
         return (
             f'{_qual_name}.' if (_qual_name := self.qual_name) else '') + child_name
+
+    def modify(self):
+        """
+        Modifies the children that support modification.
+        """
+        for ch in list(self.children):
+            # Takign a list avoids issues with modifiers that change the contents
+            if hasattr(ch, 'modify'):
+                ch.modify()
 
 
 class ListContainer(Container):

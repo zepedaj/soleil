@@ -68,20 +68,14 @@ class SolConf:
 
     def modify(self, root=None):
         """
-        Traverses the tree starting at the root and calls method ``modify`` on all nodes that have that method.
+        Traverses the tree starting at the root and calls method ``modify`` on all nodes that have that method, and all its children.
 
-        If a node has a method ``modify``, tree traversal is not continued further down that node.
+        If a node has a modify object, its children will not be modified. It is that node's responsibility to modify its own children. This enables the createion of modifiers that change the sub-tree, in which case modification of the changed sub-tree will be their responsibility.
         """
         root = root or self.node_tree
 
         if hasattr(root, 'modify'):
             root.modify()
-        elif hasattr(root, 'children'):
-            for child in list(root.children):
-                # Some nodes might modify the node tree. Taking a snapshot here with list()
-                # avoids errors related to modifying the childrens iterable while iterating
-                # over it.
-                self.modify(child)
 
     @classmethod
     def build_node_tree(cls, raw_data, parser, parent=None):

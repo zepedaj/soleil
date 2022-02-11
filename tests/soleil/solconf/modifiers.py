@@ -3,7 +3,7 @@ from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
 from soleil.solconf.dict_container import KeyNode
 from soleil.solconf.solconf import SolConf
-from soleil.solconf import modifiers as mdl
+from soleil.solconf import modifiers as mdl  # noqa
 from tempfile import TemporaryDirectory
 from pathlib import Path
 import yaml
@@ -99,6 +99,9 @@ class TestModifiers(TestCase):
 
     def test_promote(self):
 
+        sc = SolConf({'a': {'x:int:promote': 0}})
+        self.assertEqual(sc(), {'a': 0})
+
         sc = SolConf({'x:int:promote': 0})
         assert sc() == 0
 
@@ -110,3 +113,13 @@ class TestModifiers(TestCase):
              1,
              {'y:float:promote': "$: float(r_[0]() + 2*r_('1'))"}])
         self.assertEqual(sc(), [0, 1, 2.0])
+
+        sc = SolConf({
+            'a': {'x:bool:promote': False},
+            'b': '$: r_["a"]()'})
+        self.assertEqual(sc(), {'a': False, 'b': False})
+
+        sc = SolConf({
+            'a': {'x:bool:promote,hidden': False},
+            'b': '$: r_["a"]()'})
+        self.assertEqual(sc(), {'b': False})
