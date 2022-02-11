@@ -2,10 +2,11 @@
 Base node modifiers included by default in :class:`soleil.solconf.parser.Parser` contexts.
 """
 from .parser import register
+from contextlib import nullcontext
 from functools import partial
 import yaml
 from .nodes import FLAGS
-from .dict_container import KeyNode
+from .dict_container import KeyNode, DictContainer
 from .nodes import Node
 from .solconf import SolConf
 from pathlib import Path
@@ -96,7 +97,7 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
     raw_data = yaml.safe_load(text)
 
     # Build the new node sub-tree
-    ac = node.alpha_conf_obj
+    ac = node.sol_conf_obj
     new_node = SolConf.build_node_tree(raw_data, parser=ac.parser)
     new_node._source_file = path
 
@@ -108,3 +109,36 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
 
     # Since the modifier is applied to the KeyNode, and the KeyNode has not changed, return that node and not new_node.
     return node
+
+
+@register('promote')
+def promote(node: KeyNode):
+    """
+    Takes a key node and checks that it is the only node in the parent :class:`DictContainer`.
+    If so, it replaces the parent :class:`DictContainer` by :attr:`KeyNode.value` node.
+    """
+
+    # Check that this is a key node within a dictionary container.
+    if not isinstance(node, KeyNode) or not isinstance(node.parent, DictContainer):
+        raise Exception(
+            'Expected a bound `KeyNode` input node, but received `{node}` with parent `{node.parent}`.')
+
+    # Replacement will happen in the KeyNode's grandparent -- the parent will be replaced in its container.
+    if (grandparent := node.parent.parent) is None:
+        if (grandparent := node.sol_conf_obj) is None:
+            raise Exception(
+                'Cannot promote a `KeyNode` from a `DictContainer` that has no parent and is not the root of a `SolConf` object.')
+
+    with node.lock, node.parent.lock, grandparent.lock:
+
+        # Check that the container has only one child.
+        if (num_children := len(node.parent.children)) != 1:
+            raise Exception(
+                f'Value node promotion requires that the parent `DictContainer` '
+                f'have a single child, but {num_children} were found.')
+
+        # Replace grandparent by grandchild
+        grandparent.replace(node.parent, node.value)
+
+        # Return the grandchild.
+        return node.value

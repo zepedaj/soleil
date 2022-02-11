@@ -1,5 +1,6 @@
 from soleil.solconf import solconf as mdl
 from .modifiers import build_config_files
+from .nodes import ParsedNode
 
 from unittest import TestCase
 
@@ -40,3 +41,18 @@ class TestSolConf(TestCase):
             ac = mdl.SolConf.load(path)
             dat = ac()
             self.assertEqual(dat, expected)
+
+    def test_replace(self):
+        sc = mdl.SolConf({'a': 0, 'b': 1})
+
+        assert sc() == {'a': 0, 'b': 1}
+
+        old_node = sc.node_tree
+        assert sc.node_tree.sol_conf_obj is sc
+
+        new_node = ParsedNode(10, parser=sc.parser)
+        sc.replace(None, new_node)
+
+        assert old_node.sol_conf_obj is None
+        assert sc() == 10
+        assert sc.root is new_node

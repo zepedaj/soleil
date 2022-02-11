@@ -67,7 +67,7 @@ class KeyNode(ParsedNode):
     .. _raw string:
     .. rubric:: Initialization from raw string
 
-    Key nodes can be initialized from a raw string in the format |raw key format|, where
+    Key node keys can be initialized from a raw string in the form |raw key format|, where
 
     * **key** will be used to set :attr:`KeyNode.key` and must be a valid variable name;
     * **types** is either a valid type in the parser's context, an xerializer-recognized string signature, or a tuple of these; and
@@ -95,8 +95,6 @@ class KeyNode(ParsedNode):
 
     def __init__(self, raw_key: str, value: Node, parser: Parser, **kwargs):
         """
-        Initializes the node, setting the parent of value as ``self``.
-
         :param raw_key: A string in the form |raw key format| (see :ref:`raw string`).
         :param value: The value node. The parent of this node will be set to ``self`` during initialization.
         :param kwargs: This object is a dataclass, all class attributes (including those inherited) can be used as keyword args.
@@ -112,7 +110,7 @@ class KeyNode(ParsedNode):
         super().__init__(self, parser=parser, **kwargs)
 
         #
-        self.types = self._parse_raw_key_component(components['types'])
+        self.value.types = self._parse_raw_key_component(components['types'])
         self.modifiers = self._parse_raw_key_component(components['modifiers'])
         self.modified = False
 
@@ -122,9 +120,7 @@ class KeyNode(ParsedNode):
 
     def modify(self):
         """
-        This function first parses the key components (``'types'`` and ``'modifiers'``) and then applies the modifiers to the node.
-
-        Calling this function a second time has no effect.
+        Applies the modifiers to the node. Calling this function a second time has no effect.
         """
 
         # Check if the modifiers have been applied.
@@ -140,6 +136,19 @@ class KeyNode(ParsedNode):
         if self.modifiers:
             for modifier in self.modifiers:
                 node = modifier(node) or node
+
+    def remove(self, node: Node):
+        """
+        Checks that ``node`` is contained in :attr:`Node.value`. If so, it dissociates :attr:`value` from ``self``, and further dissociates ``self`` from the parent ``DictContainer``.
+        """
+
+        with self.lock, node.lock:
+            if node is not self.value:
+                raise exceptions.NotAChildOf(node, self)
+            else:
+                node.parent = None
+                self.value = None
+                self.parent.remove(self)
 
     @contextmanager
     def lock(self):
@@ -209,9 +218,7 @@ class KeyNode(ParsedNode):
         with self.lock:
             key = self.key
             value = self.value.resolve()
-            #
-            if self.types and not isinstance(value, self.types):
-                raise TypeError(f'Invalid type {type(value)}. Expected one of {self.types}.')
+
             return key, value
 
     def replace(self, old_value=Optional[Node], new_value: Node = None):

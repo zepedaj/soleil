@@ -5,7 +5,7 @@ from .exceptions import InvalidRefStr, InvalidRefStrComponent
 from dataclasses import dataclass, field
 import abc
 from .parser import Parser
-from typing import Any, Set, Optional
+from typing import Any, Set, Optional, Tuple
 from enum import Enum, auto
 from . import varnames
 import re
@@ -64,14 +64,19 @@ class Node(abc.ABC):
 
     """
 
+    types: Optional[Tuple[type]] = None
+    """
+    Contains the valid types for the resolved content.
+    """
+
     _source_file: Optional[Path] = None  # Set by :func:`load`
     source_file = property(lambda self: _propagate(self, 'source_file'))
     """
     Returns the source file of the nearest ancestor (including ``self``), or ``None`` if no ancestor was loaded from a file.
     """
 
-    _alpha_conf_obj: Optional = None  # Set by SolConf initializer.
-    alpha_conf_obj = property(lambda self: _propagate(self, 'alpha_conf_obj'))
+    _sol_conf_obj: Optional = None  # Set by SolConf initializer.
+    sol_conf_obj = property(lambda self: _propagate(self, 'sol_conf_obj'))
     """
     If the node is part of a tree in an :class:`SolConf` object, returns that object.
     """
@@ -109,7 +114,13 @@ class Node(abc.ABC):
         # using inspect.stack
         __resolving_node__ = ResolvingNode(self)  # noqa
 
-        return self._unsafe_resolve()
+        value = self._unsafe_resolve()
+
+        if self.types:
+            if self.types and not isinstance(value, self.types):
+                raise TypeError(f'Invalid type {type(value)}. Expected one of {self.types}.')
+
+        return value
 
     @abc.abstractmethod
     def _unsafe_resolve(self):

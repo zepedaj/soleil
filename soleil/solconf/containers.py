@@ -75,6 +75,7 @@ class ListContainer(Container):
         for k, node in enumerate(self.children):
             if node is child:
                 success = True
+                break
         if not success:
             raise NotAChildOfError(child, self)
         return k

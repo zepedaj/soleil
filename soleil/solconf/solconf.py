@@ -1,12 +1,21 @@
 import yaml
+from contextlib import nullcontext
+from typing import Optional
 from .containers import ListContainer
 from .dict_container import DictContainer, KeyNode
 from .nodes import ParsedNode, Node
 from .parser import Parser
 from . import varnames
+from threading import RLock
 
 
 class SolConf:
+
+    """
+    Soleil configuration object that builds a node tree and resolves :class:`~soleil.solconf.dict_container.KeyNode` decorators, |dstrings|, and cross-references.
+
+    Partiall implements the :class:`~soleil.solconf.containers.Container` interface.
+    """
 
     parser: Parser
     """
@@ -15,6 +24,10 @@ class SolConf:
     node_tree: Node
     """
     The root node.
+    """
+    lock: RLock
+    """
+    Threading lock used when modifying the object.<
     """
 
     @property
@@ -29,9 +42,10 @@ class SolConf:
         """
 
         self.parser = parser or Parser(context)
-        self.node_tree = self.build_node_tree(raw_data, parser=self.parser)
-        self.node_tree._alpha_conf_obj = self  # Needed to support Node.alpha_conf_obj propagation
-        self.parser.register(varnames.ROOT_NODE_VAR_NAME, self.node_tree)
+        root = self.build_node_tree(raw_data, parser=self.parser)
+        self.lock = RLock()
+        self.node_tree = None
+        self.replace(None, root)
         if modify:
             self.modify()
 
@@ -100,10 +114,36 @@ class SolConf:
         return out
 
     def __call__(self, *args):
-        return self.node_tree(*args)
+        with self.lock:
+            return self.node_tree(*args)
 
     def resolve(self):
-        return self.node_tree.resolve()
+        with self.lock:
+            return self.node_tree.resolve()
+
+    def replace(self, old_node: Optional[Node], new_node: Node):
+        """
+        Sets or replaces :attr:`node_tree`. The old node is dissociated from ``self`` and the new node associated so that the :attr:`~Node.sol_conf_obj` attritutes of all tree nodes return ``self``.
+        """
+        old_node = old_node or self.node_tree
+        with self.lock, (old_node.lock if old_node else nullcontext()), new_node.lock:
+
+            # Check valid old node.
+            if old_node and old_node is not self.root:
+                raise Exception(
+                    f'The provided target node `{old_node}` is not '
+                    f'at the root of the node tree `{self.root}`.')
+
+            # Remove self from old node.
+            if old_node:
+                old_node._sol_conf_obj = None
+
+            # Add self to new node
+            new_node._sol_conf_obj = self
+            self.node_tree = new_node
+
+            # Replace root node var r_ in parser context
+            self.parser.register(varnames.ROOT_NODE_VAR_NAME, self.node_tree)
 
     def __getitem__(self, *args):
         return self.node_tree.__getitem__(*args)

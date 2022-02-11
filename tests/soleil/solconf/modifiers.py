@@ -96,3 +96,17 @@ class TestModifiers(TestCase):
             resolved = ac.resolve()['super_root']
 
             self.assertEqual(expected, resolved)
+
+    def test_promote(self):
+
+        # sc = SolConf({'x:int:promote': 0})
+        # assert sc() == 0
+
+        # sc = SolConf([{'x:int:promote': 0}])
+        # self.assertEqual(sc(), [0])
+
+        sc = SolConf(
+            [{'x:int:promote': 0},
+             1,
+             {'y:float:promote': "$: float(r_[0]() + 2*r_('1'))"}])
+        self.assertEqual(sc(), [0, 1, 2.0])
