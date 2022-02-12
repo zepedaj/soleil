@@ -18,10 +18,26 @@ def cwd():
       from soleil.solconf.parser import Parser
 
       parser = Parser()
-      my_sub_dir = parser.eval("cwd()/'my'/'sub'/'dir'")
+      my_sub_dir = parser.safe_eval("cwd()/'my'/'sub'/'dir'")
 
     """
     return Path.cwd().absolute()
+
+
+@register('values')
+def values(x: dict):
+    """
+    Returns the values of the input dictionary
+    """
+    return x.values()
+
+
+@register('keys')
+def keys(x: dict):
+    """
+    Returns the keys of the input dictionary
+    """
+    return x.values()
 
 
 @register('dt64')

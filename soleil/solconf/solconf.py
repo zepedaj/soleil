@@ -11,6 +11,7 @@ from .nodes import ParsedNode, Node
 from .parser import Parser
 from . import varnames
 from threading import RLock
+from pathlib import Path
 
 
 class SolConf:
@@ -78,6 +79,7 @@ class SolConf:
         :param path: The path to the file to load the raw data from.
         :param kwargs: Extra arguments to pass to the :class:`SolConf` initializer.
         """
+        path = Path(path)
         with open(path, 'rt') as fo:
             text = fo.read()
         modify = kwargs.pop('modify', True)
@@ -159,9 +161,6 @@ class SolConf:
                 new_node.parent.remove(new_node)
             new_node._sol_conf_obj = self
             self.node_tree = new_node
-
-            # Replace root node var r_ in parser context
-            self.parser.register(varnames.ROOT_NODE_VAR_NAME, self.node_tree)
 
     def __getitem__(self, *args):
         return self.node_tree.__getitem__(*args)

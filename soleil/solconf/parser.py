@@ -11,7 +11,7 @@ MAX_EXPR_LEN = int(1e4)
 # Exceptions
 
 
-class UndefinedFunction(KeyError):
+class UndefinedName(KeyError):
     pass
 
 
@@ -107,7 +107,7 @@ class Parser:
         """
         :param extra_context: Extra variables to append to the default context. These will overwrite existing variables of the same name.
 
-        .. warning:: Using python precision can result in system hangs from malicious input given Python's infinite precision (e.g., ``parser.eval('9**9**9**9**9**9**9')`` will hang).
+        .. warning:: Using python precision can result in system hangs from malicious input given Python's infinite precision (e.g., ``parser.safe_eval('9**9**9**9**9**9**9')`` will hang).
         """
         self._operators = PYTHON_PRECISION
         self._context = {**DEFAULT_CONTEXT, **(extra_context or {})}
@@ -119,9 +119,9 @@ class Parser:
         try:
             return (context or self._context)[name]
         except KeyError:
-            raise UndefinedFunction(f'Name `{name}` undefined in parser context.')
+            raise UndefinedName(f'Name `{name}` undefined in parser context.')
 
-    def eval(self, expr, extra_context=None):
+    def safe_eval(self, expr, extra_context=None):
         """
         Evaluates the python expression ``expr``.
 

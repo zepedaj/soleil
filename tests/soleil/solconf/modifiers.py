@@ -135,6 +135,22 @@ class TestModifiers(TestCase):
             'b': '$: r_["a"]()'})
         self.assertEqual(sc(), {'b': False})
 
+    def test_special_vars_in_modifier_string(self):
+        #
+        sc = SolConf([0, {"x:int:promote,choices(r_('0'),1)": 1}])
+        assert sc() == [0, 1]
+
+        #
+        sc = SolConf(
+            {
+                'base': 'red',
+                'fancy_versions': "$: {'red': 'fuscia', 'green': 'chartreuse'}",
+                "fancy_base:str:choices(*list(values(r_('fancy_versions'))))": "$: r_('fancy_versions')[r_('base')]"})
+        self.assertEqual(
+            sc(), {'base': 'red',
+                   'fancy_versions': {'red': 'fuscia', 'green': 'chartreuse'},
+                   'fancy_base': 'fuscia'})
+
     def test_choices(self):
 
         #

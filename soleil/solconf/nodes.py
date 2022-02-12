@@ -90,7 +90,14 @@ class Node(abc.ABC):
             False if not self.parent else self.parent.hidden)
 
     @property
-    def file_root_node(self):
+    def root(self):
+        """
+        Returns the root node.
+        """
+        return sol_conf_obj.root if (sol_conf_obj := self.sol_conf_obj) else None
+
+    @property
+    def file_root(self):
         """
         Returns the nearest ancestor (including self) that was loaded from a file or ``None`` if none was loaded form a file.
         """
@@ -242,7 +249,7 @@ class ParsedNode(Node):
 
     .. rubric:: Special context variables
 
-    Parsed node objects expose an :meth:`eval` method that automatically injects the two special node-related variables |CURRENT_NODE_VAR_NAME| and |FILE_ROOT_NODE_VAR_NAME| to the parser evaluation context:
+    Parsed node objects expose an :meth:`safe_eval` method that automatically injects the special node-related variables |CURRENT_NODE_VAR_NAME|, |ROOT_NODE_VAR_NAME| and |FILE_ROOT_NODE_VAR_NAME| to the parser evaluation context:
 
     * Variable |CURRENT_NODE_VAR_NAME| points to ``self``.
     * Variable |FILE_ROOT_NODE_VAR_NAME| points to ``self``'s closest ancestor (including ``self``) that was loaded from a file. If no ancestor was loaded from a file, the variable is not present.
@@ -258,21 +265,23 @@ class ParsedNode(Node):
         self.parser = parser
         super().__init__(**kwargs)
 
-    def eval(self, py_expr: str):
+    def safe_eval(self, py_expr: str):
         """
-        Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
+        Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME|, ``self.root`` as |ROOT_NODE_VAR_NAME| and ``self.file_root`` as |FILE_ROOT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
         """
-        context = {varnames.CURRENT_NODE_VAR_NAME: self}
-        if root_node := self.file_root_node:
-            context[varnames.FILE_ROOT_NODE_VAR_NAME] = root_node
-        return self.parser.eval(py_expr, context)
+        context = {
+            varnames.CURRENT_NODE_VAR_NAME: self,
+            varnames.ROOT_NODE_VAR_NAME: self.root,
+            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root}
+
+        return self.parser.safe_eval(py_expr, context)
 
     raw_value: str = field(default_factory=_kw_only)
 
     def _unsafe_resolve(self) -> Any:
         if isinstance(self.raw_value, str):
             if self.raw_value[:2] == '$:':
-                return self.eval(self.raw_value[2:].strip())
+                return self.safe_eval(self.raw_value[2:].strip())
             elif self.raw_value[:2] == r'\:':
                 return self.raw_value[2:]
             else:

@@ -37,13 +37,13 @@ class TestParser(TestCase):
                 ('one', 1),
         ]:
 
-            self.assertEqual(out := parser.eval(expr), val)
+            self.assertEqual(out := parser.safe_eval(expr), val)
             self.assertIs(type(out), type(val))
 
     def test_undefined_function(self):
         parser = Parser()
-        with self.assertRaisesRegex(mdl.UndefinedFunction, '.*`non_existing_fxn`.*'):
-            parser.eval('non_existing_fxn("abc")')
+        with self.assertRaisesRegex(mdl.UndefinedName, '.*`non_existing_fxn`.*'):
+            parser.safe_eval('non_existing_fxn("abc")')
 
     def test_supported_language_components(self):
         parser = Parser()
@@ -64,7 +64,7 @@ class TestParser(TestCase):
                 # *args - TODO
                 'slice(*[0, 10, 2])',
         ]:
-            self.assertEqual(parser.eval(str_val), eval(str_val))
+            self.assertEqual(parser.safe_eval(str_val), eval(str_val))
 
     def test_args_kwargs_calls(self):
         parser = Parser()
@@ -89,7 +89,7 @@ class TestParser(TestCase):
                  {'a': 0, 'b': 1, 'args': (2, 3, 4), 'c': 5, 'd': 6, 'kwargs': {'e': 7}}),
         ]:
             self.assertEqual(
-                parser.eval(call),
+                parser.safe_eval(call),
                 expected
             )
 

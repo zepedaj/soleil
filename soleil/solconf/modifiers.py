@@ -136,7 +136,7 @@ def promote(node: KeyNode):
     # Check that this is a key node within a dictionary container.
     if not isinstance(node, KeyNode) or not isinstance(node.parent, DictContainer):
         raise Exception(
-            'Expected a bound `KeyNode` input node, but received `{node}` with parent `{node.parent}`.')
+            f'Expected a bound `KeyNode` input node, but received `{node}` with parent `{node.parent}`.')
 
     # Replacement will happen in the KeyNode's grandparent -- the parent will be replaced in its container.
     if (grandparent := node.parent.parent) is None:

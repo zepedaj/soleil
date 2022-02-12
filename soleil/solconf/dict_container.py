@@ -102,8 +102,8 @@ class KeyNode(ParsedNode):
         """
 
         # Extract data from raw key.
-        components = self._split_raw_key(raw_key)
-        self._key = components['key']
+        self._key_components = self._split_raw_key(raw_key)
+        self._key = self._key_components['key']
         #
         value.parent = self
         self.value = value
@@ -111,8 +111,6 @@ class KeyNode(ParsedNode):
         super().__init__(self, parser=parser, **kwargs)
 
         #
-        self.value.types = self._parse_raw_key_component(components['types'])
-        self.modifiers = self._parse_raw_key_component(components['modifiers'])
         self.modified = False
 
     @property
@@ -121,14 +119,17 @@ class KeyNode(ParsedNode):
 
     def modify(self):
         """
-        Applies the modifiers to the node. Calling this function a second time has no effect.
+        Applies the modifiers to the node, includes parsing the raw key modifiers and types. Calling this function a second time has no effect.
         """
-
         # Check if the modifiers have been applied.
         if self.modified:
             return
         else:
             self.modified = True
+
+        # Parse and assign the modifiers and types.
+        self.value.types = self._parse_raw_key_component(self._key_components['types'])
+        self.modifiers = self._parse_raw_key_component(self._key_components['modifiers'])
 
         # Apply node modifiers.
         node = self
@@ -209,7 +210,7 @@ class KeyNode(ParsedNode):
         """
         if component is None:
             return None
-        component = self.eval(component) if component else tuple()
+        component = self.safe_eval(component) if component else tuple()
         component = component if isinstance(component, tuple) else (component,)
         return component
 
