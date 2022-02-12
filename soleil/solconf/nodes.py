@@ -83,11 +83,13 @@ class Node(abc.ABC):
 
     @property
     def hidden(self):
+        # """
+        # Returns ``True`` if the node or any ancestor node is marked as hidden. With the exception of the root node (root nodes cannot be hidden), hidden nodes are not included in resolved content. Hiden nodes can, however, be referred to by ref strings or accessed using ``Node.__getitem__``, including as part of ``$``-strings.
+        # """
         """
-        Returns ``True`` if the node or any ancestor node is marked as hidden. With the exception of the root node (root nodes cannot be hidden), hidden nodes are not included in resolved content. Hiden nodes can, however, be referred to by ref strings or accessed using ``Node.__getitem__``, including as part of ``$``-strings.
+        Returns ``True`` if the node is marked as hidden.
         """
-        return (FLAGS.HIDDEN in self.flags) or (
-            False if not self.parent else self.parent.hidden)
+        return FLAGS.HIDDEN in self.flags
 
     @property
     def root(self):
