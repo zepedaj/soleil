@@ -3,18 +3,17 @@ base: red
 secondary: "$: 'green' if f_('base')=='red' else 'red'" # Ref from file root.
 
 # $-strings; hidden,choices
-fancy_versions::hidden: "$: {'red':'fuscia', 'green':'chartreuse'}"
+# fancy_versions::hidden: "$: {'red':'fuscia', 'green':'chartreuse'}" # Also valid
+fancy_versions::hidden: 
+  red: fuscia
+  green: chartreuse
 "fancy_base:str:choices(*list(values(r_('fancy_versions'))))": "$: f_('fancy_versions')[f_('base')]"
 # "fancy_base:str:choices('fuscia', 'chartreuse')": "$: r_('fancy_versions')[r_('base')]"
 fancy_secondary:str: "$: r_('fancy_versions')[r_('secondary')]"
 
-# Load,hidden
-layout_name::hidden: spots
-alternate_layout_name::hidden: "$: 'rainbow' if r_('layout_name')=='spots' else 'spots'"
-
 # Load
-"layout::load('layouts')": "$: r_('layout_name')"
-alternate_layout::load: "$: 'layouts/' + r_('alternate_layout_name')"
+"layout::load('layouts')": spots
+alternate_layout::load: layouts/rainbow
 
 # Choices
 stroke_width::choices(5,10,15): 5
