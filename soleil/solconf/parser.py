@@ -152,10 +152,27 @@ class Parser:
             return self._operators[type(node.op)](eval_ctx(node.operand))
         elif isinstance(node, ast.Call):
             func = eval_ctx(node.func)
+
+            # Build args:
+            args = []
+            for x in node.args:
+                getattr(args, 'extend' if isinstance(x, ast.Starred) else 'append')(eval_ctx(x))
+
+            # Build kwargs
+            kwargs = {}
+            for x in node.keywords:
+                kwargs.update({x.arg: eval_ctx(x.value)}
+                              if x.arg is not None else
+                              eval_ctx(x.value))
+
             return func(
-                *[eval_ctx(x) for x in node.args],
+                # Args
+                *args,
+                # Optional starargs (TODO: when is this used?)
                 *[eval_ctx(x) for x in getattr(node, 'starargs', [])],
-                **{x.arg: eval_ctx(x.value) for x in node.keywords},
+                # Kwargs
+                **kwargs,
+                # Optional kwargs (TODO: when is this used?)
                 **{x.arg: eval_ctx(x.value) for x in getattr(node, 'kwargs', [])})
         elif isinstance(node, ast.Subscript):
             obj = eval_ctx(node.value)
@@ -196,5 +213,7 @@ class Parser:
                 else:
                     left = right
             return out
+        elif isinstance(node, ast.Starred):
+            return eval_ctx(node.value)
         else:
             raise UnsupportedPythonGrammarComponent(node)

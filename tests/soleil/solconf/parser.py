@@ -62,9 +62,36 @@ class TestParser(TestCase):
                 '1 < 3 < 100 > 10 == 10 >= 9',
                 '1 < 3 < 100 < 10 == 10 >= 9',
                 # *args - TODO
-                # 'slice(*[0, 10, 2])',
+                'slice(*[0, 10, 2])',
         ]:
             self.assertEqual(parser.eval(str_val), eval(str_val))
+
+    def test_args_kwargs_calls(self):
+        parser = Parser()
+
+        def fxn(a, b, *args, c=None, d=None, **kwargs):
+            return {'a': a, 'b': b, 'args': args, 'c': c, 'd': d, 'kwargs': kwargs}
+        parser.register('fxn', fxn)
+
+        for call, expected in [
+                ('fxn(0,1)',
+                 {'a': 0, 'b': 1, 'args': tuple(), 'c': None, 'd': None, 'kwargs': {}}),
+                #
+                ('fxn(0,1,2,3,4)',
+                 {'a': 0, 'b': 1, 'args': (2, 3, 4), 'c': None, 'd': None, 'kwargs': {}}),
+                ('fxn(0,1,2,3,4,c=5,d=6,e=7)',
+                 {'a': 0, 'b': 1, 'args': (2, 3, 4), 'c': 5, 'd': 6, 'kwargs': {'e': 7}}),
+                # *args input
+                ('fxn(0,1,*[2,3,4])',
+                 {'a': 0, 'b': 1, 'args': (2, 3, 4), 'c': None, 'd': None, 'kwargs': {}}),
+                # *kwargs input
+                ('fxn(0,1,*[2,3,4],c=5,d=6,**{"e": 7})',
+                 {'a': 0, 'b': 1, 'args': (2, 3, 4), 'c': 5, 'd': 6, 'kwargs': {'e': 7}}),
+        ]:
+            self.assertEqual(
+                parser.eval(call),
+                expected
+            )
 
     # def test_unsupported_grammar_component(self):
     #     with self.assertRaises(mdl.UnsupportedGrammarComponent):
