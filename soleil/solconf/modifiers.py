@@ -43,9 +43,11 @@ def hidden(node):
 
 
 @register('load')
-def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
+def load(_node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
-    Resolves ``node.value`` and treats the resolved value as a file path whose data will be used to replace the ``node.value`` node. If the path is relative, two possibilities exist:
+    Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node. 
+
+    If the resolved path is a relative, two possibilities exist:
 
     1. An ancestor node was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the ancestor file folder.
     2. No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
@@ -73,6 +75,8 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
     * load
     * load()
     * load(ext='.yaml')
+    * load('source/sub_dir')
+    * load('source/sub_dir', ext='.yaml')
 
 
     :param ext: The default extension to add to files without an extension.
@@ -82,9 +86,16 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
     node = _node
     if node is _Unassigned:
         return partial(load, ext=ext)
+    elif isinstance(_node, (str, Path)):
+        return partial(load, subdir=_node, ext=ext)
+    elif not isinstance(node, Node):
+        raise ValueError('Invalid input for argument _node.')
 
     # Get absolute path
     path = Path(node.value())
+    if subdir:
+        subdir = Path(subdir)
+        path = subdir / path
     if not path.is_absolute():
         root_path = source_file.parent if (source_file := node.source_file) else cwd()
         path = root_path / path
@@ -117,10 +128,9 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
 @register('promote')
 def promote(node: KeyNode):
     """
-    Takes a key node and checks that it is the only node in the parent :class:`DictContainer`.
-    If so, it replaces the parent :class:`DictContainer` by :attr:`KeyNode.value` node.
+    Replaces the parent dictionary container by the key node's value node. The parent :class:`DictContainer` must contain a single child.
 
-    All modifiers up to and including ``promote`` will be applied to the containing key node. All modifiers after ``promote`` wil be applied to the child node in the key node's :attr:`~KeyNode.value` attribute.
+    All modifiers up to and including ``promote`` will be applied to the containing key node. All modifiers after ``promote`` wil be applied to the child value node.
     """
 
     # Check that this is a key node within a dictionary container.
@@ -160,8 +170,8 @@ class choices:
     Because of this, the modifier sequence ``choices(1,2,3),promote`` and ``promote,choices(1,2,3)`` will have the same result.
     """
 
-    def __init__(self, *valid):
-        self.valid = valid
+    def __init__(self, *valid_values):
+        self.valid_values = valid_values
 
     def __call__(self, node: Node):
         """
@@ -175,7 +185,7 @@ class choices:
 
     def _checked_resolve(self, node, orig_resolve):
         out = orig_resolve()
-        if out not in self.valid:
+        if out not in self.valid_values:
             raise ValueError(
-                f'The resolved value of `{node}` is `{out}`, but it must be one of `{self.valid}`.')
+                f'The resolved value of `{node}` is `{out}`, but it must be one of `{self.valid_values}`.')
         return out

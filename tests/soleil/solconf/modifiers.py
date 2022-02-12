@@ -98,6 +98,16 @@ class TestModifiers(TestCase):
 
             self.assertEqual(expected, resolved)
 
+    def test_load__relative(self):
+        with build_config_files() as (config_file, expected):
+            # relative load
+            config_root = str(config_file.parent.absolute())
+            super_root = {f'_::load("{config_root}/subdir1")': 'file1'}
+            sc = SolConf(super_root)
+
+            resolved = sc()
+            self.assertEqual(resolved, {'_': expected['root_5']})
+
     def test_promote(self):
 
         sc = SolConf({'a': {'x:int:promote': 0}})

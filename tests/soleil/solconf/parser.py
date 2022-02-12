@@ -61,6 +61,8 @@ class TestParser(TestCase):
                 '1 if False else 2',
                 '1 < 3 < 100 > 10 == 10 >= 9',
                 '1 < 3 < 100 < 10 == 10 >= 9',
+                # *args - TODO
+                # 'slice(*[0, 10, 2])',
         ]:
             self.assertEqual(parser.eval(str_val), eval(str_val))
 

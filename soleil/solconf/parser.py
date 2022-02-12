@@ -31,7 +31,7 @@ PYTHON_PRECISION = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
 # TODO: One solution to this problem is to use the finite-precision numpy operators when all arguments are numbers.
 
 BUILTIN_SCALAR_TYPES = (
-    'float', 'int', 'bool', 'bytes', 'str')
+    'float', 'int', 'bool', 'bytes', 'str', 'slice')
 BUILTIN_ITERABLE_TYPES = (
     'list', 'tuple', 'dict', 'set')  # Require __iter__
 """
