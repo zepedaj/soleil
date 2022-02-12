@@ -80,7 +80,7 @@ class KeyNode(ParsedNode):
 
     Key node modifiers are applied by calling the node's :meth:`modify` method. Type checking is applied at the end of node resolution. Typically, this happens in the following order:
 
-    1. Modifiers are applied sequentially to ``self``. A modifier can optionally return a new node, in which case subsequent modifiers will be applied to this new node instead of ``self``. This functionality is handy when creating modifiers such as :func:`~soleil.solconf.modifiers.load` and :func:`~soleil.solconf.modifiers.promote` that replace a node by a new node. 
+    1. Modifiers are applied sequentially to ``self``. A modifier can optionally return a new node, in which case subsequent modifiers will be applied to this new node instead of ``self``. This functionality is handy when creating modifiers such as :func:`~soleil.solconf.modifiers.load` and :func:`~soleil.solconf.modifiers.promote` that replace a node by a new node.
 
       The process is illustrated by the following code snippet inside :meth:`modify`:
 
@@ -121,25 +121,39 @@ class KeyNode(ParsedNode):
         """
         Applies the modifiers to the node, includes parsing the raw key modifiers and types. Calling this function a second time has no effect.
         """
+
         # Check if the modifiers have been applied.
         if self.modified:
             return
         else:
             self.modified = True
 
-        # Parse and assign the modifiers and types.
-        self.value.types = self._parse_raw_key_component(self._key_components['types'])
-        self.modifiers = self._parse_raw_key_component(self._key_components['modifiers'])
+        # Parse the raw modifiers and types strings.
+        try:
+            component = 'types'
+            self.value.types = self._parse_raw_key_component(self._key_components['types'])
+            component = 'modifiers'
+            self.modifiers = self._parse_raw_key_component(self._key_components['modifiers'])
+        except exceptions.RawKeyComponentError:
+            raise
+        except Exception as err:
+            raise exceptions.RawKeyComponentError(self, err, component)
 
-        # Apply node modifiers.
-        node = self
-        if self.modifiers:
-            for modifier in self.modifiers:
-                node = modifier(node) or node
+        try:
+            # Apply node modifiers.
+            node = self
+            if self.modifiers:
+                for modifier in self.modifiers:
+                    node = modifier(node) or node
 
-        # Modify value
-        if hasattr(self.value, 'modify'):
-            self.value.modify()
+            # Modify value
+            if hasattr(self.value, 'modify'):
+                self.value.modify()
+
+        except exceptions.ModificationError:
+            raise
+        except Exception as err:
+            raise exceptions.ModificationError(self, err)
 
     def remove(self, node: Node):
         """

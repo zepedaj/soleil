@@ -8,7 +8,8 @@ Soleil: Lucid configuration
 
 .. toctree::
    :maxdepth: 2
-
+	      
+   content/cookbook
    content/intro
    content/parser
    content/glossary

@@ -16,21 +16,50 @@ from .varnames import DEFAULT_EXTENSION
 
 
 @register('parent')
-def parent(_node: Node = _Unassigned, levels=1):
+def parent(node_or_levels: Node = None, levels=None):
     """
     Returns, for the given node, the ancestor at the specified number of levels up. Use ``levels=0`` to denote the node itself.
+
+    By default, levels will be set internally to ``levels=1`` if not explicitly assigned.
+
+    ..rubric:: Syntax:
+
+    .. code-block::
+
+        # No-op modifier
+        parent(0)
+
+        # Modifier that returns the parent
+        parent
+        parent(1)
+        parent(levels=1)
+
+        # Modifier that returns the grandparent
+        parent(2)
+        parent(levels=2)
+
+        # Can be used as a function
+        parent(node)
+        parent(node, 2)
+        parent(node, levels=2)
+
     """
 
     # Check if this is a modification call or a modifier definition call.
-    node = _node
-    if node is _Unassigned:
+    if node_or_levels is None:
         return partial(parent, levels=levels)
+    elif isinstance(node_or_levels, int) and levels is None:
+        return partial(parent, levels=node_or_levels)
+    elif not isinstance(node_or_levels, Node):
+        raise Exception('Invalid input arguments.')
 
     #
+    node = node_or_levels
+    levels = levels if levels is not None else 1
     for _ in range(levels):
-        node = node.parent
         if node is None:
-            raise Exception(f'Attempted to get the parent of root node {node}!')
+            raise Exception('Attempted to get the parent of `None`.')
+        node = node.parent
     return node
 
 
@@ -43,7 +72,7 @@ def hidden(node):
 
 
 @register('load')
-def load(_node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
+def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
     Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node. 
 
@@ -83,13 +112,13 @@ def load(_node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
 
     # Check if this is a modification call or a modifier definition call.
-    node = _node
+    node = node
     if node is _Unassigned:
         return partial(load, ext=ext)
-    elif isinstance(_node, (str, Path)):
-        return partial(load, subdir=_node, ext=ext)
+    elif isinstance(node, (str, Path)):
+        return partial(load, subdir=node, ext=ext)
     elif not isinstance(node, Node):
-        raise ValueError('Invalid input for argument _node.')
+        raise ValueError('Invalid input for argument node.')
 
     # Get absolute path
     path = Path(node.value())

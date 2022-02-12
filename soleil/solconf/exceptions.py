@@ -26,3 +26,24 @@ class InvalidRefStrComponent(Exception):
     def __init__(self, ref_component: str):
         self.ref_component = ref_component
         super().__init__(f'Invalid ref string component {ref_component}.')
+
+
+class ModificationError(Exception):
+    def __init__(self, node, err):
+        super().__init__(
+            f'Error while modifying node '
+            f'`{node}` (full traceback above): `{err}`')
+
+
+class RawKeyComponentError(Exception):
+    def __init__(self, node, err, component):
+        super().__init__(
+            f'Error while parsing the raw key `{component}` string of node '
+            f'`{node}` (full traceback above): `{err}`')
+
+
+class ResolutionError(Exception):
+    def __init__(self, node, err):
+        super().__init__(
+            f'Error while resolving node '
+            f'`{node}` (full traceback above): `{err}`')

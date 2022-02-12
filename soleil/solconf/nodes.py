@@ -1,7 +1,7 @@
 """
 """
 from threading import RLock
-from .exceptions import InvalidRefStr, InvalidRefStrComponent
+from .exceptions import InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError
 from dataclasses import dataclass, field
 import abc
 from .parser import Parser
@@ -107,7 +107,8 @@ class Node(abc.ABC):
         return node
 
     def __str__(self):
-        return f"{type(self).__name__}@'{self.qual_name}'"
+        return f"{type(self).__name__}@'{self.qual_name}'" + (
+            f'<{self.source_file}>' if self.source_file else '')
 
     def __repr__(self):
         return str(self)
@@ -119,15 +120,22 @@ class Node(abc.ABC):
 
         # Set up marker variable that is used to track node dependencies
         # using inspect.stack
-        __resolving_node__ = ResolvingNode(self)  # noqa
+        try:
+            __resolving_node__ = ResolvingNode(self)  # noqa
 
-        value = self._unsafe_resolve()
+            value = self._unsafe_resolve()
 
-        if self.types:
-            if self.types and not isinstance(value, self.types):
-                raise TypeError(f'Invalid type {type(value)}. Expected one of {self.types}.')
+            if self.types:
+                if self.types and not isinstance(value, self.types):
+                    raise TypeError(f'Invalid type {type(value)}. Expected one of {self.types}.')
 
-        return value
+            return value
+
+        except (ResolutionError, ResolutionCycleError):
+            raise
+
+        except Exception as error:
+            raise ResolutionError(self, error)
 
     @abc.abstractmethod
     def _unsafe_resolve(self):

@@ -314,7 +314,7 @@ Attempting to resolve a :class:`SolConf` object that would return a value of an 
    >>> SolConf({'val1:int' : 1.0})()
    Traceback (most recent call last):
       ...
-   TypeError: Invalid type <class 'float'>. Expected one of (<class 'int'>,).
+   soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@'val1'` (full traceback above): `Invalid type <class 'float'>. Expected one of (<class 'int'>,).`
 
 Type tuples are also valid:
 
@@ -326,7 +326,7 @@ Type tuples are also valid:
    >>> SolConf({'val1:float,bool' : 'abc'})()
    Traceback (most recent call last):
       ...
-   TypeError: Invalid type <class 'str'>. Expected one of (<class 'float'>, <class 'bool'>).
+   soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@'val1'` (full traceback above): `Invalid type <class 'str'>. Expected one of (<class 'float'>, <class 'bool'>).`
 
 .. todo:: The above examples do not check the error message strictly enough. Only the exception type is checked.
 
@@ -395,7 +395,7 @@ Types defined on the key node will be applied to its value node, providing a mec
    >>> SolConf({'_:int:promote': 'wrong type'})()
    Traceback (most recent call last):
       ...
-   TypeError: Invalid type <class 'str'>. Expected one of (<class 'int'>,).
+   soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@''` (full traceback above): `Invalid type <class 'str'>. Expected one of (<class 'int'>,).`
 
 
 .. rubric:: Modifiers
