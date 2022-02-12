@@ -80,8 +80,9 @@ class KeyNode(ParsedNode):
 
     Key node modifiers are applied by calling the node's :meth:`modify` method. Type checking is applied at the end of node resolution. Typically, this happens in the following order:
 
+    1. Modifiers are applied sequentially to ``self``. A modifier can optionally return a new node, in which case subsequent modifiers will be applied to this new node instead of ``self``. This functionality is handy when creating modifiers such as :func:`~soleil.solconf.modifiers.load` and :func:`~soleil.solconf.modifiers.promote` that replace a node by a new node. 
 
-    1. Modifiers are applied sequentially to ``self``. A modifier can optionally return a new node, in which case subsequent modifiers will be applied to this new node instead of ``self``. This functionality is handy when, e.g., a modifier replaces a node by a new node. This process is illustrated by the following code snippet inside :meth:`modify`:
+      The process is illustrated by the following code snippet inside :meth:`modify`:
 
       .. code-block::
 
@@ -89,7 +90,7 @@ class KeyNode(ParsedNode):
         for modifier in modifiers:
           node = modifier(node) or node
 
-    2. When the node is resolved by a call to :meth:`resolve`, the node checks that the type of the resolved value is one of the valid types, if any where supplied, and raises a :class:`TypeError` otherwise.
+    2. When the node is resolved by a call to :meth:`~soleil.solconf.nodes.Node.__call__` or :meth:`~soleil.solconf.nodes.Node.resolve`, the node checks that the type of the resolved value is one of the valid types, if any where supplied, and raises a :class:`TypeError` otherwise.
 
     """
 

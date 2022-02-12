@@ -139,34 +139,36 @@ class Node(abc.ABC):
 
     def node_from_ref(self, ref: str = ''):
         """
-        Returns the node indicated by the input reference string (a.k.a. "ref string"). Ref strings have the same syntax as :attr:`qualified names<qual_name>` but are interpreted relative to ``self`` rather than ``root``.
-
-        When called from the root node, this method inverts a qualified name, returning the corresponding node.
-
-        Similar to :attr:`qual_name`s, ref strings can contain a sequence of dot-separated keys or integer. An empty ref string will refer to ``self``, and starred keys will reffer to a dictionary container's key node rather than its value node. In addition to this, ref strings can use a sequence of ``N`` contiguous dots to refer to the ``N-1``-th parent node.
+        Returns the node indicated by the input :ref:`reference string <with reference strings>`.
 
         .. rubric:: Examples
 
-        .. code-block::
+        .. testcode::
+
+          from soleil import SolConf
 
           #
           raw_data = {'my_key0':[0,1,2], 'my_key1':[4,5,6]}
-          root = SolConf(raw_data).node_tree # Retrieves the root node.
+          r_ = SolConf(raw_data).root
 
-          # Ref string syntax
-          assert root() == raw_data
-          assert root('my_key0.1') == 0
-          assert root('my_key0..my_key1.2') == 6
-          assert root('my_key0.0...') == raw_data
+          # From the root node
+          assert (r_.node_from_ref('') is 
+                  r_)
+          assert (r_.node_from_ref('my_key0.1') is 
+                  r_['my_key0'][1])          
 
-          # Alternate syntax with __getitem__ on container nodes
-          # - retrieve the node with a sequence of __getitem__ calls
-          # and then resolve the node with a __call__ call.
-          assert root['my_key0'][1]() == 0
-          assert root['my_key0']['my_key1'][2]() == 6
-          assert parent(root['my_key0'][0], 2)() == raw_data
+          # Ancestor access
+          assert (r_.node_from_ref('my_key0..') is
+                  r_)
+          assert (r_.node_from_ref('my_key0.0...') is
+                  r_)
 
-        :param ref: A string of dot-separated keys, indices or empty strings.
+          # From a child node
+          node = r_.node_from_ref('my_key0..')
+          assert (node.node_from_ref('my_key1.2') is
+                  node['my_key1'][2])
+
+        :param ref: A string of dot-separated keys, indices or empty strings (:ref:`syntax <with reference strings>`).
 
         """
 

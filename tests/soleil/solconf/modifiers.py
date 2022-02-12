@@ -1,4 +1,5 @@
 from unittest import TestCase
+import re
 from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
 from soleil.solconf.dict_container import KeyNode
@@ -123,3 +124,27 @@ class TestModifiers(TestCase):
             'a': {'x:bool:promote,hidden': False},
             'b': '$: r_["a"]()'})
         self.assertEqual(sc(), {'b': False})
+
+    def test_choices(self):
+
+        #
+        sc = SolConf({'_:int:promote,choices(1,2,3)': 1})
+        self.assertEqual(sc(), 1)
+        #
+        sc = SolConf({'_:int:choices(1,2,3),promote': 1})
+        self.assertEqual(sc(), 1)
+
+        # Check KeyNode dereferencing ability
+        #
+        sc = SolConf({'_:int:choices(1,2,3),promote': 4})
+        with self.assertRaisesRegex(
+                ValueError,
+                re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
+            sc()
+
+        #
+        sc = SolConf({'_:int:promote,choices(1,2,3)': 4})
+        with self.assertRaisesRegex(
+                ValueError,
+                re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
+            sc()

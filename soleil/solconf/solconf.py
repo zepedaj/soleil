@@ -1,3 +1,7 @@
+"""
+
+"""
+
 import yaml
 from contextlib import nullcontext
 from typing import Optional
@@ -12,9 +16,23 @@ from threading import RLock
 class SolConf:
 
     """
-    Soleil configuration object that builds a node tree and resolves :class:`~soleil.solconf.dict_container.KeyNode` decorators, |dstrings|, and cross-references.
+    Soleil configuration object that builds a node tree and invokes the modifier methods of all :class:`~soleil.solconf.dict_container.KeyNode` nodes in the tree. Exposes a :class:`__call__` method that is an alias to the root node's call method and accordingly resolves |dstrings| and cross-references for the entire tree.
 
-    Partiall implements the :class:`~soleil.solconf.containers.Container` interface.
+    Partially implements the :class:`~soleil.solconf.containers.Container` interface.
+
+
+    .. rubric:: Workflow
+
+    As part of initialization, the following sequence of steps occurs:
+
+    1. The node tree is built completely by recursively traversing the input raw content top-down.
+    2. All :class:`modify` methods are called and applied top-down. This behaviour is implicit in the default implementations of :meth:`KeyNode.modify <soleil.solconf.dict_container.KeyNode.modify>` and :meth:`Container.modify <soleil.solconf.containers.Container.modify>`.
+
+    After initializaion,
+
+    3. upon invoking the object's :meth:`__call__` method, the node tree is resolved.
+
+
     """
 
     parser: Parser
@@ -31,7 +49,10 @@ class SolConf:
     """
 
     @property
-    def root(self):
+    def root(self) -> Node:
+        """
+        The root node.
+        """
         return self.node_tree
 
     def __init__(self, raw_data, context: dict = {}, parser=None, modify=True):
@@ -50,7 +71,7 @@ class SolConf:
             self.modify()
 
     @classmethod
-    def load(self, path, **kwargs):
+    def load(self, path, **kwargs) -> 'SolConf':
         """
         Returns an :class:`SolConf` object built using raw data retrieved from the specified file.
 
@@ -66,19 +87,17 @@ class SolConf:
             ac.modify()
         return ac
 
-    def modify(self, root=None):
+    def modify(self, node=None) -> Optional[Node]:
+        """        
+        An alias to the ``modify`` method of ``node``. If unspecified, ``node`` is set to :attr:`root`.
         """
-        Traverses the tree starting at the root and calls method ``modify`` on all nodes that have that method, and all its children.
+        node = node or self.node_tree
 
-        If a node has a modify object, its children will not be modified. It is that node's responsibility to modify its own children. This enables the createion of modifiers that change the sub-tree, in which case modification of the changed sub-tree will be their responsibility.
-        """
-        root = root or self.node_tree
-
-        if hasattr(root, 'modify'):
-            root.modify()
+        if hasattr(node, 'modify'):
+            node.modify()
 
     @classmethod
-    def build_node_tree(cls, raw_data, parser, parent=None):
+    def build_node_tree(cls, raw_data, parser, parent=None) -> Node:
         """
         Recursively converts the input raw_data into a node tree. Lists and dictionaries in the tree
         will result in nested levels.
@@ -108,6 +127,9 @@ class SolConf:
         return out
 
     def __call__(self, *args):
+        """
+        An alias to the :attr:`root` node's :meth:`__call__` method.
+        """
         with self.lock:
             return self.node_tree(*args)
 
@@ -133,6 +155,8 @@ class SolConf:
                 old_node._sol_conf_obj = None
 
             # Add self to new node
+            if new_node.parent:
+                new_node.parent.remove(new_node)
             new_node._sol_conf_obj = self
             self.node_tree = new_node
 

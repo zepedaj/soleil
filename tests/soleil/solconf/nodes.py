@@ -127,3 +127,13 @@ class TestParsedNode(TestCase):
 
             for node_from_ref, expected_node in ref__expected_node__tuples:
                 self.assertIs(node_from_ref, expected_node)
+
+    def test_modifier_order(self):
+
+        # The `hidden` modifier is applied to the parent promoted value node.
+        sc = SolConf({'a0': {'x:bool:promote,hidden': False}, 'a1': "$: r_['a0']()"})
+        self.assertEqual(sc(), {'a1': False})
+
+        # The `hidden` modifier is applied to the discarded KeyNode.
+        sc = SolConf({'a0': {'x:bool:hidden,promote': False}, 'a1': "$: r_['a0']()"})
+        self.assertEqual(sc(), {'a0': False, 'a1': False})

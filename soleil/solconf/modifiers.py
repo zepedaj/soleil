@@ -52,13 +52,15 @@ def load(_node: KeyNode = _Unassigned, ext=DEFAULT_EXTENSION):
 
     Paths can be explicitly made to be relative to the current working directory with function :func:`functions.cwd`.
 
-    .. rubric:: Workflow
+    .. _Load modifier workflow:
+
+    .. rubric:: Load workflow
 
     The normal ``load`` workflow is as follows:
 
-    1. A key node's ``load`` modifier is applied as part of a call to :meth:`SolConf.modify` during :class:`SolConf` initialization.
+    1. A key node's ``load`` modifier is applied as part of a call to the node's :meth:`~soleil.solconf.dict_container.KeyNode.modify` method -- this usually happens during :class:`~soleil.solconf.SolConf` initialization.
     2. The target file path is obtained by resolving the key node's value attribute using ``node.value()``.
-    3. The data in the target file is loaded and used to built a sub-tree.
+    3. The data in the target file is loaded and used to build a sub-tree.
     4. The sub-tree is used to replace the original :attr:`node.value` node in the original `SolConf` node tree.
     5. All modifiers are applied to all nodes of the newly inserted sub-tree.
     6. All remaining ``node`` modifiers after ``load`` are applied to the original key node (with the newly substituted value node).
@@ -117,6 +119,8 @@ def promote(node: KeyNode):
     """
     Takes a key node and checks that it is the only node in the parent :class:`DictContainer`.
     If so, it replaces the parent :class:`DictContainer` by :attr:`KeyNode.value` node.
+
+    All modifiers up to and including ``promote`` will be applied to the containing key node. All modifiers after ``promote`` wil be applied to the child node in the key node's :attr:`~KeyNode.value` attribute.
     """
 
     # Check that this is a key node within a dictionary container.
@@ -139,7 +143,39 @@ def promote(node: KeyNode):
                 f'have a single child, but {num_children} were found.')
 
         # Replace grandparent by grandchild
-        grandparent.replace(node.parent, node.value)
+        value_node = node.value
+        grandparent.replace(node.parent, value_node)
 
         # Return the grandchild.
-        return node.value
+        return value_node
+
+
+@register('choices')
+class choices:
+    """
+    Checks that the resolved value is one of the allowed choices.
+
+    If the modified node is a ``KeyNode``, the verification is applied to its value node. Otherwise, the verification is applied directly to the node.
+
+    Because of this, the modifier sequence ``choices(1,2,3),promote`` and ``promote,choices(1,2,3)`` will have the same result.
+    """
+
+    def __init__(self, *valid):
+        self.valid = valid
+
+    def __call__(self, node: Node):
+        """
+        Monkey-patches the input node's resolve method. If the input node is a ``KeyNode``, its child value node's resolve method is monkey-patched instead.
+
+        The new resolve method will verify that the resolved value is one of the valid choices or raise an exception otherwise.
+        """
+        node = node.value if isinstance(node, KeyNode) else node
+        orig_resolve = node.resolve
+        node.resolve = lambda: self._checked_resolve(node, orig_resolve)
+
+    def _checked_resolve(self, node, orig_resolve):
+        out = orig_resolve()
+        if out not in self.valid:
+            raise ValueError(
+                f'The resolved value of `{node}` is `{out}`, but it must be one of `{self.valid}`.')
+        return out
