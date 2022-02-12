@@ -21,7 +21,10 @@ class UnsupportedPythonGrammarComponent(TypeError):
 
 PYTHON_PRECISION = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
                     ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-                    ast.USub: op.neg}
+                    ast.USub: op.neg,
+                    ast.Lt: op.lt, ast.LtE: op.le,
+                    ast.Eq: op.eq, ast.NotEq: op.ne,
+                    ast.Gt: op.gt, ast.GtE: op.ge}
 """
 .. warning:: Python operators have infinite precision and can result in hangs when large computations are requested.
 """
@@ -177,5 +180,21 @@ class Parser:
                 for _key, _val in zip(node.keys, node.values))
         elif isinstance(node, ast.List):
             return [eval_ctx(_elt) for _elt in node.elts]
+        elif isinstance(node, ast.IfExp):
+            if eval_ctx(node.test):
+                return eval_ctx(node.body)
+            else:
+                return eval_ctx(node.orelse)
+        elif isinstance(node, ast.Compare):
+            left = eval_ctx(node.left)
+            out = True
+            for right, curr_op in zip(node.comparators, node.ops):
+                right = eval_ctx(right)
+                out = out and self._operators[type(curr_op)](left, right)
+                if not out:
+                    break
+                else:
+                    left = right
+            return out
         else:
             raise UnsupportedPythonGrammarComponent(node)

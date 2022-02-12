@@ -57,6 +57,10 @@ class TestParser(TestCase):
                 '[0,1,2,3][:3:2]',
                 # Names
                 'list(range(5))',
+                # Constructs
+                '1 if False else 2',
+                '1 < 3 < 100 > 10 == 10 >= 9',
+                '1 < 3 < 100 < 10 == 10 >= 9',
         ]:
             self.assertEqual(parser.eval(str_val), eval(str_val))
 
