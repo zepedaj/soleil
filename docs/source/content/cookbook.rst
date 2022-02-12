@@ -18,17 +18,22 @@ Loading
 colors_config.yaml
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. rubric:: File structure
+
 .. literalinclude:: yaml/colors/colors_config.yaml
    :language: yaml
    :caption:
 
-.. literalinclude:: yaml/colors/layouts/spots.yaml
+.. literalinclude:: yaml/colors/layouts/splashes.yaml
    :language: yaml
    :caption:
 
 .. literalinclude:: yaml/colors/layouts/rainbow.yaml
    :language: yaml
    :caption:
+
+
+.. rubric:: Resolved output
 
 .. doctest:: Cookbook
 

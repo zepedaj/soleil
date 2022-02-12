@@ -7,12 +7,12 @@ secondary: "$: 'green' if f_('base')=='red' else 'red'" # Ref from file root.
 fancy_versions::hidden: 
   red: fuscia
   green: chartreuse
-"fancy_base:str:choices(*list(values(r_('fancy_versions'))))": "$: f_('fancy_versions')[f_('base')]"
+fancy_base:str:choices(*list(values(r_('fancy_versions')))): "$: f_('fancy_versions')[f_('base')]"
 # "fancy_base:str:choices('fuscia', 'chartreuse')": "$: r_('fancy_versions')[r_('base')]"
 fancy_secondary:str: "$: r_('fancy_versions')[r_('secondary')]"
 
 # Load
-"layout::load('layouts')": spots
+layout::load('layouts'): splashes
 alternate_layout::load: layouts/rainbow
 
 # Choices
