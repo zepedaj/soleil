@@ -1,4 +1,5 @@
 from unittest import TestCase
+from soleil.solconf.exceptions import ModificationError, ResolutionError
 import re
 from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
@@ -16,6 +17,7 @@ def build_config_files(
         root_updates=None, root_expected_updates=None,
         file1_updates=None, file1_expected_updates=None,
         file2_updates=None, file2_expected_updates=None):
+
     # ./root.yaml
     root_dat = dict((f'root_{k}', k) for k in range(5))
     root_dat['root_5::load'] = 'subdir1/file1'
@@ -174,3 +176,23 @@ class TestModifiers(TestCase):
                 ValueError,
                 re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
             sc()
+
+    def test_load_with_choices(self):
+
+        # Source choice.
+        with build_config_files(
+                file1_updates={"file1_6::choices('file3'),load": 'file2'}
+        ) as (config_file, expected):
+            with self.assertRaisesRegex(
+                    ModificationError,
+                    '.*' + re.escape("is `file2`, but it must be one of `('file3',)`.`")):
+                sc = SolConf.load(config_file)
+
+        # Source choice and loaded choice
+        with build_config_files(
+                file1_updates={"file1_6::choices('file2'),load,choices([0])": 'file2'}
+        ) as (config_file, expected):
+            sc = SolConf.load(config_file)
+            with self.assertRaisesRegex(
+                    ResolutionError, '.*' + re.escape(", but it must be one of `([0],)`.`")):
+                sc()

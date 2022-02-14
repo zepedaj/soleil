@@ -1,0 +1,9 @@
+
+# Verify source file choice:
+"language_typing_a::choices('python','c++'),load('typing')": python # java would fail
+
+# Verify final resolved value choice
+"language_typing_b::load('typing'),choices('soft')": python #c++ would fail, as it is hard-typed
+
+# Verify source file and final resolved value choices
+"language_typing_c::choices('python','c++'),load('typing'),choices('soft')": python #java or c++ would fail

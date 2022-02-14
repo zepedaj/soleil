@@ -101,11 +101,17 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
     A modifier can be added to the modifiers list using one of these syntaxes
 
-    * load
-    * load()
-    * load(ext='.yaml')
-    * load('source/sub_dir')
-    * load('source/sub_dir', ext='.yaml')
+    .. code-block::
+
+        load
+        load()
+        load(ext='.yaml')
+        load('source/sub_dir')
+        load('source/sub_dir', ext='.yaml')
+
+    .. rubric:: Choice-checking
+
+    The :meth:`load` modifier can be combined with :meth:`choices` to constrain both the valid paths as well as the loaded node values. See the :ref:`load_with_choices.yaml` cookbook recipe for an example.
 
 
     :param ext: The default extension to add to files without an extension.

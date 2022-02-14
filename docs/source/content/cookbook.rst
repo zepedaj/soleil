@@ -50,3 +50,27 @@ colors_config.yaml
        'temperature': 'cold',
        'target_time': numpy.datetime64('2023-10-10T10:05')
    }
+
+.. _load_with_choices.yaml:
+
+load_with_choices.yaml
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: yaml/load_with_choices/config.yaml
+   :language: yaml
+   :caption:
+
+
+.. literalinclude:: yaml/load_with_choices/typing/c++.yaml
+   :language: yaml
+   :caption:
+
+.. literalinclude:: yaml/load_with_choices/typing/python.yaml
+   :language: python
+   :caption:
+
+.. doctest:: Cookbook
+
+   >>> sc = SolConf.load('yaml/load_with_choices/config.yaml')   
+   >>> print(sc())
+   {'language_typing_a': 'soft', 'language_typing_b': 'soft', 'language_typing_c': 'soft'}
