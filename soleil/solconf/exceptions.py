@@ -47,3 +47,9 @@ class ResolutionError(Exception):
         super().__init__(
             f'Error while resolving node '
             f'`{node}` (full traceback above): `{err}`')
+
+
+class InvalidOverridePattern(Exception):
+    def __init__(self, pattern):
+        super().__init__(
+            f'Invalid override pattern `{pattern}` must have the form `a.8.b... = <raw content>`.')

@@ -148,11 +148,11 @@ class Node(abc.ABC):
 
     # Regular expressions for ref strings.
     # _REF_STR_COMPONENT_PATTERN = r'((?P<parents>\.+)|(?P<index>(0|[1-9]\d*))|(?P<key>\*?[a-zA-Z+]\w*))'
-    _REF_STR_COMPONENT_PATTERN = r'(?P<component>(\.+|[^\.]+))'
-    _FULL_REF_STR_PATTERN = _REF_STR_COMPONENT_PATTERN + '*'
+    _REF_STR_COMPONENT_PATTERN_RAW = r'(?P<component>(\.+|[^\.]+))'
+    _FULL_REF_STR_PATTERN_RAW = _REF_STR_COMPONENT_PATTERN_RAW + '*'
     # Compile the patterns.
-    _REF_STR_COMPONENT_PATTERN = re.compile(_REF_STR_COMPONENT_PATTERN)
-    _FULL_REF_STR_PATTERN = re.compile(_FULL_REF_STR_PATTERN)
+    _REF_STR_COMPONENT_PATTERN = re.compile(_REF_STR_COMPONENT_PATTERN_RAW)
+    _FULL_REF_STR_PATTERN = re.compile(_FULL_REF_STR_PATTERN_RAW)
 
     def node_from_ref(self, ref: str = ''):
         """
