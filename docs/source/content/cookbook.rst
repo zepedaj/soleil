@@ -1,4 +1,6 @@
 
+.. _`cookbook`:
+
 Cookbook
 =============
 
@@ -60,17 +62,20 @@ load_with_choices.yaml
    :language: yaml
    :caption:
 
+.. literalinclude:: yaml/load_with_choices/typing/python.yaml
+   :language: yaml
+   :caption:
 
 .. literalinclude:: yaml/load_with_choices/typing/c++.yaml
    :language: yaml
    :caption:
 
-.. literalinclude:: yaml/load_with_choices/typing/python.yaml
-   :language: python
+.. literalinclude:: yaml/load_with_choices/typing/java.yaml
+   :language: yaml
    :caption:
 
 .. doctest:: Cookbook
 
    >>> sc = SolConf.load('yaml/load_with_choices/config.yaml')   
    >>> print(sc())
-   {'language_typing_a': 'soft', 'language_typing_b': 'soft', 'language_typing_c': 'soft'}
+   {'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'}

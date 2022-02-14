@@ -1,11 +1,13 @@
 
 .. currentmodule:: soleil.solconf
 
-|soleil| is *(1)* a **configuration manager** that is templated, hierarchical, and cross-referential; *(2)* a **CLI builder** ; and *(3)* **experiment launcher** inspired by Facebook's `Hydra <https://hydra.cc/docs/intro/>`_.
+|soleil| is *(1)* a **configuration manager** that is templated, hierarchical, and cross-referential; *(2)* a **CLI builder** ; and *(3)* **experiment launcher**. It is inspired by Facebook's `Hydra <https://hydra.cc/docs/intro/>`_.
 
-The main aim of |soleil| is to increase flexibility while reducing the amount of glue code, effort, technical debt buildup and related researcher cognitive load associated with managing machine learning model development and training experiments. |soleil| achieves this by enabling separation of concerns between the purely task-related code such as model definition and training scripts, and the configuration and launching code, while minizing the glue code between these two main components to ease modification and experimentation.
+The main aim of |soleil| is to increase flexibility while reducing the amount of glue code, effort, technical debt buildup and related researcher cognitive load associated with managing machine learning model development and training experiments. 
 
-Soleil is part of a family of packages that share this aim and includes :mod:`xerializer` and :mod:`ploteries`.
+|soleil| achieves this by enabling separation of concerns between the purely task-related code such as model definition and training scripts, and the configuration and launching code, providing facilities that minimize the required glue code between these components.
+
+Soleil is part of a family of ML research tools that includes :mod:`xerializer` and :mod:`ploteries`.
 
 Motivation
 ==========
@@ -49,6 +51,8 @@ Installation
 
 Getting started
 ===============
+
+Have a look at the examples in our :ref:`Cookbook`.
 
 
 Soleil configuration objects 
@@ -165,9 +169,9 @@ Raw content used to initialize :class:`~solconf.SolConf` objects can contain cro
 
   * **Root node variable** |ROOT_NODE_VAR_NAME| -- the *root node*;
   * **Root node variable** |CURRENT_NODE_VAR_NAME| -- the node where the |dstring| is defined;
-  * **File root node variable** |FILE_ROOT_NODE_VAR_NAME| -- the current file's root node, *i.e.*, the highest-level node of the configuration file where the current node is defined. This is possibly the same as ``n_``. It will not be defined if the current node was not defined in a file.
+  * **File root node variable** |FILE_ROOT_NODE_VAR_NAME| -- the current file's root node, *i.e.*, the highest-level node of the configuration file where the current node is defined.
 
-Any of the variables described above can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
+Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME| and |FILE_ROOT_NODE_VAR_NAME| could point to the same node. Any of the these variables can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
 
 .. doctest:: SolConf
 
@@ -559,11 +563,12 @@ Pros and cons of extending dictionary support to non-variable name keys
 
 * Qualified names and ref strings would not be valid anymore.
 * Would loss simple syntax for from-CLI value modifications.
-* Might complicate or invalidate the '{key}:{types}:{modifiers}' syntax - how would type and modifier decorations be applied to non-string nodes?
+* [FIXED BY ``promote``] Might complicate or invalidate the '{key}:{types}:{modifiers}' syntax - how would type and modifier decorations be applied to non-string nodes?
+* Would loss ``__call__(ref string)`` syntax, which is more intuitive than ``__call__[idx0]..[idxN]()`` syntax (easy to forget the parentheses).
 
 .. rubric:: Pros
 	    
-* Would be able to convert any python dictionary can be converted to a :class:`~solconf.SolConf` object.
+* Would be able to convert any python dictionary can be converted to a :class:`~solconf.SolConf` object. Even object keys valid if xerializable.
 * Can fix lack of support for some YAML dictionaries. E.g., the following YAML string would fail. '{-1: 1, -2 : 2, null : 3, 3.0 : 4, True : 5, False : 6}'
 * Can fix lack of support for some JSON dictionaries. E.g., '{"0" : 1, "1" : 2}'
 * Possible support for |dstring| keys -- but what's the use?

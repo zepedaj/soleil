@@ -34,7 +34,7 @@ class ResolvingNode:
         """
         Returns the resolving node whose :meth:`resolve` method called the current node's (``self.node``'s) :meth:`resolve` method.
 
-        This is done by searching down the stack for the first variable of name `__resolving_node__` and type :class:`ResolvingNode`.
+        This is done by searching down the stack for the first variable of name ``__resolving_node__`` and type :class:`ResolvingNode`.
         """
         call_stack = stack()
         for call in call_stack:

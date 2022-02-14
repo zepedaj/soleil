@@ -99,7 +99,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
     .. rubric:: Syntax
 
-    A modifier can be added to the modifiers list using one of these syntaxes
+    A ``load`` modifier can be added to a node's modifiers list using one of these syntaxes
 
     .. code-block::
 
