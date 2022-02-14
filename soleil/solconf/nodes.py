@@ -267,7 +267,7 @@ class ParsedNode(Node):
 
     parser: Parser = field(default_factory=_kw_only)
     """
-    The Python parser used to resolve node types, node modifiers and node content.
+    The Python parser used to resolve :ref:`dstrings` and :ref:`raw key <raw key syntax>` type and modifier strings.
     """
 
     def __init__(self, raw_value, parser, **kwargs):

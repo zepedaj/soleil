@@ -6,7 +6,7 @@ import operator as op
 import numpy as np
 
 # supported operators
-MAX_EXPR_LEN = int(1e4)
+MAX_EXPR_LEN = int(2e2)
 
 # Exceptions
 
@@ -32,6 +32,9 @@ PYTHON_PRECISION = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
 
 BUILTIN_SCALAR_TYPES = (
     'float', 'int', 'bool', 'bytes', 'str', 'slice')
+"""
+All these types from the ``builtins`` module are supported both as part of expressions and as node modifiers.
+"""
 BUILTIN_ITERABLE_TYPES = (
     'list', 'tuple', 'dict', 'set')  # Require __iter__
 """
@@ -42,7 +45,7 @@ DEFAULT_CONTEXT = {
     **{key: getattr(builtins, key) for key in BUILTIN_SCALAR_TYPES + BUILTIN_ITERABLE_TYPES}
 }
 """
-Contains the default context accessible to parsers.
+The default context -- :class:`Parser` objects create a copy of this context upon instantiation to use as their own variable context. This context can be extended using :func:`register`. All :class:`Parser` objects instantiated after registering a named variable will have access to it.
 """
 
 
@@ -50,58 +53,37 @@ class _Unassigned:
     pass
 
 
-@dataclass
-class register:
+def register(name: str, value: Any = _Unassigned, *, overwrite: bool = False,
+             context: Dict[str, Any] = None):
     """
-    Register a variable in the default context.
+    Registers a variable in the specified context (:attr:`DEFAULT_CONTEXT` by default). Can be used as a function to register any variable type, or as a function decorator for convenience when registering functions and methods:
 
-    Example:
-
-    .. testcode::
-
-      from soleil import register
-
-      my_var = 'my variable'
-
-      # As a stand-alone call
-      register('my_var', my_var)
-
-      # As a function decorator
-      @register('my_function')
-      def my_function(): pass
+    .. include:: ../../_snippets/register_doctest.rst
 
     """
 
-    def __init__(self, name: str, value: Any = _Unassigned, *, overwrite: bool = False,
-                 context: Dict[str, Any] = DEFAULT_CONTEXT):
-        """
-        :param name: The name of the variable in the context.
-        :param overwrite:  Whether to overwrite the variable if it is already in the context.
-        :param context: The context to modify.
-        """
+    context = DEFAULT_CONTEXT if context is None else context
 
-        self.name = name
-        self.overwrite = overwrite
-        self.context = context
-        self.executed = False
+    if value is not _Unassigned:
+        # Called as a function
+        _register(name, value, overwrite, context, do_return=False)
+    else:
+        # Called as a decorator
+        return lambda value: _register(name, value, overwrite, context, do_return=True)
 
-        if value is not _Unassigned:
-            self._register(value)
 
-    def __call__(self, fxn):
-        """
-        Registers the input function.
-        """
-        self._register(fxn)
-        return fxn
-
-    def _register(self, value):
-        if not self.overwrite and self.name in DEFAULT_CONTEXT:
-            raise Exception(f'A variable with name `{self.name}` already exists in the context.')
-        self.context[self.name] = value
+def _register(name: str, value: Any, overwrite: bool, context: Dict[str, Any], do_return: bool):
+    if not overwrite and name in context:
+        raise Exception(f'A variable with name `{name}` already exists in the context.')
+    context[name] = value
+    if do_return:
+        return value
 
 
 class Parser:
+    """
+    The Soleil Restricted Python Parser (SRPP) (see :ref:`SRPP`).
+    """
 
     def __init__(self, extra_context=None):
         """
@@ -113,6 +95,14 @@ class Parser:
         self._context = {**DEFAULT_CONTEXT, **(extra_context or {})}
 
     def register(self, name, value, overwrite=False):
+        """
+        Registers the specified variable in this parser's own copy of the variable context.
+
+        .. rubric:: Example:
+
+        .. include:: ../../_snippets/parser_register_snippet.rst
+
+        """
         register(name, value, overwrite=overwrite, context=self._context)
 
     def get_from_context(self, name, context=None):
@@ -128,9 +118,9 @@ class Parser:
         The parser's context is extended by ``extra_context`` if provided.
         """
 
-        extended_context = {**self._context, **extra_context} if extra_context else None
         if len(expr) > MAX_EXPR_LEN:
             raise Exception('The input expression has length {len(expr)} > {MAX_EXPR_LEN}.')
+        extended_context = {**self._context, **extra_context} if extra_context else self._context
         return self._eval(ast.parse(expr, mode='eval').body, extended_context)
 
     def _eval(self, node, context=None):

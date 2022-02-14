@@ -72,7 +72,7 @@ Internally, :class:`solconf.SolConf` represents compositions of the above types 
 
 .. rubric:: Basic examples
 
-A :class:`SolConf` object is built by passing raw content directly to the initializer:
+A :class:`SolConf` object is built by passing **raw content** directly to the initializer:
 
 .. testcode:: SolConf
 
@@ -106,19 +106,21 @@ Compositions of the native types are also valid input:
   }
   assert SolConf(raw_content)() == raw_content    
      
+.. _dstrings:
+
 |dstrings|
 -----------
 
-The power of :class:`SolConf` objects comes from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using |soleil|'s :ref:`Restricted Python Parser`:
+The power of :class:`SolConf` objects comes from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using |soleil|'s :ref:`SRPP`:
 
 .. testcode:: SolConf
 
   assert SolConf('$: 1+2')() == 3 # White space after ``'$:'`` is stripped.
   assert SolConf('$: {1:[0,1], 2:[2,3]}')() == {1:[0,1], 2:[2,3]}
 
-|dstrings| are evaluated using a :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xr>`. 
+|dstrings| are evaluated using a :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xref>`. 
 
-See :ref:`Restricted Python Parser` for more information on supported Python grammar components, the default variable context and ways to extend it.
+See :ref:`SRPP` for more information on supported Python grammar components, the default variable context and ways to extend it.
 
 Escaping strings
 ^^^^^^^^^^^^^^^^^
@@ -154,7 +156,7 @@ Currently, soleil only supports :class:`DictContainer` nodes with string keys th
 
 .. todo:: Missing
 
-.. _xr:
+.. _xref:
 
 Cross-references
 -----------------

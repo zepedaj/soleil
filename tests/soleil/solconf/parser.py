@@ -1,4 +1,5 @@
 from soleil.solconf import parser as mdl
+from soleil.solconf.parser import UndefinedName
 import yaml
 from pathlib import Path
 from unittest import TestCase
@@ -92,6 +93,27 @@ class TestParser(TestCase):
                 parser.safe_eval(call),
                 expected
             )
+
+    def test_register(self):
+
+        parser = Parser()
+
+        parser.register('first', 'John')
+        parser.register('with_last', lambda x: f'{x} Doe')
+
+        self.assertEqual(
+            parser.safe_eval('with_last(first)'),
+            'John Doe')
+
+        self.assertEqual(
+            parser.safe_eval("with_last('Jane')"),
+            'Jane Doe')
+
+        parser2 = Parser()
+        with self.assertRaisesRegex(
+                UndefinedName,
+                'Name `first` undefined in parser context.'):
+            parser2.safe_eval('first')
 
     # def test_unsupported_grammar_component(self):
     #     with self.assertRaises(mdl.UnsupportedGrammarComponent):
