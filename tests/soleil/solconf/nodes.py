@@ -4,55 +4,45 @@ from soleil.solconf.dict_container import KeyNode, DictContainer
 from soleil.solconf.containers import ListContainer
 from soleil.solconf.parser import Parser
 from soleil.solconf.solconf import SolConf
+import re
 
 from unittest import TestCase
 from .modifiers import build_config_files
 
 
-class TestParsedNode(TestCase):
+class TestNode(TestCase):
+    def test_patterns(self):
 
-    def test_resolve(self):
-        for raw_value, expected_resolved_value in [
-                #
-                (r"\:'abc'", r"'abc'"),
-                (r"\:$:abc", r"$:abc"),
-                (r"\: abc", r" abc"),  # White space not ignored
-                #
-                (1, 1),
-                (1.234e-6, 1.234e-6),
-                (True, True),
-                #
-                ("$:True", True),
-                ("$:(1+3)/4", (1+3)/4),
-                ("$: (1+3)/4 ", (1+3)/4),  # White space ignored
+        # Component
+        for x in [
+                'c',
+                '1',
+                'abcd'
         ]:
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._REF_STR_COMPONENT_PATTERN, x))
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._REF_STR_COMPONENT_PATTERN_OR_DOTS, x))
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._FULL_REF_STR_PATTERN, x))
 
-            node = mdl.ParsedNode(raw_value=raw_value, parser=Parser())
-            #
-            self.assertEqual(resolved_value := node.resolve(), expected_resolved_value)
-            self.assertIs(type(resolved_value), type(expected_resolved_value))
+        # Component or dots
+        for x in [
+                '.',
+                '..',
+                '....',
+        ]:
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._REF_STR_COMPONENT_PATTERN_OR_DOTS, x))
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._FULL_REF_STR_PATTERN, x))
 
-    def test_current_node_special_var_eval(self):
-        parser = Parser()
-
-        #
-        node = KeyNode('my_name', value_node := mdl.ParsedNode(
-            '$:n_', parser=parser), parser=parser)
-        self.assertEqual(resolved := node.resolve(), ('my_name', value_node))
-        self.assertIs(resolved[1], value_node)
-
-    def test_file_root_special_var_eval(self):
-        with build_config_files(
-                #
-                file1_updates={'file1_0': "$:f_['file1_1']()"},
-                file1_expected_updates={'file1_0': 1},
-                #
-                file2_updates={'file2_6': {'dict3': "$:f_['file2_0']()"}},
-                file2_expected_updates={'file2_6': {'dict3': 0}},
-                #
-        ) as (path, expected):
-            ac = SolConf.load(path)
-            self.assertEqual(ac(), expected)
+        # Full ref string
+        for x in [
+                '1.b..c',
+        ]:
+            self.assertIsNotNone(
+                re.fullmatch(mdl.Node._FULL_REF_STR_PATTERN, x))
 
     def test_call(self):
         parser = Parser()
@@ -61,6 +51,27 @@ class TestParsedNode(TestCase):
         node = KeyNode('my_name', value_node := mdl.ParsedNode(
             '$:n_', parser=parser), parser=parser)
         self.assertEqual(node(), ('my_name', value_node))
+
+    def test_node_from_ref(self):
+        #
+        for root, ref__expected_node__tuples in [
+            (r_ :=
+             SolConf(
+                 _raw_data := [
+                     0,
+                     {'a': 1, 'b': 2, 'c': [3, 4]},
+                     [5, {'d': 6, 'e': 7}, 8],
+                 ]).node_tree,
+             [
+                 (r_.node_from_ref('1.b..c'),
+                  r_[1]['c']),
+                 #
+                 (r_[1]['c'].node_from_ref('...2.1.d'),
+                  r_[2][1]['d'])]
+             )]:
+
+            for node_from_ref, expected_node in ref__expected_node__tuples:
+                self.assertIs(node_from_ref, expected_node)
 
     def test_qual_name(self):
 
@@ -107,33 +118,48 @@ class TestParsedNode(TestCase):
                 assert actual_node.qual_name == ref
                 assert actual_node() == expected_value
 
-    def test_node_from_ref(self):
+
+class TestParsedNode(TestCase):
+
+    def test_resolve(self):
+        for raw_value, expected_resolved_value in [
+                #
+                (r"\:'abc'", r"'abc'"),
+                (r"\:$:abc", r"$:abc"),
+                (r"\: abc", r" abc"),  # White space not ignored
+                #
+                (1, 1),
+                (1.234e-6, 1.234e-6),
+                (True, True),
+                #
+                ("$:True", True),
+                ("$:(1+3)/4", (1+3)/4),
+                ("$: (1+3)/4 ", (1+3)/4),  # White space ignored
+        ]:
+
+            node = mdl.ParsedNode(raw_value=raw_value, parser=Parser())
+            #
+            self.assertEqual(resolved_value := node.resolve(), expected_resolved_value)
+            self.assertIs(type(resolved_value), type(expected_resolved_value))
+
+    def test_current_node_special_var_eval(self):
+        parser = Parser()
+
         #
-        for root, ref__expected_node__tuples in [
-            (r_ :=
-             SolConf(
-                 _raw_data := [
-                     0,
-                     {'a': 1, 'b': 2, 'c': [3, 4]},
-                     [5, {'d': 6, 'e': 7}, 8],
-                 ]).node_tree,
-             [
-                 (r_.node_from_ref('1.b..c'),
-                  r_[1]['c']),
-                 #
-                 (r_[1]['c'].node_from_ref('...2.1.d'),
-                  r_[2][1]['d'])]
-             )]:
+        node = KeyNode('my_name', value_node := mdl.ParsedNode(
+            '$:n_', parser=parser), parser=parser)
+        self.assertEqual(resolved := node.resolve(), ('my_name', value_node))
+        self.assertIs(resolved[1], value_node)
 
-            for node_from_ref, expected_node in ref__expected_node__tuples:
-                self.assertIs(node_from_ref, expected_node)
-
-    def test_modifier_order(self):
-
-        # The `hidden` modifier is applied to the parent promoted value node.
-        sc = SolConf({'a0': {'x:bool:promote,hidden': False}, 'a1': "$: r_['a0']()"})
-        self.assertEqual(sc(), {'a1': False})
-
-        # The `hidden` modifier is applied to the discarded KeyNode.
-        sc = SolConf({'a0': {'x:bool:hidden,promote': False}, 'a1': "$: r_['a0']()"})
-        self.assertEqual(sc(), {'a0': False, 'a1': False})
+    def test_file_root_special_var_eval(self):
+        with build_config_files(
+                #
+                file1_updates={'file1_0': "$:f_['file1_1']()"},
+                file1_expected_updates={'file1_0': 1},
+                #
+                file2_updates={'file2_6': {'dict3': "$:f_['file2_0']()"}},
+                file2_expected_updates={'file2_6': {'dict3': 0}},
+                #
+        ) as (path, expected):
+            ac = SolConf.load(path)
+            self.assertEqual(ac(), expected)

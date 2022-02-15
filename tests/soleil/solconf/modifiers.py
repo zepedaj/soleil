@@ -196,3 +196,13 @@ class TestModifiers(TestCase):
             with self.assertRaisesRegex(
                     ResolutionError, '.*' + re.escape(", but it must be one of `([0],)`.`")):
                 sc()
+
+    def test_hidden_and_promote_order(self):
+
+        # The `hidden` modifier is applied to the parent promoted value node.
+        sc = SolConf({'a0': {'x:bool:promote,hidden': False}, 'a1': "$: r_['a0']()"})
+        self.assertEqual(sc(), {'a1': False})
+
+        # The `hidden` modifier is applied to the discarded KeyNode.
+        sc = SolConf({'a0': {'x:bool:hidden,promote': False}, 'a1': "$: r_['a0']()"})
+        self.assertEqual(sc(), {'a0': False, 'a1': False})

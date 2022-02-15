@@ -1,5 +1,6 @@
 """
 """
+from .autonamed_pattern import AutonamedPattern
 from threading import RLock
 from .exceptions import InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError
 from dataclasses import dataclass, field
@@ -148,11 +149,16 @@ class Node(abc.ABC):
 
     # Regular expressions for ref strings.
     # _REF_STR_COMPONENT_PATTERN = r'((?P<parents>\.+)|(?P<index>(0|[1-9]\d*))|(?P<key>\*?[a-zA-Z+]\w*))'
-    _REF_STR_COMPONENT_PATTERN_RAW = r'(?P<component>(\.+|[^\.]+))'
-    _FULL_REF_STR_PATTERN_RAW = _REF_STR_COMPONENT_PATTERN_RAW + '*'
+    # _REF_STR_COMPONENT_PATTERN_RAW = r'(?P<component>(\.+|[^\.\*\=]+))'
+    _REF_STR_COMPONENT_PATTERN_RAW = r'(0|[1-9]\d*|\*?[_a-zA-Z]\w*)'
+    _REF_STR_COMPONENT_PATTERN_OR_DOTS_RAW = f'(?P<component_or_dots>{_REF_STR_COMPONENT_PATTERN_RAW}|\\.+)'
+    _FULL_REF_STR_PATTERN_RAW = AutonamedPattern(
+        r'\.*(?P<start>{x})?(?(start)(\.+{x})*)',
+        {'x': AutonamedPattern(_REF_STR_COMPONENT_PATTERN_RAW)})
     # Compile the patterns.
-    _REF_STR_COMPONENT_PATTERN = re.compile(_REF_STR_COMPONENT_PATTERN_RAW)
-    _FULL_REF_STR_PATTERN = re.compile(_FULL_REF_STR_PATTERN_RAW)
+    _REF_STR_COMPONENT_PATTERN = re.compile(str(_REF_STR_COMPONENT_PATTERN_RAW))
+    _REF_STR_COMPONENT_PATTERN_OR_DOTS = re.compile(_REF_STR_COMPONENT_PATTERN_OR_DOTS_RAW)
+    _FULL_REF_STR_PATTERN = re.compile(str(_FULL_REF_STR_PATTERN_RAW))
 
     def node_from_ref(self, ref: str = ''):
         """
@@ -194,8 +200,8 @@ class Node(abc.ABC):
             raise InvalidRefStr(ref)
 
         # Break up ref string into list of components.
-        _ref_components = [
-            x['component'] for x in re.finditer(self._REF_STR_COMPONENT_PATTERN, ref)]
+        _ref_components = [x['component_or_dots']
+                           for x in re.finditer(self._REF_STR_COMPONENT_PATTERN_OR_DOTS, ref)]
 
         node = self
 
