@@ -196,7 +196,7 @@ class Node(abc.ABC):
 
         # Check ref string
         if not re.fullmatch(self._FULL_REF_STR_PATTERN, ref):
-            raise InvalidRefStr(ref)
+            raise InvalidRefStr(self, ref)
 
         # Break up ref string into list of components.
         _ref_components = [x['component_or_dots']
@@ -205,10 +205,7 @@ class Node(abc.ABC):
         node = self
 
         for _component in _ref_components:
-            try:
-                node = node._node_from_ref_component(_component)
-            except InvalidRefStrComponent:
-                raise InvalidRefStr(ref, _component)
+            node = node._node_from_ref_component(_component)
 
         return node
 
@@ -231,7 +228,7 @@ class Node(abc.ABC):
                     node = node.parent
             return node
         else:
-            raise InvalidRefStrComponent(ref_component)
+            raise InvalidRefStrComponent(self, ref_component)
 
     def __call__(self, ref: str = '.', calling_node=None):
         """

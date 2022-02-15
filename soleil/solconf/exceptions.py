@@ -15,17 +15,14 @@ class ResolutionCycleError(Exception):
 
 
 class InvalidRefStr(Exception):
-    def __init__(self, ref: str, ref_component: str = _Unassigned):
-        if ref_component is not _Unassigned:
-            super().__init__(f'Invalid component `{ref_component}` in reference string `{ref}`.')
-        else:
-            super().__init__(f'Invalid reference string `{ref}`.')
+    def __init__(self, node, ref: str):
+        super().__init__(f'Node `{node}` cannot handle reference string format `{ref}`.')
 
 
 class InvalidRefStrComponent(Exception):
-    def __init__(self, ref_component: str):
+    def __init__(self, node, ref_component: str):
         self.ref_component = ref_component
-        super().__init__(f'Invalid ref string component {ref_component}.')
+        super().__init__(f'Node `{node}` cannot handle ref string component `{ref_component}`.')
 
 
 class ModificationError(Exception):
