@@ -241,7 +241,7 @@ class KeyNode(ParsedNode):
 
     def replace(self, old_value=Optional[Node], new_value: Node = None):
         """
-        Replaces the value node by a new value node. 
+        Replaces the value node by a new value node.
 
         :param old_value: If provided, must be the current value node :attr:`value`. Use ``None`` to specify it by default. This signature is provided for consistency with the :class:`Container` signature.
         :param new_value: The new value node.
@@ -324,6 +324,8 @@ class DictContainer(Container):
         The node's parent is set to ``self``.
         """
         with self.lock, node.lock:
+            if not isinstance(node, KeyNode):
+                raise exceptions.KeyNodeRequired(node)
             if node.parent is not None:
                 raise Exception('Attempted to add a node that already has a parent.')
             # Remove node of same key, if it exists.
@@ -348,10 +350,13 @@ class DictContainer(Container):
                 popped_node.parent = None
                 return popped_node
 
-    def replace(self, old_node: Union[str, Node], new_node: Node):
+    def replace(self, old_node: Union[str, KeyNode], new_node: KeyNode):
         """
         Removes the old node and adds the new node. Both nodes do not need to have the same hash key.
         """
+
+        if not isinstance(new_node, KeyNode):
+            raise exceptions.KeyNodeRequired(new_node)
 
         old_node = self[old_node]
         with self.lock, new_node.lock, old_node.lock:

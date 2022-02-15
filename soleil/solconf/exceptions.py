@@ -53,3 +53,8 @@ class InvalidOverridePattern(Exception):
     def __init__(self, pattern):
         super().__init__(
             f'Invalid override pattern `{pattern}` must have the form `a.8.b... = <raw content>`.')
+
+
+class KeyNodeRequired(TypeError):
+    def __init__(self, node):
+        super().__init__(f'`KeyNode` required but got {node} of type `{type(node)}`.')
