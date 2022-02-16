@@ -2,11 +2,12 @@
 """
 from .autonamed_pattern import AutonamedPattern
 from threading import RLock
-from .exceptions import InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError
+from .exceptions import (
+    InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError, ModificationError)
 from dataclasses import dataclass, field
 import abc
 from .parser import Parser
-from typing import Any, Set, Optional, Tuple
+from typing import Any, Set, Optional, Tuple, Callable
 from enum import Enum, auto
 from . import varnames
 import re
@@ -70,6 +71,16 @@ class Node(abc.ABC):
     Contains the valid types for the resolved content.
     """
 
+    modified: bool = False
+    """
+    Keeps track of whether the node's :meth:`modify` method has been called.
+    """
+
+    modifiers: Tuple[Callable[['Node'], Optional['Node']]] = tuple()
+    """
+    Contains the modifiers to apply to this node.
+    """
+
     _source_file: Optional[Path] = None  # Set by :func:`load`
     source_file = property(lambda self: _propagate(self, 'source_file'))
     """
@@ -99,6 +110,29 @@ class Node(abc.ABC):
         """
         return sol_conf_obj.root if (sol_conf_obj := self.sol_conf_obj) else None
 
+    def modify(self):
+        """
+        Applies the modifiers associated to the current node. Does not modify children nodes, if any.
+        """
+
+        # Check if the modifiers have been applied.
+        if self.modified:
+            return
+        else:
+            self.modified = True
+
+        try:
+            # Apply node modifiers.
+            node = self
+            if self.modifiers:
+                for modifier in self.modifiers:
+                    node = modifier(node) or node
+
+        except ModificationError:
+            raise
+        except Exception as err:
+            raise ModificationError(self, err)
+
     @property
     def file_root(self):
         """
@@ -121,11 +155,18 @@ class Node(abc.ABC):
         Computes and returns the node's value, checking for cyclical references and generating meaningful error messages if these are detected.
         """
 
-        # Set up marker variable that is used to track node dependencies
-        # using inspect.stack
+        if not self.modified and self.modifiers:
+            self.modify()
+            raise Exception(
+                f'Attempted resolution of unmodified node `{self}` with modifiers - call `node.modify()` before resolving.')
+
         try:
+            # Set up marker variable that is used to track node dependencies
+            # The follwing unused variable is used in stack inspection within initializer
+            # to automatically detect cyclical referenes.
             __resolving_node__ = ResolvingNode(self)  # noqa
 
+            # Resolve the node
             value = self._unsafe_resolve()
 
             if self.types:
@@ -193,21 +234,23 @@ class Node(abc.ABC):
         :param ref: A string of dot-separated keys, indices or empty strings (:ref:`syntax <with reference strings>`).
 
         """
-
-        # Check ref string
-        if not re.fullmatch(self._FULL_REF_STR_PATTERN, ref):
-            raise InvalidRefStr(self, ref)
-
-        # Break up ref string into list of components.
-        _ref_components = [x['component_or_dots']
-                           for x in re.finditer(self._REF_STR_COMPONENT_PATTERN_OR_DOTS, ref)]
-
+        #
+        _ref_components = self._get_ref_components(ref)
         node = self
-
         for _component in _ref_components:
             node = node._node_from_ref_component(_component)
 
         return node
+
+    @classmethod
+    def _get_ref_components(cls, ref: str):
+        # Check ref string
+        if not re.fullmatch(cls._FULL_REF_STR_PATTERN, ref):
+            raise InvalidRefStr(ref)
+
+        # Break up ref string into list of components.
+        return [x['component_or_dots']
+                for x in re.finditer(cls._REF_STR_COMPONENT_PATTERN_OR_DOTS, ref)]
 
     def _node_from_ref_component(self, ref_component: str):
         """

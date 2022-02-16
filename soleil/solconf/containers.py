@@ -57,15 +57,6 @@ class Container(Node):
         return (
             f'{_qual_name}.' if (_qual_name := self.qual_name) else '') + child_name
 
-    def modify(self):
-        """
-        Modifies the children that support modification.
-        """
-        for ch in list(self.children):
-            # Takign a list avoids issues with modifiers that change the contents
-            if hasattr(ch, 'modify'):
-                ch.modify()
-
 
 class ListContainer(Container):
 

@@ -6,10 +6,10 @@ import yaml
 from contextlib import nullcontext
 from typing import Optional
 from .containers import ListContainer
+from .modification_heuristics import modify_tree
 from .dict_container import DictContainer, KeyNode
 from .nodes import ParsedNode, Node
 from .parser import Parser
-from . import varnames
 from threading import RLock
 from pathlib import Path
 
@@ -69,7 +69,7 @@ class SolConf:
         self.node_tree = None
         self.replace(None, root)
         if modify:
-            self.modify()
+            self.modify_tree()
 
     @classmethod
     def load(self, path, **kwargs) -> 'SolConf':
@@ -86,17 +86,14 @@ class SolConf:
         ac = SolConf(raw_data := yaml.safe_load(text), modify=False, **kwargs)
         ac.node_tree._source_file = path
         if modify:
-            ac.modify()
+            ac.modify_tree()
         return ac
 
-    def modify(self, node=None) -> Optional[Node]:
-        """        
-        An alias to the ``modify`` method of ``node``. If unspecified, ``node`` is set to :attr:`root`.
+    def modify_tree(self, node=None, **kwargs) -> Optional[Node]:
         """
-        node = node or self.node_tree
-
-        if hasattr(node, 'modify'):
-            node.modify()
+        An alias to :func:`containers.modify_tree <soleil.solconf.containers.modify_tree`> that sets ``node`` to :attr:`root` if unspecified.
+        """
+        return modify_tree(node or self.root, **kwargs)
 
     @classmethod
     def build_node_tree(cls, raw_data, parser, parent=None) -> Node:

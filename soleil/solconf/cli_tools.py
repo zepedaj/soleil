@@ -1,4 +1,6 @@
 from typing import List
+from .modification_heuristics import modify_ref_path
+import yaml
 from .exceptions import InvalidOverridePattern
 import re
 from soleil.solconf.nodes import Node
@@ -21,7 +23,7 @@ class SolConfArg:
     """
 
     _OVERRIDE_PATTERN = re.compile(
-        f'(?P<qual_name>{Node._FULL_REF_STR_PATTERN_RAW})\\=(?P<raw_content>.*)')
+        f'(?P<ref_str>{Node._FULL_REF_STR_PATTERN_RAW})(?P<assignment_type>\\=|\\*\\=)(?P<raw_content>.*)')
 
     def __init__(self, config_source: str = None):
         """
@@ -37,37 +39,73 @@ class SolConfArg:
     def __call__(self,  overrides: List[str] = None):
         """
         If the object was initialized without specifying a ``config_source``, then the first entry of ``overrides`` must contain it.
+
+        .. rubric:: Workflow:
+
+        1) Load the configuration file specified by ``config_source`` to create a :class:`SolConf` object. Do not apply modifiers during :class:`SolConf` initialization..
+        2) For each override:
+          1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
+          2) Apply all modifiers of the path implicit in the reference string (except for the last component) using :func:`~modification_heuristics.modify_ref_path`. This enables e..g, modifying ``load`` targets. Because of this application of modifiers, the order in which overrides are provided is important.
+          3) Assign the override value depending on the assignment type:
+            * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case it replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
+            * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. Discard the target node, if any, and add the new node.
+
         """
 
         # If config file not previously defined, get from overrides
         if self.config_source is None:
             self.config_source = overrides.pop(0)
 
-        # Load config file
-        sc = SolConf.load(self.config_source)
+        # Load config file, do not apply modifiers yet.
+        sc = SolConf.load(self.config_source, modify=False)
 
-        # Modify the loaded node tree with the specified new nodes
-        for qual_name, raw_content in map(self._parse_override_str, overrides):
+        # Alter the loaded node tree with the specified overrides.
+        for ref_str, assignment_type, raw_content in map(self._parse_override_str, overrides):
 
-            # Build the new node sub-tree, force eval of raw content.
-            new_node = SolConf.build_node_tree('$:'+raw_content, parser=sc.parser)
+            # Modify all nodes in the specified path.
+            # This is required to e.g., apply load target overrides or load content that the
+            # reference string refers to.
+            components = Node._get_ref_components(ref_str)
+            if len(components) > 1:
+                modify_ref_path(sc.root, components[:-1])
 
-            # Replace the new node as the value in the original KeyNode.
-            # Support for replacing the whole node tree could be added with
-            #     node = node if (node := sc(qual_name)).parent else sc
-            node = sc.root.node_from_ref(qual_name)
-            node.parent.replace(node, new_node)
+            # Get node
+            node = sc.root
+            for _component in components:
+                node = node._node_from_ref_component(_component)
 
-            # Modify the new node sub-tree
-            if hasattr(new_node, 'modify'):
-                new_node.modify()
+            # Apply assignment
+            if assignment_type == '=':
+                # Assign
+                # Rather than checking if type is ParseNode, check for the attribute.
+                if hasattr(node, 'raw_value'):
+                    node.raw_value = raw_content
+                else:
+                    raise TypeError(f'Cannot assign to node {node}.')
+
+            elif assignment_type == '*=':
+                # Clobber
+
+                # Build the new node sub-tree, force eval of raw content.
+                new_node = SolConf.build_node_tree(raw_content, parser=sc.parser)
+
+                # Replace the new node as the value in the original KeyNode.
+                node = sc.root.node_from_ref(ref_str)
+                (node.parent if node.parent else node.sol_conf_obj).replace(node, new_node)
+
+        # Modify all remaining non-modified parts.
+        sc.modify_tree()
 
         # Resolve the tree
         return sc()
 
     @classmethod
     def _parse_override_str(cls, override: str):
+        """
+        Parses the override string, extracting 1) the qualified name of the target, 2) the assignment type and 3) the yaml-parsed raw content.
+        """
         if not (parts := re.fullmatch(cls._OVERRIDE_PATTERN, override)):
             raise InvalidOverridePattern(override)
         else:
-            return parts['qual_name'], parts['raw_content']
+            return parts['ref_str'], parts['assignment_type'], yaml.safe_load(
+                parts['raw_content'])

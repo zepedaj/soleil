@@ -15,8 +15,8 @@ class ResolutionCycleError(Exception):
 
 
 class InvalidRefStr(Exception):
-    def __init__(self, node, ref: str):
-        super().__init__(f'Node `{node}` cannot handle reference string format `{ref}`.')
+    def __init__(self, ref: str):
+        super().__init__(f'Invalid reference string `{ref}`.')
 
 
 class InvalidRefStrComponent(Exception):

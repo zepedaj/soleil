@@ -56,7 +56,11 @@ class _RawKeyPatterns:
     """
 
 
-class KeyNode(ParsedNode):
+def _keynode_unimplemented(name):
+    raise NotImplementedError(f'`KeyNode`s do not implement `{name}`.')
+
+
+class KeyNode(ParsedNode, Container):
     """
     Key nodes represent a Python dictionary entry and as such, they must always be used as :class:`DictContainer` children. They implement part of the :class:`Container` interface. Key nodes have
 
@@ -117,6 +121,19 @@ class KeyNode(ParsedNode):
     def hidden(self):
         return super().hidden or FLAGS.HIDDEN in self.value.flags
 
+    @property
+    def children(self):
+        """
+        Returns a tuple containing the key node's :attr:`value` node.
+        """
+        if self.value is None:
+            return tuple()
+        else:
+            return tuple([self.value])
+
+    # Unimplemented methods from the Container interface.
+    add = lambda *args: _keynode_unimplemented('add')
+
     def modify(self):
         """
         Applies the modifiers to the node, includes parsing the raw key modifiers and types. Calling this function a second time has no effect.
@@ -125,35 +142,21 @@ class KeyNode(ParsedNode):
         # Check if the modifiers have been applied.
         if self.modified:
             return
-        else:
-            self.modified = True
 
         # Parse the raw modifiers and types strings.
         try:
             component = 'types'
             self.value.types = self._parse_raw_key_component(self._key_components['types'])
             component = 'modifiers'
-            self.modifiers = self._parse_raw_key_component(self._key_components['modifiers'])
+            self.modifiers += self._parse_raw_key_component(
+                self._key_components['modifiers']) or tuple()
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:
             raise exceptions.RawKeyComponentError(self, err, component)
 
-        try:
-            # Apply node modifiers.
-            node = self
-            if self.modifiers:
-                for modifier in self.modifiers:
-                    node = modifier(node) or node
-
-            # Modify value
-            if hasattr(self.value, 'modify'):
-                self.value.modify()
-
-        except exceptions.ModificationError:
-            raise
-        except Exception as err:
-            raise exceptions.ModificationError(self, err)
+        else:
+            super().modify()
 
     def remove(self, node: Node):
         """

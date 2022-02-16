@@ -2,7 +2,6 @@
 Base node modifiers included by default in :class:`soleil.solconf.parser.Parser` contexts.
 """
 from .parser import register
-from contextlib import nullcontext
 from functools import partial
 import yaml
 from .nodes import FLAGS
@@ -74,7 +73,7 @@ def hidden(node):
 @register('load')
 def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
-    Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node. 
+    Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node.
 
     If the resolved path is a relative, two possibilities exist:
 
@@ -89,13 +88,12 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
     The normal ``load`` workflow is as follows:
 
-    1. A key node's ``load`` modifier is applied as part of a call to the node's :meth:`~soleil.solconf.dict_container.KeyNode.modify` method -- this usually happens during :class:`~soleil.solconf.SolConf` initialization.
-    2. The target file path is obtained by resolving the key node's value attribute using ``node.value()``.
-    3. The data in the target file is loaded and used to build a sub-tree.
-    4. The sub-tree is used to replace the original :attr:`node.value` node in the original `SolConf` node tree.
-    5. All modifiers are applied to all nodes of the newly inserted sub-tree.
-    6. All remaining ``node`` modifiers after ``load`` are applied to the original key node (with the newly substituted value node).
-    7. Modification of the original sub-tree as part of the :meth:`SolConf.modify` call continues with the remaining nodes.
+    1. A key node's ``load`` modifier call is started. 
+    2. The :meth:`~soleil.solconf.nodes.Node.modify` method of the key node's :attr:`~soleil.solconf.solconf.SolConf.value` node is called in preparation for resolution.
+    3. The target file path is obtained by resolving the key node's :attr:`~soleil.solconf.solconf.SolConf.value` attribute.
+    3. The data in the target file is loaded and used to build a sub-tree. The modifiers of the sub-tree are not applied. Use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>` -- this happens automatically when instantiating a :class:`~soleil.solconf.SolConf` object.
+    4. The sub-tree is used to replace the original :attr:`node.value` node.
+    5. All remaining ``node`` modifiers after ``load`` are applied to the new :attr:`~soleil.solconf.solconf.SolConf.value` node.
 
     .. rubric:: Syntax
 
@@ -127,6 +125,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
         raise ValueError('Invalid input for argument node.')
 
     # Get absolute path
+    node.modify()
     path = Path(node.value())
     if subdir:
         subdir = Path(subdir)
@@ -152,12 +151,8 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     # Replace the new node as the value in the original KeyNode.
     node.replace(node.value, new_node)
 
-    # Modify the new node sub-tree
-    if hasattr(new_node, 'modify'):
-        new_node.modify()
-
     # Since the modifier is applied to the KeyNode, and the KeyNode has not changed, return that node and not new_node.
-    return node
+    return new_node
 
 
 @register('promote')
@@ -165,7 +160,13 @@ def promote(node: KeyNode):
     """
     Replaces the parent dictionary container by the key node's value node. The parent :class:`DictContainer` must contain a single child.
 
-    All modifiers up to and including ``promote`` will be applied to the containing key node. All modifiers after ``promote`` wil be applied to the child value node.
+    ..rubric:: Workflow:
+
+    1. Before ``promote`` modifier call: All modifiers up to and including ``promote`` are be applied to the containing key node. 
+    2. During ``promote`` modifier call:
+      a. The key node's :attr:`value` node replaces the key node's parent node. The modifiers of the new :attr:`value` node are not applied -- use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>`.
+    3. After ``promote`` modifier call: Since the call returns the key node's value node, all modifiers from the original key node after ``promote`` are applied to the promoted value node.
+
     """
 
     # Check that this is a key node within a dictionary container.
@@ -173,7 +174,8 @@ def promote(node: KeyNode):
         raise Exception(
             f'Expected a bound `KeyNode` input node, but received `{node}` with parent `{node.parent}`.')
 
-    # Replacement will happen in the KeyNode's grandparent -- the parent will be replaced in its container.
+    # Replacement will happen in the key nodes's grandparent. The key nodes's dict container will
+    # will be replaced (by the key node's child value node) in the dict container's parent container.
     if (grandparent := node.parent.parent) is None:
         if (grandparent := node.sol_conf_obj) is None:
             raise Exception(
@@ -187,9 +189,12 @@ def promote(node: KeyNode):
                 f'Value node promotion requires that the parent `DictContainer` '
                 f'have a single child, but {num_children} were found.')
 
-        # Replace grandparent by grandchild
+        # Replace key node parent by key node child.
         value_node = node.value
         grandparent.replace(node.parent, value_node)
+
+        # Apply value node modifiers.
+        # value_node.modify()
 
         # Return the grandchild.
         return value_node
