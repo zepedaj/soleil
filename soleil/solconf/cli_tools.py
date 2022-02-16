@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from .modification_heuristics import modify_ref_path
 import yaml
 from .exceptions import InvalidOverridePattern
@@ -36,7 +36,7 @@ class SolConfArg:
         """
         self.config_source = config_source
 
-    def __call__(self,  overrides: List[str] = None):
+    def __call__(self,  overrides: Optional[List[str]] = None):
         """
         If the object was initialized without specifying a ``config_source``, then the first entry of ``overrides`` must contain it.
 
@@ -51,6 +51,8 @@ class SolConfArg:
             * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. Discard the target node, if any, and add the new node.
 
         """
+
+        overrides = overrides or []
 
         # If config file not previously defined, get from overrides
         if self.config_source is None:
