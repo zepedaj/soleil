@@ -191,7 +191,7 @@ class Node(abc.ABC):
     _REF_STR_COMPONENT_PATTERN_RAW = r'(0|[1-9]\d*|\*?[_a-zA-Z]\w*)'
     _REF_STR_COMPONENT_PATTERN_OR_DOTS_RAW = f'(?P<component_or_dots>{_REF_STR_COMPONENT_PATTERN_RAW}|\\.+)'
     _FULL_REF_STR_PATTERN_RAW = AutonamedPattern(
-        r'\.*(?P<start>{x})?(?(start)(\.+{x})*)',
+        r'\.*(?P<start>{x})?(?(start)(\.+{x})*\.*)',
         {'x': AutonamedPattern(_REF_STR_COMPONENT_PATTERN_RAW)})
 
     # Compile the patterns.
