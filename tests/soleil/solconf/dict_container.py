@@ -85,20 +85,20 @@ class TestKeyNode(TestCase):
 
         # Types string error
         with self.assertRaisesRegex(exceptions.RawKeyComponentError, re.escape(
-                "Error while parsing the raw key `types` string of node `KeyNode@'*abc'` "
-                "(full traceback above): `'Name `invalid_type` undefined in parser context.'`")):
+                "Error while parsing the raw key `types` string `invalid_type` of node `KeyNode@'*abc'`.")):
             SolConf({'abc:invalid_type': 1})()
 
         # Modifiers string error
         with self.assertRaisesRegex(exceptions.RawKeyComponentError, re.escape(
-                "Error while parsing the raw key `modifiers` string of node `KeyNode@'*abc'` "
-                "(full traceback above): `'Name `invalid_modif` undefined in parser context.'`")):
+                "Error while parsing the raw key `modifiers` string `invalid_modif` of node `KeyNode@'*abc'`.")):
             SolConf({'abc::invalid_modif': 1})()
 
         # Modification error
-        with self.assertRaisesRegex(exceptions.ModificationError, re.escape(
-                "Error while modifying node `KeyNode@'*abc'` (full traceback above): "
-                "`Attempted to get the parent of `None`.`")):
+        with self.assertRaisesRegex(
+                exceptions.ModificationError,
+                re.escape(
+                    "Error while applying modifier `functools.partial(<function parent at 0x") +
+                r'\w+' + re.escape(">, levels=3)` to node `KeyNode@'*abc'`.")):
             SolConf({'abc::parent(3)': 1})()
 
 

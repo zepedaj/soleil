@@ -48,7 +48,7 @@ class _RawKeyPatterns:
         r'('
         f'\\s*:\\s*(?P<types>({TYPE_PATTERN}))?'
         # Modifiers could be better checked. Should be a callable or tuple.
-        r'(\s*:\s*(?P<modifiers>(.*)))?'
+        r'(\s*:\s*(?P<modifiers>([^\s].+[^\s])))?'
         r')?\s*',
     )
     """
@@ -108,6 +108,7 @@ class KeyNode(ParsedNode, Container):
         # Extract data from raw key.
         self._key_components = self._split_raw_key(raw_key)
         self._key = self._key_components['key']
+        self._raw_key_parsed = False
         #
         value.parent = self
         self.value = value
@@ -132,31 +133,16 @@ class KeyNode(ParsedNode, Container):
             return tuple([self.value])
 
     # Unimplemented methods from the Container interface.
-    add = lambda *args: _keynode_unimplemented('add')
+    def add(self, *args): _keynode_unimplemented(f'add (args: {args})')
+    def __getitem__(self, *args): _keynode_unimplemented(f'__getitem__ (args: {args})')
 
     def modify(self):
         """
-        Applies the modifiers to the node, includes parsing the raw key modifiers and types. Calling this function a second time has no effect.
+        Evaluates the raw keky modifiers and types before applying the node modifiers. Calling this function a second time has no effect.
         """
-
-        # Check if the modifiers have been applied.
-        if self.modified:
-            return
-
-        # Parse the raw modifiers and types strings.
-        try:
-            component = 'types'
-            self.value.types = self._parse_raw_key_component(self._key_components['types'])
-            component = 'modifiers'
-            self.modifiers += self._parse_raw_key_component(
-                self._key_components['modifiers']) or tuple()
-        except exceptions.RawKeyComponentError:
-            raise
-        except Exception as err:
-            raise exceptions.RawKeyComponentError(self, err, component)
-
-        else:
-            super().modify()
+        # Parse the raw modifiers and types strings before applying modifiers
+        self._parse_raw_key()
+        super().modify()
 
     def remove(self, node: Node):
         """
@@ -221,10 +207,35 @@ class KeyNode(ParsedNode, Container):
         else:
             return {key: match[key] for key in ['key', 'types', 'modifiers']}
 
+    def _parse_raw_key(self):
+        """
+        Evaluates the raw modifiers and types strings and assigns them to this node's :attr:`modifiers` attribute and to the attr:`value` node's :attr:`~soleil.solconf.nodes.Node.types` attribute.
+
+        This function will only have an effect the first time its called.
+        """
+        if self._raw_key_parsed:
+            return
+        self._raw_key_parsed = True
+
+        try:
+            #
+            component = 'types'
+            raw_value = self._key_components[component]
+            self.value.types = self._parse_raw_key_component(raw_value)
+            #
+            component = 'modifiers'
+            raw_value = self._key_components[component]
+            self.modifiers += self._parse_raw_key_component(raw_value) or tuple()
+        except exceptions.RawKeyComponentError:
+            raise
+        except Exception as err:
+            raise exceptions.RawKeyComponentError(self, component, raw_value) from err
+
     def _parse_raw_key_component(self, component: Optional[str]):
         """
         Evaluates the component ('types' or 'modifiers') and returns its parsed value. If this is not a tuple, it is instead returned as a single-entry tuple.
         """
+
         if component is None:
             return None
         component = self.safe_eval(component) if component else tuple()

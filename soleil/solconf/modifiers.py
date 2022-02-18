@@ -6,12 +6,21 @@ from functools import partial
 import yaml
 from .nodes import FLAGS
 from .dict_container import KeyNode, DictContainer
-from .nodes import Node
+from .containers import Container
+from .nodes import Node, ParsedNode
 from .solconf import SolConf
 from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned
-from .varnames import DEFAULT_EXTENSION
+from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME
+
+
+@register('noop')
+def noop(*args):
+    """
+    No-operation modifier that returns ``None``.
+    """
+    return None
 
 
 @register('parent')
@@ -70,6 +79,24 @@ def hidden(node):
     node.flags.add(FLAGS.HIDDEN)
 
 
+def _abs_path(node, path, subdir=None, ext=DEFAULT_EXTENSION):
+    """
+    Returns the absolute path as interpreted from the given node. See the discussion in :func:`load` concerning relative path interpretation rules.
+    """
+    path = Path(path)
+    if subdir:
+        path = Path(subdir) / path
+    if not path.is_absolute():
+        root_path = source_file.parent if (source_file := node.source_file) else cwd()
+        path = root_path / path
+
+    # Set default extension
+    if not path.suffix:
+        path = path.with_suffix(ext)
+
+    return path
+
+
 @register('load')
 def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
@@ -88,7 +115,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
     The normal ``load`` workflow is as follows:
 
-    1. A key node's ``load`` modifier call is started. 
+    1. A key node's ``load`` modifier call is started.
     2. The :meth:`~soleil.solconf.nodes.Node.modify` method of the key node's :attr:`~soleil.solconf.solconf.SolConf.value` node is called in preparation for resolution.
     3. The target file path is obtained by resolving the key node's :attr:`~soleil.solconf.solconf.SolConf.value` attribute.
     3. The data in the target file is loaded and used to build a sub-tree. The modifiers of the sub-tree are not applied. Use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>` -- this happens automatically when instantiating a :class:`~soleil.solconf.SolConf` object.
@@ -113,6 +140,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
 
     :param ext: The default extension to add to files without an extension.
+    :param subdir: All paths will be relative to this subdir. The same relative path interpretation rules apply to subdir.
     """
 
     # Check if this is a modification call or a modifier definition call.
@@ -127,16 +155,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     # Get absolute path
     node.modify()
     path = Path(node.value())
-    if subdir:
-        subdir = Path(subdir)
-        path = subdir / path
-    if not path.is_absolute():
-        root_path = source_file.parent if (source_file := node.source_file) else cwd()
-        path = root_path / path
-
-    # Set default extension
-    if not path.suffix:
-        path = path.with_suffix(ext)
+    path = _abs_path(node, path, subdir=subdir, ext=ext)
 
     # Load the data
     with open(path, 'rt') as fo:
@@ -162,7 +181,7 @@ def promote(node: KeyNode):
 
     ..rubric:: Workflow:
 
-    1. Before ``promote`` modifier call: All modifiers up to and including ``promote`` are be applied to the containing key node. 
+    1. Before ``promote`` modifier call: All modifiers up to and including ``promote`` are be applied to the containing key node.
     2. During ``promote`` modifier call:
       a. The key node's :attr:`value` node replaces the key node's parent node. The modifiers of the new :attr:`value` node are not applied -- use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>`.
     3. After ``promote`` modifier call: Since the call returns the key node's value node, all modifiers from the original key node after ``promote`` are applied to the promoted value node.
@@ -229,3 +248,127 @@ class choices:
             raise ValueError(
                 f'The resolved value of `{node}` is `{out}`, but it must be one of `{self.valid_values}`.')
         return out
+
+
+@register('types')
+def types(node: Node):
+    """
+    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.types`.
+    """
+    if isinstance(node, KeyNode):
+        node._parse_raw_key()
+        return node.value.types
+    else:
+        return node.types
+
+
+@register('modifiers')
+def modifiers(node: Node):
+    """
+    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.modifiers`.
+    """
+    if isinstance(node, KeyNode):
+        node._parse_raw_key()
+        return node.value.modifiers
+    else:
+        return node.modifiers
+
+
+@register('raw_value')
+def raw_value(node: ParsedNode):
+    # TODO: (?) Return the raw content interpreted by SolConf.build_node_tree for non-ParsedNode nodes?
+    return node.raw_value
+
+
+@register('child')
+def child(node: Container):
+    """
+    Returns the single child, if a single child exists, and raises an exception otherwise.
+    """
+    with node.lock:
+        children = list(node.children)
+        if len(children) != 1:
+            raise Exception(
+                f'Expected a single child node for container node `{node}` but found `{len(children)}`.')
+        return children[0]
+
+
+def _inject_extended_node(extend_source_node: KeyNode, override_node: KeyNode):
+    """
+    Monkey-patches :meth:`~soleil.solconf.nodes.ParsedNode.safe_eval` so that it injects the ``extend_source_node`` as new variable {EXTENDED_NODE_VAR_NAME} into the eval context of ``override_node``.
+    """
+
+    prev_safe_eval = override_node.safe_eval
+
+    def new_safe_eval(py_expr: str, context=None):
+        context = {
+            EXTENDED_NODE_VAR_NAME: extend_source_node,
+            **(context or {})}
+        return prev_safe_eval(py_expr, context)
+
+    override_node.safe_eval = new_safe_eval
+
+
+@register('extends')
+class extends:
+    """
+    Loads the specified path and updates it with the new content. The new nodes will have their evaluation context extended by the node being extended under variable |EXTENDED_NODE_VAR_NAME|.
+
+    .. code-block:: yaml
+
+        _::promote,extends('config.yaml'):
+          a: 1       # Keep parent types and modifiers.
+          b:int: 2   # Replaces the parent type.
+          c::noop: 3 # Replaces the parent modifier.
+
+          # TODO
+          d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4 # Expands the types or modifiers
+
+          # TODO
+          # Replaces nested content, possibly from another file -- see SolConfArg overrides approach.
+          d.x.y: 4
+    """
+
+    def __init__(self, path):
+        # Set default extension
+        path = Path(path)
+        if not path.suffix:
+            path = path.with_suffix(DEFAULT_EXTENSION)
+        self.path = path
+
+    def __str__(self):
+        return f'extends<{self.path}>'
+
+    def __call__(self, overrides_node: KeyNode):
+        """
+        :param overrides_node: KeyNode with DictContainer value attribute.
+        """
+        # Check input
+        if not isinstance(overrides_node, KeyNode):
+            raise TypeError(f'Excected `KeyNode` object but got {overrides_node}.')
+        elif not isinstance(overrides_node.value, DictContainer):  # TODO - add support for ListContainer
+            raise TypeError(
+                f'Expected overrides_node to have a `DictContainer` node as a value attribute but got `{overrides_node.value}`.')
+
+        # Load the template to extend
+        path = _abs_path(overrides_node, self.path)
+        extend_source_tree = SolConf.load(path, modify=False).root
+
+        #
+        for extend_source_node in list(extend_source_tree.children):
+            if curr_override := overrides_node.value.children.get(extend_source_node.key, None):
+
+                # Source exists for this override is specified
+                _inject_extended_node(extend_source_node, curr_override)
+                curr_override._parse_raw_key()
+                curr_override.value.types = (
+                    curr_override.value.types or extend_source_node.value.types)
+                curr_override.modifiers = curr_override.modifiers or extend_source_node.modifiers
+
+            else:
+                # No source for this override specified
+                # TODO: don't do this. Add copy method to node using deepcopy and use that.
+                extend_source_tree.remove(extend_source_node)
+                overrides_node.value.add(extend_source_node)
+
+        return overrides_node

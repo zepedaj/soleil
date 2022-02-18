@@ -1,4 +1,6 @@
 from unittest import TestCase
+from ._helpers import file_structure
+from soleil.solconf.modifiers import noop
 from soleil.solconf.exceptions import ModificationError, ResolutionError
 import re
 from soleil.solconf.parser import Parser
@@ -183,19 +185,28 @@ class TestModifiers(TestCase):
         with build_config_files(
                 file1_updates={"file1_6::choices('file3'),load": 'file2'}
         ) as (config_file, expected):
-            with self.assertRaisesRegex(
-                    ModificationError,
-                    '.*' + re.escape("is `file2`, but it must be one of `('file3',)`.`")):
+            try:
                 sc = SolConf.load(config_file)
+            except Exception as err:
+                self.assertRegex(
+                    str(err.__cause__),
+                    '.*' + re.escape("is `file2`, but it must be one of `('file3',)`."))
+            else:
+                raise Exception('Error expected!')
 
         # Source choice and loaded choice
         with build_config_files(
                 file1_updates={"file1_6::choices('file2'),load,choices([0])": 'file2'}
         ) as (config_file, expected):
             sc = SolConf.load(config_file)
-            with self.assertRaisesRegex(
-                    ResolutionError, '.*' + re.escape(", but it must be one of `([0],)`.`")):
+            try:
                 sc()
+            except Exception as err:
+                self.assertRegex(
+                    str(err.__cause__),
+                    '.*' + re.escape(", but it must be one of `([0],)`."))
+            else:
+                raise Exception('Exception expected!')
 
     def test_hidden_and_promote_order(self):
 
@@ -206,3 +217,26 @@ class TestModifiers(TestCase):
         # The `hidden` modifier is applied to the discarded KeyNode.
         sc = SolConf({'a0': {'x:bool:hidden,promote': False}, 'a1': "$: r_['a0']()"})
         self.assertEqual(sc(), {'a0': False, 'a1': False})
+
+    def test_extends(self):
+
+        # # Simple
+        # with file_structure({
+        #         'config_source.yaml': {'a': 1, 'b': 2, 'c': 3},
+        #         'config_extends.yaml': {"_::extends('config_source'),promote": {'d': 4}}}
+        # ) as (tmp_dir, paths):
+        #     self.assertEqual(
+        #         SolConf.load(paths['config_extends.yaml'])(),
+        #         {'a': 1, 'b': 2, 'c': 3, 'd': 4})
+
+        # With x_ cross-ref
+        with file_structure({
+            'config_source.yaml': {'a::noop': 1, 'b': 2, 'c': 3},
+            'config_extends.yaml': {
+                "_::extends('config_source'),promote": {"a::modifiers(x_)": 0, "d": 4}}}
+        ) as (temp_dir, path_mappings):
+            sc = SolConf.load(path_mappings['config_extends.yaml'])
+            self.assertEqual(sc['*a'].modifiers, (noop,))
+            self.assertEqual(
+                sc(),
+                {'a': 0, 'b': 2, 'c': 3, 'd': 4})

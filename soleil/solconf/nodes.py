@@ -53,7 +53,7 @@ class Node(abc.ABC):
     """
     flags: Set[FLAGS] = field(default_factory=set)
 
-    parent: Optional['Node'] = field(default=None, init=False)
+    parent: Optional['Node'] = field(default=None)
     """
     The parent :class:`Container` node. This field is handled by container nodes and should not be set explicitly.
     """
@@ -121,17 +121,16 @@ class Node(abc.ABC):
         else:
             self.modified = True
 
-        try:
-            # Apply node modifiers.
-            node = self
-            if self.modifiers:
-                for modifier in self.modifiers:
+        # Apply node modifiers.
+        node = self
+        if self.modifiers:
+            for modifier in self.modifiers:
+                try:
                     node = modifier(node) or node
-
-        except ModificationError:
-            raise
-        except Exception as err:
-            raise ModificationError(self, err)
+                except ModificationError:
+                    raise
+                except Exception as err:
+                    raise ModificationError(self,  modifier) from err
 
     @property
     def file_root(self):
@@ -179,7 +178,7 @@ class Node(abc.ABC):
             raise
 
         except Exception as error:
-            raise ResolutionError(self, error)
+            raise ResolutionError(self) from error
 
     @abc.abstractmethod
     def _unsafe_resolve(self):
@@ -320,14 +319,15 @@ class ParsedNode(Node):
         self.parser = parser
         super().__init__(**kwargs)
 
-    def safe_eval(self, py_expr: str):
+    def safe_eval(self, py_expr: str, context=None):
         """
         Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME|, ``self.root`` as |ROOT_NODE_VAR_NAME| and ``self.file_root`` as |FILE_ROOT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
         """
         context = {
             varnames.CURRENT_NODE_VAR_NAME: self,
             varnames.ROOT_NODE_VAR_NAME: self.root,
-            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root}
+            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root,
+            **(context or {})}
 
         return self.parser.safe_eval(py_expr, context)
 

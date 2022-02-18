@@ -1,4 +1,5 @@
 from soleil.solconf import parser as mdl
+import re
 from soleil.solconf.parser import UndefinedName
 import yaml
 from pathlib import Path
@@ -44,7 +45,10 @@ class TestParser(TestCase):
     def test_undefined_function(self):
         parser = Parser()
         with self.assertRaisesRegex(mdl.UndefinedName, '.*`non_existing_fxn`.*'):
-            parser.safe_eval('non_existing_fxn("abc")')
+            try:
+                parser.safe_eval('non_existing_fxn("abc")')
+            except Exception as err:
+                raise err.__cause__
 
     def test_supported_language_components(self):
         parser = Parser()
@@ -110,10 +114,13 @@ class TestParser(TestCase):
             'Jane Doe')
 
         parser2 = Parser()
-        with self.assertRaisesRegex(
-                UndefinedName,
-                'Name `first` undefined in parser context.'):
+        try:
             parser2.safe_eval('first')
+        except Exception as err:
+            assert isinstance(err.__cause__, UndefinedName)
+            self.assertEqual(str(err.__cause__), "'Name `first` undefined in parser context.'")
+        else:
+            raise Exception('Error expected!')
 
     # def test_unsupported_grammar_component(self):
     #     with self.assertRaises(mdl.UnsupportedGrammarComponent):

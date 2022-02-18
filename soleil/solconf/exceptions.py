@@ -26,24 +26,25 @@ class InvalidRefStrComponent(Exception):
 
 
 class ModificationError(Exception):
-    def __init__(self, node, err):
+    def __init__(self, node, modifier=None):
         super().__init__(
-            f'Error while modifying node '
-            f'`{node}` (full traceback above): `{err}`')
+            'Error while ' +
+            (f'applying modifier `{modifier}` to ' if modifier else 'modifying ') +
+            f'node `{node}`.')
 
 
 class RawKeyComponentError(Exception):
-    def __init__(self, node, err, component):
+    def __init__(self, node, component, raw_value=None):
         super().__init__(
-            f'Error while parsing the raw key `{component}` string of node '
-            f'`{node}` (full traceback above): `{err}`')
+            f'Error while parsing the raw key `{component}` string ' +
+            (f'`{raw_value}` ' if raw_value is not None else '') +
+            f'of node `{node}`.')
 
 
 class ResolutionError(Exception):
-    def __init__(self, node, err):
+    def __init__(self, node):
         super().__init__(
-            f'Error while resolving node '
-            f'`{node}` (full traceback above): `{err}`')
+            f'Error while resolving node `{node}`.')
 
 
 class InvalidOverridePattern(Exception):

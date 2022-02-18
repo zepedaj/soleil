@@ -14,6 +14,27 @@ Cookbook
 
 .. contents:: Examples
 
+Syntax
+--------
+
+.. literalinclude:: yaml/syntax/quotations.yaml
+   :language: yaml
+   :caption:
+
+.. doctest:: Cookbook
+
+   >> print(SolConf.load('yaml/syntax/quotations.yaml'))
+
+
+
+Extends
+---------
+
+
+Promotes
+----------
+
+
 Loading
 ----------
 

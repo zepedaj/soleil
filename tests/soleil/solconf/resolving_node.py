@@ -50,5 +50,10 @@ class TestSolConf(TestCase):
                 val = tree.resolve()
             except ResolutionCycleError as err:
                 self.assertTrue(compare_cycle(err.cycle, expected_cycle))
+            except Exception as err:
+                root_cause = err
+                while not isinstance(root_cause, ResolutionCycleError):
+                    root_cause = root_cause.__cause__
+                self.assertTrue(compare_cycle(root_cause.cycle, expected_cycle))
             else:
                 raise Exception('Expected error!')

@@ -89,11 +89,11 @@ class SolConf:
             ac.modify_tree()
         return ac
 
-    def modify_tree(self, node=None, **kwargs) -> Optional[Node]:
+    def modify_tree(self, **kwargs) -> Optional[Node]:
         """
-        An alias to :func:`containers.modify_tree <soleil.solconf.containers.modify_tree`> that sets ``node`` to :attr:`root` if unspecified.
+        An alias to :func:`modification_heuristics.modify_tree <soleil.solconf.modification_heuristics.modify_tree>` that derives the root node from :attr:`SolConf.root` in every iteration.
         """
-        return modify_tree(node or self.root, **kwargs)
+        return modify_tree(lambda: self.root, **kwargs)
 
     @classmethod
     def build_node_tree(cls, raw_data, parser, parent=None) -> Node:

@@ -14,10 +14,16 @@ FILE_ROOT_NODE_VAR_NAME = 'f_'
 Specifies the name of the highest-level node in the current file.
 """
 
+EXTENDED_NODE_VAR_NAME = 'x_'
+"""
+When an :meth:`~soleil.solconf.modifiers.extends` modifier is in effect, nodes being modified will have the source node injected into the eval context under this name.
+"""
+
 SPHINX_DEFS = f"""
 .. |CURRENT_NODE_VAR_NAME| replace:: ``{CURRENT_NODE_VAR_NAME}``
 .. |ROOT_NODE_VAR_NAME| replace:: ``{ROOT_NODE_VAR_NAME}``
 .. |FILE_ROOT_NODE_VAR_NAME| replace:: ``{FILE_ROOT_NODE_VAR_NAME}``
+.. |EXTENDED_NODE_VAR_NAME| replace:: ``{EXTENDED_NODE_VAR_NAME}``
 """
 
 DEFAULT_EXTENSION = '.yaml'

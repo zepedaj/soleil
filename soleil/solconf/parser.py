@@ -19,6 +19,11 @@ class UnsupportedPythonGrammarComponent(TypeError):
     pass
 
 
+class EvalError(Exception):
+    def __init__(self, expr: str):
+        super().__init__(f'Error while attempting to evaluate expression `{expr}`.')
+
+
 PYTHON_PRECISION = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
                     ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
                     ast.USub: op.neg,
@@ -108,8 +113,8 @@ class Parser:
     def get_from_context(self, name, context=None):
         try:
             return (context or self._context)[name]
-        except KeyError:
-            raise UndefinedName(f'Name `{name}` undefined in parser context.')
+        except KeyError as err:
+            raise UndefinedName(f'Name `{name}` undefined in parser context.') from err
 
     def safe_eval(self, expr, extra_context=None):
         """
@@ -118,10 +123,14 @@ class Parser:
         The parser's context is extended by ``extra_context`` if provided.
         """
 
-        if len(expr) > MAX_EXPR_LEN:
-            raise Exception('The input expression has length {len(expr)} > {MAX_EXPR_LEN}.')
-        extended_context = {**self._context, **extra_context} if extra_context else self._context
-        return self._eval(ast.parse(expr, mode='eval').body, extended_context)
+        try:
+            if len(expr) > MAX_EXPR_LEN:
+                raise Exception('The input expression has length {len(expr)} > {MAX_EXPR_LEN}.')
+            extended_context = {**self._context, **
+                                extra_context} if extra_context else self._context
+            return self._eval(ast.parse(expr, mode='eval').body, extended_context)
+        except Exception as err:
+            raise EvalError(expr) from err
 
     def _eval(self, node, context=None):
 

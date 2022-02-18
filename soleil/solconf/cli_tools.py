@@ -18,8 +18,6 @@ class SolConfArg:
 
       >>> parser = argparse.ArgumentParser()
       >>> parser.add_argument('arg', nargs='*', type=SolConfArg())
-
-
     """
 
     _OVERRIDE_PATTERN = re.compile(
@@ -27,12 +25,25 @@ class SolConfArg:
 
     def __init__(self, config_source: str = None):
         """
-        .. testcode::
+        .. testcode:: SolConfArg
 
-          >> sc1 = SolConfArg() # or SolConfArg
-          >> config = sc1(["'typing_a='c++'", "typing_b='c++'"])
-          >> sc2 = SolConfArg('yaml/load_with_choices/config.yaml')
-          >> config = SolConfArg('yaml/load_with_choices/config.yaml')(["'typing_a='c++'", "typing_b='c++'"])
+          >> sca1 = SolConfArg() # or SolConfArg
+          >> config = sca1(['yaml/load_with_choices/config.yaml', "'typing_a='c++'", "typing_b='c++'"]) # Path required
+          >> sca2 = SolConfArg('yaml/load_with_choices/config.yaml')
+          >> config = sca2(["typing_a=c++", "typing_b=c++"]) # Path optional?
+
+        In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment:
+
+        .. testcode:: SolConfArg
+
+          config = sc2(['.*={_::load,promote : yaml/colors/colors_config.yaml}'])
+
+        One disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment is carried out. The **root clober**  special syntax ``**=<path>`` has the same effect but avoids this drawback:
+
+        .. testcode:: SolConfArg
+
+          config = asc2(['**=yaml/colors/colors_config.yaml'])
+
         """
         self.config_source = config_source
 
@@ -47,7 +58,7 @@ class SolConfArg:
           1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
           2) Apply all modifiers of the path implicit in the reference string (except for the last component) using :func:`~modification_heuristics.modify_ref_path`. This enables e..g, modifying ``load`` targets. Because of this application of modifiers, the order in which overrides are provided is important.
           3) Assign the override value depending on the assignment type:
-            * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case it replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
+            * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode` (or rather, if it exposes a :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` attribute), in which case it replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
             * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. Discard the target node, if any, and add the new node.
 
         """
@@ -78,15 +89,16 @@ class SolConfArg:
 
             # Apply assignment
             if assignment_type == '=':
-                # Assign
-                # Rather than checking if type is ParseNode, check for the attribute.
+                # Value assignment
+
+                # Rather than checking if type is ParsedNode, check for the attribute.
                 if hasattr(node, 'raw_value'):
                     node.raw_value = raw_content
                 else:
                     raise TypeError(f'Cannot assign to node {node}.')
 
             elif assignment_type == '*=':
-                # Clobber
+                # Clobber assignment
 
                 # Build the new node sub-tree, force eval of raw content.
                 new_node = SolConf.build_node_tree(raw_content, parser=sc.parser)
