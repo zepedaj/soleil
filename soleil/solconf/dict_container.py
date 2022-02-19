@@ -48,7 +48,7 @@ class _RawKeyPatterns:
         r'('
         f'\\s*:\\s*(?P<types>({TYPE_PATTERN}))?'
         # Modifiers could be better checked. Should be a callable or tuple.
-        r'(\s*:\s*(?P<modifiers>([^\s].+[^\s])))?'
+        r'(\s*:\s*(?P<modifiers>([^\s].+[^\s]))?)?'
         r')?\s*',
     )
     """

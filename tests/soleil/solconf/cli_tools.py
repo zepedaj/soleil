@@ -43,6 +43,15 @@ class TestSolConfArg(TestCase):
                 expected['root_5']['file1_5'],
                 actual['root_5'])
 
+    def test_parse_override_str(self):
+        for raw_override, (ref, assgn, raw_val) in [
+                (".*={'_::load,promote': /tmp/tmpsx0kl2rt/numbers/prime.yaml}", (
+                    '.', '*=', "{'_::load,promote': /tmp/tmpsx0kl2rt/numbers/prime.yaml}")),
+        ]:
+            self.assertEqual(
+                mdl.SolConfArg._parse_override_str(raw_override),
+                (ref, assgn, raw_val))
+
     def test_edge_cases(self):
         with file_structure({
                 'config.yaml': {
@@ -53,6 +62,13 @@ class TestSolConfArg(TestCase):
                     'primary': 'red',
                     'derived': 'pink'}
         }) as (temp_dir, paths):
+
+            # Clobber-replace with load
+            sca = mdl.SolConfArg(
+                paths['config.yaml'])
+            self.assertEqual(
+                sca(['.*={"_::load,promote": ' + str(paths['numbers/prime.yaml']) + '}']),
+                [1, 3, 5])
 
             # No overrides
             sca = mdl.SolConfArg(paths['config.yaml'])

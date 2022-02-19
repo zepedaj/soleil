@@ -68,11 +68,17 @@ The SRPP evaluates all strings using an automatically generated variable context
         'keys': <function keys at 0x...>,
         'dt64': <function datetime64 at 0x...>,
         'range': <class 'range'>,
+        'noop': <function noop at 0x...>,
         'parent': <function parent at 0x...>,
         'hidden': <function hidden at 0x...>,
         'load': <function load at 0x...>,
         'promote': <function promote at 0x...>,
-        'choices': <class 'soleil.solconf.modifiers.choices'>
+        'choices': <class 'soleil.solconf.modifiers.choices'>,
+        'types': <function types at 0x...>,
+        'modifiers': <function modifiers at 0x...>,
+        'raw_value': <function raw_value at 0x...>,
+        'child': <function child at 0x...>,
+        'extends': <class 'soleil.solconf.modifiers.extends'>
     }
 
 New names can be added to the default context using :func:`parser.register`, which works as a function or a decorator:
@@ -94,8 +100,10 @@ Eval-time context
 Variables can also be injected into the evaluation-time context when calling :meth:`Parser.safe_eval <parser.Parser.safe_eval>`. Variables injected into the evaluation-time context will only be available locally inside that call and not in the next call unless injected again:
 
 .. doctest::
+   :options: +NORMALIZE_WHITESPACE
 
    >>> from soleil.solconf.parser import Parser
+   >>> import traceback
    
    >>> parser = Parser()
 
@@ -104,9 +112,17 @@ Variables can also be injected into the evaluation-time context when calling :me
    3
 
    # They are not available in the next `parser.safe_eval` call
-   >>> parser.safe_eval('a+b')
+   # soleil.solconf.parser.UndefinedName: 'Name `a` undefined in parser context.'
+   # soleil.solconf.parser.EvalError: Error while attempting to evaluate expression `a+b`.
+   >>> try:
+   ...   parser.safe_eval('a+b')
+   ... except Exception as err:
+   ...   print(traceback.format_exc()) # Print the traceback 
    Traceback (most recent call last):
    ...
    soleil.solconf.parser.UndefinedName: 'Name `a` undefined in parser context.'
+   ...
+   soleil.solconf.parser.EvalError: Error while attempting to evaluate expression `a+b`.
+
 
 Soleil parsed nodes expose method :meth:`ParsedNode.safe_eval <soleil.solconf.nodes.ParsedNode.safe_eval>` that wraps :meth:`Parser.safe_eval <parser.Parser.safe_eval>` and automatically inject :ref:`cross-referencing variables <xref>` |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME| and |FILE_ROOT_NODE_VAR_NAME| into the eval-time variable context.

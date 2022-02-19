@@ -1,6 +1,8 @@
 .. doctest::
+   :options: +NORMALIZE_WHITESPACE
 
    >>> from soleil.solconf.parser import Parser
+   >>> import traceback
 
    >>> parser = Parser()
 
@@ -15,7 +17,15 @@
    'John Doe'
 
    # Above defs not included in next instantiation
-   >>> Parser().safe_eval('first')  
+   # soleil.solconf.parser.UndefinedName: 'Name `first` undefined in parser context.'
+   # soleil.solconf.parser.EvalError: Error while attempting to evaluate expression `first`.
+   >>> try:
+   ...   Parser().safe_eval('first')
+   ... except Exception as err:
+   ...   print(traceback.format_exc()) # Print the traceback 
    Traceback (most recent call last):
    ...
    soleil.solconf.parser.UndefinedName: 'Name `first` undefined in parser context.'
+   ...
+   soleil.solconf.parser.EvalError: Error while attempting to evaluate expression `first`.
+

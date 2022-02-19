@@ -11,13 +11,15 @@ class SolConfArg:
     """
     Can be passed as a value for ``type`` when defining a Python argparse argument:
 
-    .. testcode::
+    .. doctest:: SolConfArg
 
       >>> import argparse
       >>> from soleil import SolConfArg
 
       >>> parser = argparse.ArgumentParser()
       >>> parser.add_argument('arg', nargs='*', type=SolConfArg())
+      _StoreAction(option_strings=[], dest='arg', nargs='*', const=None, default=None, type=<soleil.solconf.cli_tools.SolConfArg object at 0x...>, choices=None, help=None, metavar=None)
+
     """
 
     _OVERRIDE_PATTERN = re.compile(
@@ -25,24 +27,24 @@ class SolConfArg:
 
     def __init__(self, config_source: str = None):
         """
-        .. testcode:: SolConfArg
+        .. doctest:: SolConfArg
 
-          >> sca1 = SolConfArg() # or SolConfArg
-          >> config = sca1(['yaml/load_with_choices/config.yaml', "'typing_a='c++'", "typing_b='c++'"]) # Path required
-          >> sca2 = SolConfArg('yaml/load_with_choices/config.yaml')
-          >> config = sca2(["typing_a=c++", "typing_b=c++"]) # Path optional?
+          >>> sca1 = SolConfArg() # or SolConfArg
+          >>> config = sca1(['yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"]) # Path required
+          >>> sca2 = SolConfArg('yaml/load_with_choices/config.yaml')
+          >>> config = sca2(["typing_a=c++", "typing_b=c++"]) # Path optional?
 
         In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment:
 
-        .. testcode:: SolConfArg
+        .. doctest:: SolConfArg
 
-          config = sc2(['.*={_::load,promote : yaml/colors/colors_config.yaml}'])
+          >>> config = sca2(['.*={"_::load,promote": yaml/colors/colors_config.yaml}'])
 
         One disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment is carried out. The **root clober**  special syntax ``**=<path>`` has the same effect but avoids this drawback:
 
-        .. testcode:: SolConfArg
+        .. doctest:: SolConfArg
 
-          config = asc2(['**=yaml/colors/colors_config.yaml'])
+          >>> # config = sca2(['**=source/content/yaml/colors/colors_config.yaml'])
 
         """
         self.config_source = config_source
@@ -55,9 +57,11 @@ class SolConfArg:
 
         1) Load the configuration file specified by ``config_source`` to create a :class:`SolConf` object. Do not apply modifiers during :class:`SolConf` initialization..
         2) For each override:
+
           1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
           2) Apply all modifiers of the path implicit in the reference string (except for the last component) using :func:`~modification_heuristics.modify_ref_path`. This enables e..g, modifying ``load`` targets. Because of this application of modifiers, the order in which overrides are provided is important.
           3) Assign the override value depending on the assignment type:
+
             * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode` (or rather, if it exposes a :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` attribute), in which case it replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
             * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. Discard the target node, if any, and add the new node.
 
@@ -73,7 +77,10 @@ class SolConfArg:
         sc = SolConf.load(self.config_source, modify=False)
 
         # Alter the loaded node tree with the specified overrides.
-        for ref_str, assignment_type, raw_content in map(self._parse_override_str, overrides):
+        for ref_str, assignment_type, raw_content_str in map(self._parse_override_str, overrides):
+
+            #
+            raw_content = yaml.safe_load(raw_content_str)
 
             # Modify all nodes in the specified path.
             # This is required to e.g., apply load target overrides or load content that the
@@ -121,5 +128,4 @@ class SolConfArg:
         if not (parts := re.fullmatch(cls._OVERRIDE_PATTERN, override)):
             raise InvalidOverridePattern(override)
         else:
-            return parts['ref_str'], parts['assignment_type'], yaml.safe_load(
-                parts['raw_content'])
+            return parts['ref_str'], parts['assignment_type'], parts['raw_content']

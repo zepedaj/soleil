@@ -220,14 +220,14 @@ class TestModifiers(TestCase):
 
     def test_extends(self):
 
-        # # Simple
-        # with file_structure({
-        #         'config_source.yaml': {'a': 1, 'b': 2, 'c': 3},
-        #         'config_extends.yaml': {"_::extends('config_source'),promote": {'d': 4}}}
-        # ) as (tmp_dir, paths):
-        #     self.assertEqual(
-        #         SolConf.load(paths['config_extends.yaml'])(),
-        #         {'a': 1, 'b': 2, 'c': 3, 'd': 4})
+        # Simple
+        with file_structure({
+                'config_source.yaml': {'a': 1, 'b': 2, 'c': 3},
+                'config_extends.yaml': {"_::extends('config_source'),promote": {'d': 4}}}
+        ) as (tmp_dir, paths):
+            self.assertEqual(
+                SolConf.load(paths['config_extends.yaml'])(),
+                {'a': 1, 'b': 2, 'c': 3, 'd': 4})
 
         # With x_ cross-ref
         with file_structure({

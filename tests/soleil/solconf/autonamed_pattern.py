@@ -72,7 +72,7 @@ class TestAutonamedPattern(TestCase):
 class TestPxs(TestCase):
     def test_all(self):
         for name, matches, non_matches in [
-                ('VARNAME', vnm := ('abc0', '_abc0'), vnnm := ('0abc',)),
+                ('VARNAME', vnm := ('abc0', '_abc0', '_'), vnnm := ('0abc',)),
                 ('NS_VARNAME', vnm+('abc0.def1',), vnnm+('abc.0abc', 'abc.', 'abc.def1.')),
                 # Any string will match zero-slashes not preceded by slash
                 # at the start of the string, including odd slashes. Skipping

@@ -17,13 +17,19 @@ Cookbook
 Syntax
 --------
 
+Quotations
+^^^^^^^^^^^
+
 .. literalinclude:: yaml/syntax/quotations.yaml
    :language: yaml
    :caption:
 
 .. doctest:: Cookbook
+   :options: +NORMALIZE_WHITESPACE
 
-   >> print(SolConf.load('yaml/syntax/quotations.yaml'))
+   >>> print(SolConf.load('yaml/syntax/quotations.yaml')())
+   {'example_1': [1, 1, 1, 1, 1], 
+    'example_2': [1, 1, 1, 1, {'a': None, 'promote': 1}]}
 
 
 

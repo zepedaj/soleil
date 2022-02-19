@@ -56,3 +56,6 @@ class TestSolConf(TestCase):
         assert old_node.sol_conf_obj is None
         assert sc() == 10
         assert sc.root is new_node
+
+    def test_basic(self):
+        assert mdl.SolConf({'_::': 1})() == {'_': 1}

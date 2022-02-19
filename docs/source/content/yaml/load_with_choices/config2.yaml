@@ -1,0 +1,3 @@
+_::promote,extends('config.yaml'):
+  a: 1 # Keep parent types and modifiers
+

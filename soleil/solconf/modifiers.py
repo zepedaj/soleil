@@ -118,9 +118,9 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     1. A key node's ``load`` modifier call is started.
     2. The :meth:`~soleil.solconf.nodes.Node.modify` method of the key node's :attr:`~soleil.solconf.solconf.SolConf.value` node is called in preparation for resolution.
     3. The target file path is obtained by resolving the key node's :attr:`~soleil.solconf.solconf.SolConf.value` attribute.
-    3. The data in the target file is loaded and used to build a sub-tree. The modifiers of the sub-tree are not applied. Use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>` -- this happens automatically when instantiating a :class:`~soleil.solconf.SolConf` object.
-    4. The sub-tree is used to replace the original :attr:`node.value` node.
-    5. All remaining ``node`` modifiers after ``load`` are applied to the new :attr:`~soleil.solconf.solconf.SolConf.value` node.
+    4. The data in the target file is loaded and used to build a sub-tree. The modifiers of the sub-tree are not applied. Use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>` -- this happens automatically when instantiating a :class:`~soleil.solconf.SolConf` object.
+    5. The sub-tree is used to replace the original :attr:`node.value` node.
+    6. All remaining ``node`` modifiers after ``load`` are applied to the new :attr:`~soleil.solconf.solconf.SolConf.value` node.
 
     .. rubric:: Syntax
 
@@ -137,7 +137,6 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     .. rubric:: Choice-checking
 
     The :meth:`load` modifier can be combined with :meth:`choices` to constrain both the valid paths as well as the loaded node values. See the :ref:`load_with_choices.yaml` cookbook recipe for an example.
-
 
     :param ext: The default extension to add to files without an extension.
     :param subdir: All paths will be relative to this subdir. The same relative path interpretation rules apply to subdir.
@@ -171,7 +170,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     node.replace(node.value, new_node)
 
     # Since the modifier is applied to the KeyNode, and the KeyNode has not changed, return that node and not new_node.
-    return new_node
+    return node
 
 
 @register('promote')
@@ -183,7 +182,9 @@ def promote(node: KeyNode):
 
     1. Before ``promote`` modifier call: All modifiers up to and including ``promote`` are be applied to the containing key node.
     2. During ``promote`` modifier call:
+
       a. The key node's :attr:`value` node replaces the key node's parent node. The modifiers of the new :attr:`value` node are not applied -- use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>`.
+
     3. After ``promote`` modifier call: Since the call returns the key node's value node, all modifiers from the original key node after ``promote`` are applied to the promoted value node.
 
     """

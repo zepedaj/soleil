@@ -23,6 +23,14 @@ def add_val_modif(key, val):
 class TestRawKeyPatterns(TestCase):
     def test_split_raw_key(self):
         for raw_key, expected in [
+            ('_',
+             {'key': '_',
+              'types': None,
+              'modifiers': None}),
+            ('_::',
+             {'key': '_',
+              'types': None,
+              'modifiers': None}),
             ('my_key',
              {'key': 'my_key',
               'types': None,
