@@ -13,6 +13,12 @@ from threading import RLock
 from . import exceptions
 
 
+def as_tuple(component):
+    if component is None:
+        return None
+    return component if isinstance(component, tuple) else (component,)
+
+
 class _RawKeyPatterns:
     """
     Contains regular expressions used to extract key type and modifier decorations from a string key.
@@ -119,6 +125,17 @@ class KeyNode(ParsedNode, Container):
         self.modified = False
 
     @property
+    def types(self):
+        """
+        KeyNodes are untyped, and setting types will set the :attr:`value` node's `types` attribute.
+        """
+        return tuple()
+
+    @types.setter
+    def types(self, value):
+        self.value.types = value
+
+    @property
     def hidden(self):
         return super().hidden or FLAGS.HIDDEN in self.value.flags
 
@@ -221,7 +238,7 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'types'
             raw_value = self._key_components[component]
-            self.value.types = self._parse_raw_key_component(raw_value)
+            self.types = self._parse_raw_key_component(raw_value)  # Sets self.value.types
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
@@ -239,7 +256,7 @@ class KeyNode(ParsedNode, Container):
         if component is None:
             return None
         component = self.safe_eval(component) if component else tuple()
-        component = component if isinstance(component, tuple) else (component,)
+        component = as_tuple(component)
         return component
 
     def _unsafe_resolve(self):

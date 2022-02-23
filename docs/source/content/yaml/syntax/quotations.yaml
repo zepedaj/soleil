@@ -18,6 +18,3 @@
   - "a::noop,promote": 1
   - {"a::noop,promote": 1}
   - {a::noop,promote: 1} # BRACES+UNQUOTED -- NOT EQUIVALENT!
-
-
-#'example_1': [1, 1, 1, 1, 1], 'example_2': [1, 1, 1, 1, {'a': None, 'promote': 1}]

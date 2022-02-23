@@ -5,7 +5,7 @@ from .parser import register
 from functools import partial
 import yaml
 from .nodes import FLAGS
-from .dict_container import KeyNode, DictContainer
+from .dict_container import KeyNode, DictContainer, as_tuple
 from .containers import Container
 from .nodes import Node, ParsedNode
 from .solconf import SolConf
@@ -13,6 +13,7 @@ from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned
 from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME
+from .modification_heuristics import modify_tree
 
 
 @register('noop')
@@ -373,3 +374,78 @@ class extends:
                 overrides_node.value.add(extend_source_node)
 
         return overrides_node
+
+
+@register('fuse')
+def fuse(node: KeyNode):
+    """
+
+    Provides an alternate syntax for decorated key nodes
+
+    Takes a |KeyNode| (the 'base' node) with a |KeyNode.attr| node of type |DictContainer|  (the meta node) having key ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` with string values. The contents of the meta node will be used to set the corresponding attributes of the base node, with the strings in the ``'types'`` and ``'modifiers'`` nodes interpreted as if they were provided as part of a raw key in the base node.
+
+    .. rubric:: Example
+
+    .. doctest::
+
+      >>> from soleil import SolConf
+
+      # Fuse-based syntax
+      >>> sc_fused = SolConf(
+      ...   {'base::fuse': {
+      ...     'value': '$: 1+2',
+      ...     'types': 'int',
+      ...     'modifiers': 'noop'
+      ...   }}
+      ...  )
+
+      # Equivalent raw key-based syntax
+      >>> sc_rk = SolConf({'base:int:noop': '$: 1+2'})
+
+      >>> sc_fused['base'].types, sc_rk['base'].types
+      ((<class 'int'>,), (<class 'int'>,))
+
+      >>> sc_fused['*base'].modifiers, sc_rk['*base'].modifiers
+      ((<function noop at 0x...>,), (<function noop at 0x...>,))
+
+      >>> sc_fused['base'].raw_value, sc_rk['base'].raw_value
+      ('$: 1+2', '$: 1+2')
+
+      >>> sc_fused(), sc_rk()
+      ({'base': 3}, {'base': 3})
+
+    """
+
+    with node.lock:
+        # Check input
+        if not isinstance(node, KeyNode):
+            raise TypeError(f'Expected `{node}` to be of type `{KeyNode}`.')
+        if not isinstance(node.value, DictContainer):
+            raise TypeError(
+                f'Expected fused meta values dictionary {node.value} to be of type `{DictContainer}`.')
+        with node.value.lock:
+            # Check input
+            if 'value' not in (keys := {x.key for x in node.value.children}):
+                raise ValueError(
+                    "Expected fused meta values dictionary to have key 'value'.")
+            if invalid_keys := (keys - (valid_keys := {'value', 'types', 'modifiers'})):
+                raise ValueError(
+                    f'Invalid keys `{invalid_keys}` for fused meta values dictionary should come from {valid_keys}.')
+
+            # Fuse
+
+            # Set types and modifiers
+            for attr in ['types', 'modifiers']:
+                modify_tree(lambda: node.value[f'*{attr}'])
+                node._key_components.update({attr: node.value(attr)})
+
+            # Reset node types and modifiers
+            node.modifiers = tuple()
+            node.modified = False
+            node._raw_key_parsed = False
+
+            # Promote the value node
+            for attr in ['types', 'modifiers']:
+                if attr in keys:
+                    node.value.remove(node.value[f'*{attr}'])
+            promote(node.value['*value'])

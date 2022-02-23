@@ -24,6 +24,9 @@ SPHINX_DEFS = f"""
 .. |ROOT_NODE_VAR_NAME| replace:: ``{ROOT_NODE_VAR_NAME}``
 .. |FILE_ROOT_NODE_VAR_NAME| replace:: ``{FILE_ROOT_NODE_VAR_NAME}``
 .. |EXTENDED_NODE_VAR_NAME| replace:: ``{EXTENDED_NODE_VAR_NAME}``
+.. |KeyNode| replace:: :class:`~soleil.solconf.dict_container.KeyNode`
+.. |KeyNode.attr| replace:: :attr:`KeyNode.attr <soleil.solconf.dict_container.KeyNode.attr>`
+.. |DictContainer| replace:: :attr:`~soleil.solconf.dict_container.DictContainer`
 """
 
 DEFAULT_EXTENSION = '.yaml'

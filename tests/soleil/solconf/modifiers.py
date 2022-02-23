@@ -1,7 +1,6 @@
 from unittest import TestCase
 from ._helpers import file_structure
 from soleil.solconf.modifiers import noop
-from soleil.solconf.exceptions import ModificationError, ResolutionError
 import re
 from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
@@ -240,3 +239,57 @@ class TestModifiers(TestCase):
             self.assertEqual(
                 sc(),
                 {'a': 0, 'b': 2, 'c': 3, 'd': 4})
+
+    def test_fuse(self):
+
+        # Fuse
+        sc = SolConf({'_::fuse':
+                      {'value': 1,
+                       'types': 'int',
+                       'modifiers': 'noop'}
+                      })
+
+        self.assertEqual(sc.root['_'].types, (int,))
+        self.assertEqual(sc.root['_'].modifiers, (noop,))
+        self.assertEqual(sc(), {'_': 1})
+
+        # Fuse, promote
+        sc = SolConf({'_::fuse,promote':
+                      {'value': 1,
+                       'types': 'int',
+                       'modifiers': 'noop'}
+                      })
+
+        self.assertEqual(sc.root.types, (int,))
+        self.assertEqual(sc.root.modifiers, (noop,))
+        self.assertEqual(sc(), 1)
+
+    def test_docs(self):
+
+        # Fuse-based syntax
+        sc_fused = SolConf(
+            {'base::fuse': {
+                'value': '$: 1+2',
+                'types': 'int',
+                'modifiers': 'noop'
+            }}
+        )
+
+        # Equivalent raw key-based syntax
+        sc_rk = SolConf({'base:int:noop': '$: 1+2'})
+
+        self.assertEqual(
+            (sc_fused['base'].types, sc_rk['base'].types),
+            ((int,), (int,)))
+
+        self.assertEqual(
+            (sc_fused['*base'].modifiers, sc_rk['*base'].modifiers),
+            ((noop,), (noop,)))
+
+        self.assertEqual(
+            (sc_fused['base'].raw_value, sc_rk['base'].raw_value),
+            ('$: 1+2', '$: 1+2'))
+
+        self.assertEqual(
+            (sc_fused(), sc_rk()),
+            ({'base': 3}, {'base': 3}))
