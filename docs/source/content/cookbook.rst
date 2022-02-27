@@ -28,8 +28,7 @@ Quotations
    :options: +NORMALIZE_WHITESPACE
 
    >>> print(SolConf.load('yaml/syntax/quotations.yaml')())
-   {'example_1': [1, 1, 1, 1, 1], 
-    'example_2': [1, 1, 1, 1, {'a': None, 'promote': 1}]}
+   {'example': [1, 1, 1, 1, {'a': None, 'promote': 1}]}
 
 
 

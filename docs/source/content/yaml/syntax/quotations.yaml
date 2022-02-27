@@ -1,20 +1,12 @@
-# YAML files are first parsed using the YAML interpreter,
-# which is the reason why all hash keys below will result
-# map to the same SolConf object.
+# YAML files are first parsed using the YAML interpreter.
+# The resulting python object is then passed to the 
+# SolConf initializer.
 
-# Equivalent 
-'example_1':
-  - a:int,float:noop,promote: 1
-  - 'a:int,float:noop,promote': 1
-  - "a:int,float:noop,promote": 1
-  - {"a:int,float:noop,promote": 1}
-  - a:int,float:noop,promote: 1
-
-# Pitfall when modifiers with no types
-# Good practice to always quote raw keys
-'example_2':
+'example':
   - a::noop,promote: 1
   - 'a::noop,promote': 1
   - "a::noop,promote": 1
   - {"a::noop,promote": 1}
-  - {a::noop,promote: 1} # BRACES+UNQUOTED -- NOT EQUIVALENT!
+  # BRACES+UNQUOTED -- NOT ALWAYS EQUIVALENT!
+  # Good practice to always quote raw keys
+  - {a::noop,promote: 1} 

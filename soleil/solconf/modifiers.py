@@ -382,7 +382,7 @@ def fuse(node: KeyNode):
 
     Provides an alternate syntax for decorated key nodes
 
-    Takes a |KeyNode| (the 'base' node) with a |KeyNode.attr| node of type |DictContainer|  (the meta node) having key ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` with string values. The contents of the meta node will be used to set the corresponding attributes of the base node, with the strings in the ``'types'`` and ``'modifiers'`` nodes interpreted as if they were provided as part of a raw key in the base node.
+    Takes a |KeyNode| (the 'base' node) with a |KeyNode.attr| node of type |DictContainer|  (the meta node) having key ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` with values that are strings of lists of strings. The contents of the meta node will be used to set the corresponding attributes of the base node, with the strings in the ``'types'`` and ``'modifiers'`` nodes interpreted as if they were provided as part of a raw key in the base node.
 
     .. rubric:: Example
 
@@ -393,13 +393,13 @@ def fuse(node: KeyNode):
       # Fuse-based syntax
       >>> sc_fused = SolConf(
       ...   {'base::fuse': {
-      ...     'value': '$: 1+2',
-      ...     'types': 'int',
-      ...     'modifiers': 'noop'
+      ...      'value': '$: 1+2',
+      ...      'types': 'int',
+      ...      'modifiers': 'noop'
       ...   }}
       ...  )
 
-      # Equivalent raw key-based syntax
+      # Equivalent raw key-based-syntax
       >>> sc_rk = SolConf({'base:int:noop': '$: 1+2'})
 
       >>> sc_fused['base'].types, sc_rk['base'].types
@@ -413,6 +413,43 @@ def fuse(node: KeyNode):
 
       >>> sc_fused(), sc_rk()
       ({'base': 3}, {'base': 3})
+
+
+    It is also valid to use a list of modifiers or types:
+
+    .. doctest::
+
+      # Fuse-based syntax: lists
+      >>> sc_fused_2 = SolConf(
+      ...  {'base::fuse': {
+      ...     'value': '$: 1+2',
+      ...     'types': ['int', 'float'],
+      ...     'modifiers': ['noop', 'choices(1,2,3)']
+      ...      }}
+      ...  )
+
+      # Equivalent raw-key-based syntax
+      >>> sc_rk_2 = SolConf({'base:int,float:noop,choices(1,2,3)': '$: 1+2'})
+
+      >>> sc_fused_2['base'].types
+      (<class 'int'>, <class 'float'>)
+      >>> sc_rk_2['base'].types
+      (<class 'int'>, <class 'float'>)
+
+      >>> sc_fused_2['*base'].modifiers
+      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
+      >>> sc_rk_2['*base'].modifiers
+      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
+
+      >>> sc_fused_2['base'].raw_value
+      '$: 1+2'
+      >>> sc_rk_2['base'].raw_value
+      '$: 1+2'
+
+      >>> sc_fused_2(), sc_rk_2()
+      ({'base': 3}, {'base': 3})
+
+
 
     """
 
@@ -437,7 +474,8 @@ def fuse(node: KeyNode):
             # Set types and modifiers
             for attr in ['types', 'modifiers']:
                 modify_tree(lambda: node.value[f'*{attr}'])
-                node._key_components.update({attr: node.value(attr)})
+                value = ', '.join(value) if isinstance(value := node.value(attr), list) else value
+                node._key_components.update({attr: value})
 
             # Reset node types and modifiers
             node.modifiers = tuple()
@@ -448,4 +486,5 @@ def fuse(node: KeyNode):
             for attr in ['types', 'modifiers']:
                 if attr in keys:
                     node.value.remove(node.value[f'*{attr}'])
+            value = node.value['*value']
             promote(node.value['*value'])

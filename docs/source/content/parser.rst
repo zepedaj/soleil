@@ -53,6 +53,7 @@ The SRPP evaluates all strings using an automatically generated variable context
    >>> from soleil.solconf.parser import DEFAULT_CONTEXT
    >>> print(DEFAULT_CONTEXT)
     {
+        'NoneType': <class 'NoneType'>,
         'float': <class 'float'>,
         'int': <class 'int'>,
         'bool': <class 'bool'>,

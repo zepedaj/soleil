@@ -47,6 +47,7 @@ All these types from the ``builtins`` module are supported both as part of expre
 """
 
 DEFAULT_CONTEXT = {
+    **{'NoneType': type(None)},
     **{key: getattr(builtins, key) for key in BUILTIN_SCALAR_TYPES + BUILTIN_ITERABLE_TYPES}
 }
 """

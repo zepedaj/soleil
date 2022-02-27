@@ -250,18 +250,18 @@ class TestModifiers(TestCase):
                       })
 
         self.assertEqual(sc.root['_'].types, (int,))
-        self.assertEqual(sc.root['_'].modifiers, (noop,))
+        self.assertEqual(sc.root['*_'].modifiers, (noop,))
         self.assertEqual(sc(), {'_': 1})
 
         # Fuse, promote
-        sc = SolConf({'_::fuse,promote':
+        sc = SolConf({'_::fuse':
                       {'value': 1,
                        'types': 'int',
-                       'modifiers': 'noop'}
+                       'modifiers': 'promote'}
                       })
 
         self.assertEqual(sc.root.types, (int,))
-        self.assertEqual(sc.root.modifiers, (noop,))
+        self.assertEqual(sc.root.modifiers, tuple())
         self.assertEqual(sc(), 1)
 
     def test_docs(self):
@@ -293,3 +293,20 @@ class TestModifiers(TestCase):
         self.assertEqual(
             (sc_fused(), sc_rk()),
             ({'base': 3}, {'base': 3}))
+
+        ###
+
+        # Fuse-based syntax: lists
+        sc_fused = SolConf(
+            {'base::fuse': {
+                'value': '$: 1+2',
+                'types': ['int', 'float'],
+                'modifiers': ['noop', 'choices(1,2,3)']
+            }}
+        )
+
+        self.assertEqual(
+            sc_fused['base'].types, (int, float))
+        self.assertEqual(len(sc_fused['*base'].modifiers), 2)
+        self.assertEqual(sc_fused['*base'].modifiers[0], mdl.noop)
+        self.assertEqual(type(sc_fused['*base'].modifiers[1]), mdl.choices)
