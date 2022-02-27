@@ -27,18 +27,25 @@ class SolConfArg:
 
     def __init__(self, config_source: str = None):
         """
+
+        .. testsetup:: SolConfArg
+
+          import conf
+          from pathlib import Path
+          examples_root = str(Path(conf.__file__).parent / 'content') + '/'  # Necessary bc CWD changes between `make doctest` runs.
+
         .. doctest:: SolConfArg
 
           >>> sca1 = SolConfArg() # or SolConfArg
-          >>> config = sca1(['yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"]) # Path required
-          >>> sca2 = SolConfArg('yaml/load_with_choices/config.yaml')
+          >>> config = sca1([f'{examples_root}/yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"]) # Path required
+          >>> sca2 = SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml')
           >>> config = sca2(["typing_a=c++", "typing_b=c++"]) # Path optional?
 
         In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment:
 
         .. doctest:: SolConfArg
 
-          >>> config = sca2(['.*={"_::load,promote": yaml/colors/colors_config.yaml}'])
+          >>> config = sca2(['.*={"_::load,promote": ' + examples_root + 'yaml/colors/colors_config.yaml}'])
 
         One disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment is carried out. The **root clober**  special syntax ``**=<path>`` has the same effect but avoids this drawback:
 
