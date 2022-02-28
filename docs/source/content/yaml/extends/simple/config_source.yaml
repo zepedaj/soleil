@@ -1,0 +1,3 @@
+a: 1
+b:float: 2.0
+c:int:choices(1,3,5): 3

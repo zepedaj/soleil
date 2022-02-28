@@ -120,7 +120,6 @@ class KeyNode(ParsedNode, Container):
         self.value = value
         self.lock = RLock()
         super().__init__(self, parser=parser, **kwargs)
-
         #
         self.modified = False
 
@@ -155,7 +154,7 @@ class KeyNode(ParsedNode, Container):
 
     def modify(self):
         """
-        Evaluates the raw keky modifiers and types before applying the node modifiers. Calling this function a second time has no effect.
+        Evaluates the raw key modifiers and types before applying the node modifiers. Calling this function a second time has no effect.
         """
         # Parse the raw modifiers and types strings before applying modifiers
         self._parse_raw_key()

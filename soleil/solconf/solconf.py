@@ -5,13 +5,14 @@
 import yaml
 from contextlib import nullcontext
 from typing import Optional
-from .containers import ListContainer
+from .containers import Container, ListContainer
 from .modification_heuristics import modify_tree
 from .dict_container import DictContainer, KeyNode
 from .nodes import ParsedNode, Node
 from .parser import Parser
 from threading import RLock
 from pathlib import Path
+from .utils import print_tree
 
 
 class SolConf:
@@ -95,6 +96,9 @@ class SolConf:
         """
         return modify_tree(lambda: self.root, **kwargs)
 
+    def print_tree(self):
+        print_tree(self.root)
+
     @classmethod
     def build_node_tree(cls, raw_data, parser, parent=None) -> Node:
         """
@@ -118,7 +122,7 @@ class SolConf:
                 out.add(cls.build_node_tree(val, parser))  # Sets parent.
 
         else:
-            # Create a parse node.
+            # Create a parsed node.
             out = ParsedNode(
                 raw_data, parser=parser)
 

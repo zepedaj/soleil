@@ -343,7 +343,7 @@ class extends:
 
     def __call__(self, overrides_node: KeyNode):
         """
-        :param overrides_node: KeyNode with DictContainer value attribute.
+        :param overrides_node: KeyNode with |DictContainer| value attribute.
         """
         # Check input
         if not isinstance(overrides_node, KeyNode):
@@ -358,9 +358,13 @@ class extends:
 
         #
         for extend_source_node in list(extend_source_tree.children):
+
             if curr_override := overrides_node.value.children.get(extend_source_node.key, None):
 
-                # Source exists for this override is specified
+                # Parse source node raw keys
+                extend_source_node._parse_raw_key()
+
+                # Source exists for this override
                 _inject_extended_node(extend_source_node, curr_override)
                 curr_override._parse_raw_key()
                 curr_override.value.types = (
@@ -368,7 +372,7 @@ class extends:
                 curr_override.modifiers = curr_override.modifiers or extend_source_node.modifiers
 
             else:
-                # No source for this override specified
+                # No source exists for this override
                 # TODO: don't do this. Add copy method to node using deepcopy and use that.
                 extend_source_tree.remove(extend_source_node)
                 overrides_node.value.add(extend_source_node)

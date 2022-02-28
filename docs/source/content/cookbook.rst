@@ -35,6 +35,65 @@ Quotations
 Extends
 ---------
 
+Simple
+^^^^^^^
+
+.. literalinclude:: yaml/extends/simple/config_source.yaml
+   :language: yaml
+   :caption:
+
+.. literalinclude:: yaml/extends/simple/config_extends.yaml
+   :language: yaml
+   :caption:
+
+
+.. doctest:: Cookbook
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> sc = SolConf.load('yaml/extends/simple/config_extends.yaml')
+
+   >>> sc.print_tree()
+    {
+        "DictContainer@''(types=None, modifiers=())": [
+            {"KeyNode@'*b'(types=(), modifiers=())": ["ParsedNode@'b'(types=(<class 'float'>,), modifiers=())"]},
+            {"KeyNode@'*c'(types=(), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=())"]},
+            {"KeyNode@'*d'(types=(), modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
+            {"KeyNode@'*a'(types=(), modifiers=())": ["ParsedNode@'a'(types=None, modifiers=())"]}
+        ]
+    }
+
+   >>> print(sc())
+   {'b': 3.0, 'c': 5.0, 'd': 4, 'a': 1}
+
+With ``x_`` cross-ref
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: yaml/extends/cross_ref/config_source.yaml
+   :language: yaml
+   :caption:
+
+.. literalinclude:: yaml/extends/cross_ref/config_extends.yaml
+   :language: yaml
+   :caption:
+
+
+.. doctest:: Cookbook
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> sc = SolConf.load('yaml/extends/cross_ref/config_extends.yaml')
+   >>> sc.print_tree()
+    {
+        "DictContainer@''(types=None, modifiers=())": [
+            {"KeyNode@'*a'(types=(), modifiers=(<function noop at 0x...>,))": ["ParsedNode@'a'(types=None, modifiers=())"]},
+            {"KeyNode@'*d'(types=(), modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
+            {"KeyNode@'*b'(types=(), modifiers=())": ["ParsedNode@'b'(types=None, modifiers=())"]},
+            {"KeyNode@'*c'(types=(), modifiers=())": ["ParsedNode@'c'(types=None, modifiers=())"]}
+        ]
+    }
+
+   >>> print(sc())
+    {'a': 0, 'd': 4, 'b': 2, 'c': 3}
+
 
 Promotes
 ----------

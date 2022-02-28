@@ -221,12 +221,15 @@ class TestModifiers(TestCase):
 
         # Simple
         with file_structure({
-                'config_source.yaml': {'a': 1, 'b': 2, 'c': 3},
-                'config_extends.yaml': {"_::extends('config_source'),promote": {'d': 4}}}
+                'config_source.yaml': {'a': 1, 'b:int': 2, 'c:float,int:noop': 3, 'd::noop': 4},
+                'config_extends.yaml': {"_::extends('config_source'),promote": {'b': 3, 'e': 5}}}
         ) as (tmp_dir, paths):
-            self.assertEqual(
-                SolConf.load(paths['config_extends.yaml'])(),
-                {'a': 1, 'b': 2, 'c': 3, 'd': 4})
+            sc = SolConf.load(paths['config_extends.yaml'])
+            self.assertEqual((sc['a'].types, sc['a'].modifiers), (None, tuple()))
+            self.assertEqual((sc['b'].types, sc['b'].modifiers), ((int,), tuple()))
+            self.assertEqual((sc['c'].types, sc['*c'].modifiers), ((float, int), (mdl.noop,)))
+            self.assertEqual((sc['d'].types, sc['*d'].modifiers), (None, (mdl.noop,)))
+            self.assertEqual(sc(), {'a': 1, 'b': 3, 'c': 3, 'd': 4, 'e': 5})
 
         # With x_ cross-ref
         with file_structure({

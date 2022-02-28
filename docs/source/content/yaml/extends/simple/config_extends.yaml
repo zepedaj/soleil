@@ -1,0 +1,4 @@
+_::extends('config_source'),promote:
+  b: 3.0
+  c:float: 5.0
+  d: 4
