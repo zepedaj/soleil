@@ -302,7 +302,7 @@ class TestModifiers(TestCase):
             ((int,), (int,)))
 
         self.assertEqual(
-            (sc_fused['*base'].modifiers, sc_rk['*base'].modifiers),
+            (sc_fused['base'].modifiers, sc_rk['base'].modifiers),
             ((noop,), (noop,)))
 
         self.assertEqual(
@@ -326,6 +326,6 @@ class TestModifiers(TestCase):
 
         self.assertEqual(
             sc_fused['base'].types, (int, float))
-        self.assertEqual(len(sc_fused['*base'].modifiers), 2)
-        self.assertEqual(sc_fused['*base'].modifiers[0], mdl.noop)
-        self.assertEqual(type(sc_fused['*base'].modifiers[1]), mdl.choices)
+        self.assertEqual(len(sc_fused['base'].modifiers), 2)
+        self.assertEqual(sc_fused['base'].modifiers[0], mdl.noop)
+        self.assertEqual(type(sc_fused['base'].modifiers[1]), mdl.choices)

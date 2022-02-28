@@ -478,7 +478,7 @@ def fuse(dict_node: DictContainer):
                 # ['int', 'float']
                 out = []
                 for _x in decorator:
-                    out.extend(merge_decorator_values(_x))
+                    out.extend(merge_decorator_values(_x, eval_fxn))
                 return tuple(out)
             else:
                 raise ValueError(f'Invalid decorator value `{decorator}`.')
