@@ -215,9 +215,6 @@ def promote(value_node: Node):
         # Replace key node parent by key node child.
         dict_node_container.replace(dict_node, value_node)
 
-        # Apply value node modifiers.
-        # value_node.modify()
-
         # Return the grandchild.
         return value_node
 
@@ -378,3 +375,130 @@ class extends:
                 overrides_node.add(extend_source_node)
 
         return overrides_node
+
+
+@register('fuse')
+def fuse(dict_node: DictContainer):
+    """
+
+    Provides an alternate syntax for decorated key nodes
+
+    Takes a |KeyNode| (the 'base' node) with a |KeyNode.attr| node of type |DictContainer|  (the meta node) having key ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` with values that are strings of lists of strings. The contents of the meta node will be used to set the corresponding attributes of the base node, with the strings in the ``'types'`` and ``'modifiers'`` nodes interpreted as if they were provided as part of a raw key in the base node.
+
+    .. rubric:: Example
+
+    .. doctest::
+
+      >>> from soleil import SolConf
+
+      # Fuse-based syntax
+      >>> sc_fused = SolConf(
+      ...   {'base::fuse': {
+      ...      'value': '$: 1+2',
+      ...      'types': 'int',
+      ...      'modifiers': 'noop'
+      ...   }}
+      ...  )
+
+      # Equivalent raw key-based-syntax
+      >>> sc_rk = SolConf({'base:int:noop': '$: 1+2'})
+
+      >>> sc_fused['base'].types, sc_rk['base'].types
+      ((<class 'int'>,), (<class 'int'>,))
+
+      >>> sc_fused['*base'].modifiers, sc_rk['*base'].modifiers
+      ((<function noop at 0x...>,), (<function noop at 0x...>,))
+
+      >>> sc_fused['base'].raw_value, sc_rk['base'].raw_value
+      ('$: 1+2', '$: 1+2')
+
+      >>> sc_fused(), sc_rk()
+      ({'base': 3}, {'base': 3})
+
+
+    It is also valid to use a list of modifiers or types:
+
+    .. doctest::
+
+      # Fuse-based syntax: lists
+      >>> sc_fused_2 = SolConf(
+      ...  {'base::fuse': {
+      ...     'value': '$: 1+2',
+      ...     'types': ['int', 'float'],
+      ...     'modifiers': ['noop', 'choices(1,2,3)']
+      ...      }}
+      ...  )
+
+      # Equivalent raw-key-based syntax
+      >>> sc_rk_2 = SolConf({'base:int,float:noop,choices(1,2,3)': '$: 1+2'})
+
+      >>> sc_fused_2['base'].types
+      (<class 'int'>, <class 'float'>)
+      >>> sc_rk_2['base'].types
+      (<class 'int'>, <class 'float'>)
+
+      >>> sc_fused_2['*base'].modifiers
+      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
+      >>> sc_rk_2['*base'].modifiers
+      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
+
+      >>> sc_fused_2['base'].raw_value
+      '$: 1+2'
+      >>> sc_rk_2['base'].raw_value
+      '$: 1+2'
+
+      >>> sc_fused_2(), sc_rk_2()
+      ({'base': 3}, {'base': 3})
+
+
+
+    """
+
+    with dict_node.lock:
+
+        # Check input
+        if not isinstance(dict_node, DictContainer):
+            raise TypeError(
+                f'Expected fused meta values dictionary `{dict_node}` to be of type `{DictContainer}`.')
+
+        # Check input
+        if 'value' not in (keys := {x.key for x in dict_node.children}):
+            raise ValueError(
+                "Expected fused meta values dictionary to have key 'value'.")
+        if invalid_keys := (keys - (valid_keys := {'value', 'types', 'modifiers'})):
+            raise ValueError(
+                f'Invalid keys `{invalid_keys}` for fused meta values dictionary should come from {valid_keys}.')
+
+        # Fuse
+        def merge_decorator_values(decorator, eval_fxn):
+            if isinstance(decorator, str):
+                # 'int' or 'int,float' or 'None'
+                return (eval_fxn(decorator),)
+            elif isinstance(decorator, list):
+                # ['int', 'float']
+                out = []
+                for _x in decorator:
+                    out.extend(merge_decorator_values(_x))
+                return tuple(out)
+            else:
+                raise ValueError(f'Invalid decorator value `{decorator}`.')
+
+        # Set types and modifiers
+        for attr in ['types', 'modifiers']:
+            modify_tree(lambda: dict_node[f'*{attr}'])
+            attr_value = merge_decorator_values(
+                dict_node(f'{attr}'), dict_node[f'*{attr}'].safe_eval)
+            setattr(dict_node['value'], attr, attr_value)
+
+        # Reset dict_node types and modifiers
+        dict_node['value'].modified = False
+
+        # Promote the value node
+        for attr in ['types', 'modifiers']:
+            if attr in keys:
+                dict_node.remove(dict_node[f'*{attr}'])
+        value = dict_node['value']
+
+        promote(value)
+
+        return value

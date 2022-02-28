@@ -271,6 +271,8 @@ class KeyNode(ParsedNode, Container):
                 if old_value is not self.value:
                     raise exceptions.NotAChildOfError(old_value, self)
                 old_value.parent = None
+                if new_value.parent:
+                    new_value.parent.remove(new_value)
                 self.value = new_value
                 new_value.parent = self
 
@@ -380,6 +382,8 @@ class DictContainer(Container):
         old_node = self[old_node]
         with self.lock, new_node.lock, old_node.lock:
             self.remove(old_node)
+            if new_node.parent:
+                new_node.parent.remove(new_node)
             self.add(new_node)
 
     def _unsafe_resolve(self):
