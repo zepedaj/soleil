@@ -502,3 +502,27 @@ def fuse(dict_node: DictContainer):
         promote(value)
 
         return value
+
+
+@register('cast')
+def cast(*args):
+    """
+    Applies a callable to the node's resolved value. The output of the callable is returned as the node's resolved value. The modifier accomplishes this by monkey-patching the node's :meth:`Node.resolve <soleil.solconf.nodes.resolve>` method.
+
+      * ``cast(callable)`` : Returns a modifier that applies the callable to the node's value after resolution.
+      * ``cast(callable, node)``: Applies to specified callable to the resolved node value.
+
+    """
+
+    if len(args) == 1:
+        return partial(cast, *args)
+    elif len(args) == 2:
+        caster, node = args
+        orig_resolve = node.resolve
+
+        def casted_resolve():
+            return caster(orig_resolve())
+
+        node.resolve = casted_resolve
+    else:
+        raise ValueError('Expected 1 or 2 input arguments but received `{len(args)}`.')

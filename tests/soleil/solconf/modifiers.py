@@ -1,4 +1,5 @@
 from unittest import TestCase
+import numpy as np
 from ._helpers import file_structure
 from soleil.solconf.modifiers import noop
 import re
@@ -329,3 +330,8 @@ class TestModifiers(TestCase):
         self.assertEqual(len(sc_fused['base'].modifiers), 2)
         self.assertEqual(sc_fused['base'].modifiers[0], mdl.noop)
         self.assertEqual(type(sc_fused['base'].modifiers[1]), mdl.choices)
+
+    def test_cast(self):
+        out = SolConf({'_::cast(dt64),promote': '2020-10-10'})()
+        self.assertIsInstance(out, np.datetime64)
+        self.assertEqual(out, np.datetime64('2020-10-10'))
