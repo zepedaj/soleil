@@ -238,16 +238,14 @@ class choices:
 
         The new resolve method will verify that the resolved value is one of the valid choices or raise an exception otherwise.
         """
-        node = node.value if isinstance(node, KeyNode) else node
-        orig_resolve = node.resolve
-        node.resolve = lambda: self._checked_resolve(node, orig_resolve)
+        self.node = node
+        node.value_modifiers.append(self._checked_resolve)
 
-    def _checked_resolve(self, node, orig_resolve):
-        out = orig_resolve()
-        if out not in self.valid_values:
+    def _checked_resolve(self, resolved_value):
+        if resolved_value not in self.valid_values:
             raise ValueError(
-                f'The resolved value of `{node}` is `{out}`, but it must be one of `{self.valid_values}`.')
-        return out
+                f'The resolved value of `{self.node}` is `{resolved_value}`, but it must be one of `{self.valid_values}`.')
+        return resolved_value
 
 
 @register('types')
@@ -518,11 +516,6 @@ def cast(*args):
         return partial(cast, *args)
     elif len(args) == 2:
         caster, node = args
-        orig_resolve = node.resolve
-
-        def casted_resolve():
-            return caster(orig_resolve())
-
-        node.resolve = casted_resolve
+        node.value_modifiers.append(caster)
     else:
         raise ValueError('Expected 1 or 2 input arguments but received `{len(args)}`.')

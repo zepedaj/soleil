@@ -7,7 +7,7 @@ from .exceptions import (
 from dataclasses import dataclass, field
 import abc
 from .parser import Parser
-from typing import Any, Set, Optional, Tuple, Callable
+from typing import Any, Set, Optional, Tuple, Callable, List
 from enum import Enum, auto
 from . import varnames
 import re
@@ -79,6 +79,11 @@ class Node(abc.ABC):
     modifiers: Tuple[Callable[['Node'], Optional['Node']]] = tuple()
     """
     Contains the modifiers to apply to this node.
+    """
+
+    value_modifiers: List[Callable] = field(default_factory=list)
+    """
+    List of callables applied sequentially to the resolved node's value at the end of node resolution.
     """
 
     _source_file: Optional[Path] = None  # Set by :func:`load`
@@ -155,7 +160,6 @@ class Node(abc.ABC):
         """
 
         if not self.modified and self.modifiers:
-            self.modify()
             raise Exception(
                 f'Attempted resolution of unmodified node `{self}` with modifiers - call `node.modify()` before resolving.')
 
@@ -168,6 +172,11 @@ class Node(abc.ABC):
             # Resolve the node
             value = self._unsafe_resolve()
 
+            # Apply value modifiers
+            for _fxn in self.value_modifiers:
+                value = _fxn(value)
+
+            # Check type is correct
             if self.types:
                 if self.types and not isinstance(value, self.types):
                     raise TypeError(f'Invalid type {type(value)}. Expected one of {self.types}.')

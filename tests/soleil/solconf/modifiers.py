@@ -1,4 +1,6 @@
 from unittest import TestCase
+from functools import partial
+import traceback
 import numpy as np
 from ._helpers import file_structure
 from soleil.solconf.modifiers import noop
@@ -166,18 +168,16 @@ class TestModifiers(TestCase):
 
         # Check KeyNode dereferencing ability
         #
-        sc = SolConf({'_:int:choices(1,2,3),promote': 4})
-        with self.assertRaisesRegex(
-                ValueError,
-                re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
-            sc()
-
-        #
-        sc = SolConf({'_:int:promote,choices(1,2,3)': 4})
-        with self.assertRaisesRegex(
-                ValueError,
-                re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
-            sc()
+        for key in ['_:int:choices(1,2,3),promote', '_:int:promote,choices(1,2,3)']:
+            sc = SolConf({key: 4})
+            try:
+                sc()
+            except Exception:
+                self.assertIsNotNone(re.search(re.escape(
+                    "The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`."),
+                    traceback.format_exc()))
+            else:
+                raise Exception('Exception expected!')
 
     def test_choices_docs(self):
         with file_structure({
@@ -196,10 +196,10 @@ class TestModifiers(TestCase):
         ) as (config_file, expected):
             try:
                 sc = SolConf.load(config_file)
-            except Exception as err:
-                self.assertRegex(
-                    str(err.__cause__),
-                    '.*' + re.escape("is `file2`, but it must be one of `('file3',)`."))
+            except Exception:
+                self.assertIsNotNone(re.search(
+                    '.*' + re.escape("is `file2`, but it must be one of `('file3',)`."),
+                    traceback.format_exc()))
             else:
                 raise Exception('Error expected!')
 
@@ -239,7 +239,7 @@ class TestModifiers(TestCase):
 
         # With x_ cross-ref
         with file_structure({
-            'config_source.yaml': {'a::noop': 1, 'b': 2, 'c': 3},
+            'config_source.yaml': {'a::noop': 1, 'b': 2, 'c:int': 3},
             'config_extends.yaml': {
                 "_::extends('config_source'),promote": {"a::modifiers(x_)": 0, "d": 4}}}
         ) as (temp_dir, path_mappings):
@@ -332,6 +332,6 @@ class TestModifiers(TestCase):
         self.assertEqual(type(sc_fused['base'].modifiers[1]), mdl.choices)
 
     def test_cast(self):
-        out = SolConf({'_::cast(dt64),promote': '2020-10-10'})()
+        out = SolConf({'_:dt64:cast(dt64),promote': '2020-10-10'})()
         self.assertIsInstance(out, np.datetime64)
         self.assertEqual(out, np.datetime64('2020-10-10'))
