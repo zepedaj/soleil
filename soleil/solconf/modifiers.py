@@ -24,47 +24,39 @@ def noop(*args):
     return None
 
 
+# def parent(node_or_levels: Node = None, levels=None):
 @register('parent')
-def parent(node_or_levels: Node = None, levels=None):
+def parent(*args):
     """
-    Returns, for the given node, the ancestor at the specified number of levels up. Use ``levels=0`` to denote the node itself.
+    Returns, for the given node, the ancestor at a specified number of levels up (defauls to :math:`1` level up).
 
-    By default, levels will be set internally to ``levels=1`` if not explicitly assigned.
+    .. rubric:: Syntax:
 
-    ..rubric:: Syntax:
-
-    .. code-block::
-
-        # No-op modifier
-        parent(0)
-
-        # Modifier that returns the parent
-        parent
-        parent(1)
-        parent(levels=1)
-
-        # Modifier that returns the grandparent
-        parent(2)
-        parent(levels=2)
-
-        # Can be used as a function
-        parent(node)
-        parent(node, 2)
-        parent(node, levels=2)
+    * ``parent``: Modifier that returns the parent (same as ``parent(1)``).
+    * ``parent(N:int)``: Modifier that returns the :math:`N`-th ancestor.
+    * ``parent(node)``: Retuns the parent of the specified node (same as ``parent(1, node)``).
+    * ``parent(N, node)``: Returns the :math:`N`-th ancestor of node.
 
     """
 
     # Check if this is a modification call or a modifier definition call.
-    if node_or_levels is None:
-        return partial(parent, levels=levels)
-    elif isinstance(node_or_levels, int) and levels is None:
-        return partial(parent, levels=node_or_levels)
-    elif not isinstance(node_or_levels, Node):
-        raise Exception('Invalid input arguments.')
 
-    #
-    node = node_or_levels
-    levels = levels if levels is not None else 1
+    invalid_args = ValueError('Invalid input arguments.')
+    if len(args) == 1:
+        if isinstance(args[0], int):
+            # parent(N)
+            return partial(parent, *args)
+        elif isinstance(args[0], Node):
+            # parent(node)
+            node, levels = args[0], 1
+        else:
+            raise invalid_args
+    elif len(args) == 2:
+        # parent(node, N)
+        levels, node = args
+    else:
+        raise invalid_args
+
     for _ in range(levels):
         if node is None:
             raise Exception('Attempted to get the parent of `None`.')
@@ -101,46 +93,40 @@ def _abs_path(node, path, subdir=None, ext=DEFAULT_EXTENSION):
 @register('load')
 def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
-    Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node.
+    Loads the sub-tree from the source file with path obtained by resolving the node's value. The loaded sub-tree will replace the original node.
 
-    If the resolved path is a relative, two possibilities exist:
+    :param node: If specified, modifies that node. If unspecified, returns a modifier with other specified parameters bound to the given values.
+    :param ext: The default extension to add to files without an extension. Use ``''`` to skip adding extensions.
+    :param subdir: All relative paths will be relative to this sub-directory. The same :ref:`relative path interpretation <path conventions>` rules that apply to relative paths apply to the value of ``subdir``.
 
-    1. An ancestor node was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the ancestor file folder.
-    2. No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
+    .. _path conventions:
 
-    Paths can be explicitly made to be relative to the current working directory with function :func:`functions.cwd`.
+    .. rubric:: Relative path interpretation
+
+    If the resolved path is a relative path, two possibilities exist:
+
+        #. **Relative to ancestor file**: The node or one of its ancestors was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the directory of that ancestor file. The closest ancestor is used if more than one ancestors were loaded from a file.
+        #. **Relative to working directory**: No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
+
+    Paths can be explicitly made to be relative to the current working directory by post-concatenating relative paths to the output of registered function :func:`functions.cwd`.
 
     .. _Load modifier workflow:
 
     .. rubric:: Load workflow
 
-    The normal ``load`` workflow is as follows:
+    The normal ``load`` workflow is usually triggered during an iterative tree modification heuristic (usually carried out by :meth:`SolConf.modify_tree <soleil.solconf.solconf.SolConf.modify_tree>` as part of |SolConf| initialization):
 
-    1. A key node's ``load`` modifier call is started.
-    2. The :meth:`~soleil.solconf.nodes.Node.modify` method of the key node's :attr:`~soleil.solconf.solconf.SolConf.value` node is called in preparation for resolution.
-    3. The target file path is obtained by resolving the key node's :attr:`~soleil.solconf.solconf.SolConf.value` attribute.
-    4. The data in the target file is loaded and used to build a sub-tree. The modifiers of the sub-tree are not applied. Use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>` -- this happens automatically when instantiating a :class:`~soleil.solconf.SolConf` object.
-    5. The sub-tree is used to replace the original :attr:`node.value` node.
-    6. All remaining ``node`` modifiers after ``load`` are applied to the new :attr:`~soleil.solconf.solconf.SolConf.value` node.
+        #. A node's ``load`` modifier call is started.
+        #. The target file path is obtained by resolving the node, using the :ref:`relative path interpretation <path conventions>` described above.
+        #. The data in the target file is loaded and used to build a sub-tree. The modifiers of all nodes in the loaded sub-tree are not applied immediately -- this will happen in latter iterations of the tree modification heuristic.
+        #. The sub-tree is used to replace the original node in the node tree.
+        #. All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
 
-    .. rubric:: Syntax
-
-    A ``load`` modifier can be added to a node's modifiers list using one of these syntaxes
-
-    .. code-block::
-
-        load
-        load()
-        load(ext='.yaml')
-        load('source/sub_dir')
-        load('source/sub_dir', ext='.yaml')
 
     .. rubric:: Choice-checking
 
     The :meth:`load` modifier can be combined with :meth:`choices` to constrain both the valid paths as well as the loaded node values. See the :ref:`load_with_choices.yaml` cookbook recipe for an example.
 
-    :param ext: The default extension to add to files without an extension.
-    :param subdir: All paths will be relative to this subdir. The same relative path interpretation rules apply to subdir.
     """
 
     # Check if this is a modification call or a modifier definition call.
@@ -176,16 +162,17 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 @register('promote')
 def promote(value_node: Node):
     """
-    Replaces the parent dictionary container by the key node's value node. The parent :class:`DictContainer` must contain a single child.
+    Valid only for nodes that are a value of a |KeyNode| node (the parent) within a |DictContainer| container node (the grand-parent). The grand-parent dictionary container will be replaced by the input ``value_node``. The grand-parent :class:`DictContainer` must contain a single child, otherwise an error is raised.
 
-    ..rubric:: Workflow:
+    .. rubric:: Workflow:
 
-    1. Before ``promote`` modifier call: All modifiers up to and including ``promote`` are be applied to the containing key node.
-    2. During ``promote`` modifier call:
+    #. *Before* ``promote`` *modifier call*: All modifiers up to and including ``promote`` are applied to ``value_node``.
+    #. *During* ``promote`` *modifier call*:
 
-      a. The key node's :attr:`value` node replaces the key node's parent node. The modifiers of the new :attr:`value` node are not applied -- use :func:`modify_tree <soleil.solconf.containers.modify_tree>` or its alias :meth:`SolConf.modify_tree <soleil.solconf.SolConf.modify_tree>`.
+      #. Node ``value_node`` replaces the grand-parent dictionary container. Modifiers of node ``value_node`` are not applied immediately -- they will be applied in a latter iteration of the recursive tree node modification.
 
-    3. After ``promote`` modifier call: Since the call returns the key node's value node, all modifiers from the original key node after ``promote`` are applied to the promoted value node.
+    #. *After* ``promote`` *modifier call*: Since the grand-parent dictionary container was replaced by ``value_node``, all modifiers from the original grand-parent after ``promote`` are applied to the promoted ``value_node`` node.
+    #. In a latter tree modification iteration, modifiers of ``value_node`` are applied to that node.
 
     """
 
@@ -222,21 +209,20 @@ def promote(value_node: Node):
 @register('choices')
 class choices:
     """
-    Checks that the resolved value is one of the allowed choices.
+    Checks that a node's resolved value is one of the allowed choices. A ``ValueError`` exception is raised otherwise.
 
-    If the modified node is a ``KeyNode``, the verification is applied to its value node. Otherwise, the verification is applied directly to the node.
-
-    Because of this, the modifier sequence ``choices(1,2,3),promote`` and ``promote,choices(1,2,3)`` will have the same result.
+    .. todo:: To support auto-CLI generation, the choices of each node chouls be available to generate documentation. Best add a ``choices`` attribute to nodes and have this modifier set that attribute.
     """
 
     def __init__(self, *valid_values):
+        """
+        :param valid_values: All values that are valid for the resolved node.
+        """
         self.valid_values = valid_values
 
     def __call__(self, node: Node):
         """
-        Monkey-patches the input node's resolve method. If the input node is a ``KeyNode``, its child value node's resolve method is monkey-patched instead.
-
-        The new resolve method will verify that the resolved value is one of the valid choices or raise an exception otherwise.
+        Appends the modifier instance to the node's |Node.value_modifiers|.
         """
         self.node = node
         node.value_modifiers.append(self._checked_resolve)
@@ -251,7 +237,7 @@ class choices:
 @register('types')
 def types(node: Node):
     """
-    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.types`.
+    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.types` attribute.
     """
     if isinstance(node, KeyNode):
         node._parse_raw_key()
@@ -263,7 +249,7 @@ def types(node: Node):
 @register('modifiers')
 def modifiers(node: Node):
     """
-    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.modifiers`.
+    Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.modifiers` attribute.
     """
     if isinstance(node, KeyNode):
         node._parse_raw_key()
@@ -310,21 +296,20 @@ def _inject_extended_node(extend_source_node: KeyNode, override_node: KeyNode):
 @register('extends')
 class extends:
     """
-    Loads the specified path and updates it with the new content. The new nodes will have their evaluation context extended by the node being extended under variable |EXTENDED_NODE_VAR_NAME|.
+    Loads a sub-tree from the specified path (using :func:`load` -- this will be the *source tree*) and merges it to the contents of the node being modified (the *overrides node*). Any node raw value, type or modifier specified in the overrides node will take precedence. Non-specified values will be inherited from the source tree.
 
-    .. code-block:: yaml
+    .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
-        _::promote,extends('config.yaml'):
-          a: 1       # Keep parent types and modifiers.
-          b:int: 2   # Replaces the parent type.
-          c::noop: 3 # Replaces the parent modifier.
+    When a source node exists for a given overrides node, the overrides node evaluation context will be extended with a variable |EXTENDED_NODE_VAR_NAME| that points to the source node. This can be used to build override types and modifiers that depend on the source node's values.
 
-          # TODO
-          d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4 # Expands the types or modifiers
+    .. rubric:: Examples
 
-          # TODO
-          # Replaces nested content, possibly from another file -- see SolConfArg overrides approach.
-          d.x.y: 4
+    See the :ref:`extends cookbook examples <Extends recipes>` for usage examples.
+
+    .. todo::
+
+      * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``
+      * Support nested overrides: ``d.x.y: 4``
     """
 
     def __init__(self, path):
@@ -378,12 +363,15 @@ class extends:
 @register('fuse')
 def fuse(dict_node: DictContainer):
     """
+    Provides an alternate syntax for node type and modifier specification.
 
-    Provides an alternate syntax for decorated key nodes
+    Takes a |DictContainer| (the 'base' node)  having keys ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` -- the contents of these three keys are fused to produce a single node that replaces the base node.
 
-    Takes a |KeyNode| (the 'base' node) with a |KeyNode.attr| node of type |DictContainer|  (the meta node) having key ``'value'`` and optional keys ``'types'`` and ``'modifiers'`` with values that are strings of lists of strings. The contents of the meta node will be used to set the corresponding attributes of the base node, with the strings in the ``'types'`` and ``'modifiers'`` nodes interpreted as if they were provided as part of a raw key in the base node.
+    The ``'value'`` node contains the sub-tree that will replace the base node and become the fused node. The ``'types'`` and ``'modifiers'`` nodes can contain a string or list of strings that will set the types and modifiers of the fused node.
 
     .. rubric:: Example
+
+    Using string types and modifiers:
 
     .. doctest::
 
@@ -414,7 +402,7 @@ def fuse(dict_node: DictContainer):
       ({'base': 3}, {'base': 3})
 
 
-    It is also valid to use a list of modifiers or types:
+    Using string list types and modifiers:
 
     .. doctest::
 
@@ -505,10 +493,12 @@ def fuse(dict_node: DictContainer):
 @register('cast')
 def cast(*args):
     """
-    Applies a callable to the node's resolved value. The output of the callable is returned as the node's resolved value. The modifier accomplishes this by monkey-patching the node's :meth:`Node.resolve <soleil.solconf.nodes.resolve>` method.
+    Applies a callable to the node's resolved value. The output of the callable is returned as the node's resolved value. The modifier accomplishes this by appending a partial version of this method to the node's |Node.value_modifiers| attribute.
 
-      * ``cast(callable)`` : Returns a modifier that applies the callable to the node's value after resolution.
-      * ``cast(callable, node)``: Applies to specified callable to the resolved node value.
+    .. rubric:: Syntax
+
+    * ``cast(callable)`` : Returns a modifier that applies the callable to the node's value after resolution.
+    * ``cast(callable, node)``: Adds the specified callable to the resolved node's |Node.value_modifiers|.
 
     """
 

@@ -31,6 +31,7 @@ Quotations
    {'example': [1, 1, 1, 1, {'a': None, 'promote': 1}]}
 
 
+.. _Extends recipes:
 
 Extends
 ---------

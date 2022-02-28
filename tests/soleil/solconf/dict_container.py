@@ -107,7 +107,7 @@ class TestKeyNode(TestCase):
                 exceptions.ModificationError,
                 re.escape(
                     "Error while applying modifier `functools.partial(<function parent at 0x") +
-                r'\w+' + re.escape(">, levels=4)` to node `ParsedNode@'abc'`.")):
+                r'\w+' + re.escape(">, 4)` to node `ParsedNode@'abc'`.")):
             SolConf({'abc::parent(4)': 1})()
 
 

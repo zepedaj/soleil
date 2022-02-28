@@ -401,14 +401,21 @@ Types defined on the key node will be applied to its value node, providing a mec
 Modifiers will likewise be applied to the promoted value node, enabling, for example, non-key node choice verification:
 
 .. doctest:: SolConf
+   :options: +NORMALIZE_WHITESPACE
 
+   >>> import traceback
    >>> SolConf({'_:int:promote,choices(1,2,3)': 3})()
    3
 
-   >>> SolConf({'_:int:promote,choices(1,2,3)': 4})()
+   >>> try:
+   ...   SolConf({'_:int:promote,choices(1,2,3)': 4})()
+   ... except Exception:
+   ...   print(traceback.format_exc())
    Traceback (most recent call last):
-      ...
-   ValueError: The resolved value of `ParsedNode@'_'` is `4`, but it must be one of `(1, 2, 3)`.
+   ...
+   ValueError: The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.
+   ...
+   soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@''`.
 
 
 Referencing nodes
