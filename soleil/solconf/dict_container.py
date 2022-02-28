@@ -230,7 +230,7 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
-            self.value.modifiers += self._parse_raw_key_component(raw_value) or tuple()
+            self.value.modifiers = self._parse_raw_key_component(raw_value) or tuple()
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:

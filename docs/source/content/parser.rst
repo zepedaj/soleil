@@ -81,7 +81,6 @@ The SRPP evaluates all strings using an automatically generated variable context
         'child': <function child at 0x...>,
         'extends': <class 'soleil.solconf.modifiers.extends'>,
         'fuse': <function fuse at 0x...>
-        'extends': <class 'soleil.solconf.modifiers.extends'>
     }
 
 New names can be added to the default context using :func:`parser.register`, which works as a function or a decorator:

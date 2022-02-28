@@ -406,7 +406,7 @@ def fuse(dict_node: DictContainer):
       >>> sc_fused['base'].types, sc_rk['base'].types
       ((<class 'int'>,), (<class 'int'>,))
 
-      >>> sc_fused['*base'].modifiers, sc_rk['*base'].modifiers
+      >>> sc_fused['base'].modifiers, sc_rk['base'].modifiers
       ((<function noop at 0x...>,), (<function noop at 0x...>,))
 
       >>> sc_fused['base'].raw_value, sc_rk['base'].raw_value
@@ -437,9 +437,9 @@ def fuse(dict_node: DictContainer):
       >>> sc_rk_2['base'].types
       (<class 'int'>, <class 'float'>)
 
-      >>> sc_fused_2['*base'].modifiers
+      >>> sc_fused_2['base'].modifiers
       (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
-      >>> sc_rk_2['*base'].modifiers
+      >>> sc_rk_2['base'].modifiers
       (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
 
       >>> sc_fused_2['base'].raw_value
