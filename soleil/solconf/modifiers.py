@@ -369,7 +369,7 @@ class extends:
                 curr_override._parse_raw_key()
                 curr_override.value.types = (
                     curr_override.value.types or extend_source_node.value.types)
-                curr_override.modifiers = curr_override.modifiers or extend_source_node.modifiers
+                curr_override.value.modifiers = curr_override.value.modifiers or extend_source_node.value.modifiers
 
             else:
                 # No source exists for this override

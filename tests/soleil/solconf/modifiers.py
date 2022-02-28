@@ -178,6 +178,15 @@ class TestModifiers(TestCase):
                 re.escape("The resolved value of `ParsedNode@''` is `4`, but it must be one of `(1, 2, 3)`.")):
             sc()
 
+    def test_choices_docs(self):
+        with file_structure({
+                'config_source.yaml': {'a': 1, 'b:float:': 2.0, 'c:int:choices(1,3,5)': 3},
+                'config_extends.yaml': {"_::extends('config_source'),promote":
+                                        {'b': 3.0, 'c:float': 5.0, 'd': 4}}
+        }) as (tmp_dir, paths):
+            sc = SolConf.load(paths['config_extends.yaml'])
+            self.assertTrue(isinstance(sc['c'].modifiers[0], mdl.choices))
+
     def test_load_with_choices(self):
 
         # Source choice.

@@ -54,11 +54,11 @@ Simple
 
    >>> sc.print_tree()
     {
-        "DictContainer@''(types=None, modifiers=())": [
-            {"KeyNode@'*b'(types=(), modifiers=())": ["ParsedNode@'b'(types=(<class 'float'>,), modifiers=())"]},
-            {"KeyNode@'*c'(types=(), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=())"]},
-            {"KeyNode@'*d'(types=(), modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
-            {"KeyNode@'*a'(types=(), modifiers=())": ["ParsedNode@'a'(types=None, modifiers=())"]}
+        "DictContainer@''(types=None, modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
+            {"KeyNode@'*b'(types=None, modifiers=())": ["ParsedNode@'b'(types=(<class 'float'>,), modifiers=())"]},
+            {"KeyNode@'*c'(types=None, modifiers=())": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))"]},
+            {"KeyNode@'*d'(types=None, modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
+            {"KeyNode@'*a'(types=None, modifiers=())": ["ParsedNode@'a'(types=None, modifiers=())"]}
         ]
     }
 
@@ -83,11 +83,11 @@ With ``x_`` cross-ref
    >>> sc = SolConf.load('yaml/extends/cross_ref/config_extends.yaml')
    >>> sc.print_tree()
     {
-        "DictContainer@''(types=None, modifiers=())": [
-            {"KeyNode@'*a'(types=(), modifiers=(<function noop at 0x...>,))": ["ParsedNode@'a'(types=None, modifiers=())"]},
-            {"KeyNode@'*d'(types=(), modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
-            {"KeyNode@'*b'(types=(), modifiers=())": ["ParsedNode@'b'(types=None, modifiers=())"]},
-            {"KeyNode@'*c'(types=(), modifiers=())": ["ParsedNode@'c'(types=None, modifiers=())"]}
+        "DictContainer@''(types=None, modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
+            {"KeyNode@'*a'(types=None, modifiers=())": ["ParsedNode@'a'(types=None, modifiers=(<function noop at 0x...>,))"]},
+            {"KeyNode@'*d'(types=None, modifiers=())": ["ParsedNode@'d'(types=None, modifiers=())"]},
+            {"KeyNode@'*b'(types=None, modifiers=())": ["ParsedNode@'b'(types=None, modifiers=())"]},
+            {"KeyNode@'*c'(types=None, modifiers=())": ["ParsedNode@'c'(types=None, modifiers=())"]}
         ]
     }
 

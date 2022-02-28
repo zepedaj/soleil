@@ -356,17 +356,9 @@ If a modifier outputs a new node, subsequent modifiers will be applied to this r
 
 .. rubric:: Effect of modifier order
 
-Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order will affect the results, as illustrated by this example:
+Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results.
 
-.. doctest:: SolConf
-
-   # The `hidden` modifier is applied to the promoted value node.
-   >>> SolConf({'a0': {'x:bool:promote,hidden' : False}, 'a1': "$: r_['a0']()"})() 
-   {'a1': False}
-
-   # The `hidden` modifier is applied to the discarded key node.
-   >>> SolConf({'a0': {'x:bool:hidden,promote' : False}, 'a1': "$: r_['a0']()"})() 
-   {'a0': False, 'a1': False}
+.. todo:: Is there an example where modifier order affects the results?
 
 For a discussion of modifier evaluation timing protcols, see the :class:`~dict_container.KeyNode` and :class:`~solconf.SolConf` documentation.
 
@@ -587,10 +579,6 @@ Pros and cons of extending dictionary support to non-variable name keys
       # The `hidden` modifier is applied to the parent promoted value node.
       >>> SolConf({'_0': {'x:bool:promote,hidden' : False}, '_1': "$: r_['_0']()"})() 
       {'_1': False}
-
-      # The `hidden` modifier is applied to the discarded KeyNode.
-      >>> SolConf({'_0': {'x:bool:hidden,promote' : False}, '_1': "$: r_['_0']()"})() 
-      {'_0': False, '_1': False}
 	 
 	 
 * Use reference strings to support only some types of indexing, and require the more verbose index-based syntax for full flexibility -- this would require dropping/changing :attr:`nodes.Node.qual_name`.
