@@ -99,7 +99,7 @@ def _abs_path(node, path, subdir=None, ext=DEFAULT_EXTENSION):
 
 
 @register('load')
-def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
+def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     """
     Loads the sub-tree from the file with path obtained by resolving the child value node. The sub-tree will replace the original value node.
 
@@ -154,7 +154,7 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 
     # Get absolute path
     node.modify()
-    path = Path(node.value())
+    path = Path(node())
     path = _abs_path(node, path, subdir=subdir, ext=ext)
 
     # Load the data
@@ -167,15 +167,14 @@ def load(node: KeyNode = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     new_node = SolConf.build_node_tree(raw_data, parser=ac.parser)
     new_node._source_file = path
 
-    # Replace the new node as the value in the original KeyNode.
-    node.replace(node.value, new_node)
+    # Replace the new node as the value in the original container.
+    node.parent.replace(node, new_node)
 
-    # Since the modifier is applied to the KeyNode, and the KeyNode has not changed, return that node and not new_node.
-    return node
+    return new_node
 
 
 @register('promote')
-def promote(node: KeyNode):
+def promote(value_node: Node):
     """
     Replaces the parent dictionary container by the key node's value node. The parent :class:`DictContainer` must contain a single child.
 
@@ -191,28 +190,30 @@ def promote(node: KeyNode):
     """
 
     # Check that this is a key node within a dictionary container.
-    if not isinstance(node, KeyNode) or not isinstance(node.parent, DictContainer):
+    if not ((key_node := value_node.parent)
+            and (dict_node := key_node.parent)
+            and isinstance(key_node, KeyNode)
+            and isinstance(dict_node, DictContainer)):
         raise Exception(
-            f'Expected a bound `KeyNode` input node, but received `{node}` with parent `{node.parent}`.')
+            f'Expected {value_node} to be the value of a bound `KeyNode` but it was not.')
 
     # Replacement will happen in the key nodes's grandparent. The key nodes's dict container will
     # will be replaced (by the key node's child value node) in the dict container's parent container.
-    if (grandparent := node.parent.parent) is None:
-        if (grandparent := node.sol_conf_obj) is None:
-            raise Exception(
-                'Cannot promote a `KeyNode` from a `DictContainer` that has no parent and is not the root of a `SolConf` object.')
+    if (dict_node_container := dict_node.parent) is None and (
+            dict_node_container := value_node.sol_conf_obj) is None:
+        raise Exception(
+            'Cannot promote a `KeyNode` from a `DictContainer` that has no parent and is not the root of a `SolConf` object.')
 
-    with node.lock, node.parent.lock, grandparent.lock:
+    with value_node.lock, key_node.lock, dict_node.lock, dict_node_container.lock:
 
         # Check that the container has only one child.
-        if (num_children := len(node.parent.children)) != 1:
+        if (num_children := len(dict_node.children)) != 1:
             raise Exception(
-                f'Value node promotion requires that the parent `DictContainer` '
-                f'have a single child, but {num_children} were found.')
+                f'Node `{value_node}` promotion requires that the DictContainer `{dict_node}`'
+                f'have a single child, but `{num_children}` were found.')
 
         # Replace key node parent by key node child.
-        value_node = node.value
-        grandparent.replace(node.parent, value_node)
+        dict_node_container.replace(dict_node, value_node)
 
         # Apply value node modifiers.
         # value_node.modify()
@@ -341,16 +342,15 @@ class extends:
     def __str__(self):
         return f'extends<{self.path}>'
 
-    def __call__(self, overrides_node: KeyNode):
+    def __call__(self, overrides_node: DictContainer):
         """
         :param overrides_node: KeyNode with |DictContainer| value attribute.
         """
         # Check input
-        if not isinstance(overrides_node, KeyNode):
-            raise TypeError(f'Excected `KeyNode` object but got {overrides_node}.')
-        elif not isinstance(overrides_node.value, DictContainer):  # TODO - add support for ListContainer
-            raise TypeError(
-                f'Expected overrides_node to have a `DictContainer` node as a value attribute but got `{overrides_node.value}`.')
+        if not (isinstance(overrides_node, DictContainer)
+                and isinstance(key_node := overrides_node.parent, KeyNode)):
+            raise TypeError(f'Expected ``overrides_node`` to be a `DictContainer` '
+                            'that is the value of a `KeyNode`.')
 
         # Load the template to extend
         path = _abs_path(overrides_node, self.path)
@@ -359,7 +359,7 @@ class extends:
         #
         for extend_source_node in list(extend_source_tree.children):
 
-            if curr_override := overrides_node.value.children.get(extend_source_node.key, None):
+            if curr_override := overrides_node.children.get(extend_source_node.key, None):
 
                 # Parse source node raw keys
                 extend_source_node._parse_raw_key()
@@ -375,6 +375,6 @@ class extends:
                 # No source exists for this override
                 # TODO: don't do this. Add copy method to node using deepcopy and use that.
                 extend_source_tree.remove(extend_source_node)
-                overrides_node.value.add(extend_source_node)
+                overrides_node.add(extend_source_node)
 
         return overrides_node

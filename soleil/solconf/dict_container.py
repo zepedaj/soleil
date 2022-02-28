@@ -124,17 +124,6 @@ class KeyNode(ParsedNode, Container):
         self.modified = False
 
     @property
-    def types(self):
-        """
-        KeyNodes are untyped, and setting types will set the :attr:`value` node's `types` attribute.
-        """
-        return tuple()
-
-    @types.setter
-    def types(self, value):
-        self.value.types = value
-
-    @property
     def hidden(self):
         return super().hidden or FLAGS.HIDDEN in self.value.flags
 
@@ -237,11 +226,11 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'types'
             raw_value = self._key_components[component]
-            self.types = self._parse_raw_key_component(raw_value)  # Sets self.value.types
+            self.value.types = self._parse_raw_key_component(raw_value)  # Sets self.value.types
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
-            self.modifiers += self._parse_raw_key_component(raw_value) or tuple()
+            self.value.modifiers += self._parse_raw_key_component(raw_value) or tuple()
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:

@@ -80,11 +80,12 @@ class TestKeyNode(TestCase):
 
         # Modify the node
         node.modify()
+        node.value.modify()
 
         # Check modifications
-        self.assertEqual(node.modifs[0], 'abc')
-        self.assertEqual(node.modifs[1], 2)
-        self.assertEqual(node.modifs[2], True)
+        self.assertEqual(node.value.modifs[0], 'abc')
+        self.assertEqual(node.value.modifs[1], 2)
+        self.assertEqual(node.value.modifs[2], True)
 
         #
         self.assertEqual(node.resolve(), ('my_key', 11))
@@ -106,8 +107,8 @@ class TestKeyNode(TestCase):
                 exceptions.ModificationError,
                 re.escape(
                     "Error while applying modifier `functools.partial(<function parent at 0x") +
-                r'\w+' + re.escape(">, levels=3)` to node `KeyNode@'*abc'`.")):
-            SolConf({'abc::parent(3)': 1})()
+                r'\w+' + re.escape(">, levels=4)` to node `ParsedNode@'abc'`.")):
+            SolConf({'abc::parent(4)': 1})()
 
 
 class TestDictContainer(TestCase):

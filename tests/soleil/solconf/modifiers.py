@@ -209,13 +209,9 @@ class TestModifiers(TestCase):
 
     def test_hidden_and_promote_order(self):
 
-        # The `hidden` modifier is applied to the parent promoted value node.
-        sc = SolConf({'a0': {'x:bool:promote,hidden': False}, 'a1': "$: r_['a0']()"})
-        self.assertEqual(sc(), {'a1': False})
-
-        # The `hidden` modifier is applied to the discarded KeyNode.
-        sc = SolConf({'a0': {'x:bool:hidden,promote': False}, 'a1': "$: r_['a0']()"})
-        self.assertEqual(sc(), {'a0': False, 'a1': False})
+        for modifiers_str in ['promote,hidden', 'hidden,promote']:
+            sc = SolConf({'a0': {f'x:bool:{modifiers_str}': False}, 'a1': "$: r_['a0']()"})
+            self.assertEqual(sc(), {'a1': False})
 
     def test_extends(self):
 
@@ -227,8 +223,8 @@ class TestModifiers(TestCase):
             sc = SolConf.load(paths['config_extends.yaml'])
             self.assertEqual((sc['a'].types, sc['a'].modifiers), (None, tuple()))
             self.assertEqual((sc['b'].types, sc['b'].modifiers), ((int,), tuple()))
-            self.assertEqual((sc['c'].types, sc['*c'].modifiers), ((float, int), (mdl.noop,)))
-            self.assertEqual((sc['d'].types, sc['*d'].modifiers), (None, (mdl.noop,)))
+            self.assertEqual((sc['c'].types, sc['c'].modifiers), ((float, int), (mdl.noop,)))
+            self.assertEqual((sc['d'].types, sc['d'].modifiers), (None, (mdl.noop,)))
             self.assertEqual(sc(), {'a': 1, 'b': 3, 'c': 3, 'd': 4, 'e': 5})
 
         # With x_ cross-ref
@@ -238,7 +234,7 @@ class TestModifiers(TestCase):
                 "_::extends('config_source'),promote": {"a::modifiers(x_)": 0, "d": 4}}}
         ) as (temp_dir, path_mappings):
             sc = SolConf.load(path_mappings['config_extends.yaml'])
-            self.assertEqual(sc['*a'].modifiers, (noop,))
+            self.assertEqual(sc['a'].modifiers, (noop,))
             self.assertEqual(
                 sc(),
                 {'a': 0, 'b': 2, 'c': 3, 'd': 4})
