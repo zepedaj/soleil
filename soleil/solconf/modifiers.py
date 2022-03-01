@@ -304,6 +304,8 @@ class extends:
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
+    .. todo:: Not too clear if this is working. The |EXTENDED_NODE_VAR_NAME| should be available in types and modifiers strings as well as parsed value nodes.
+
     When a source node exists for a given overrides node, the overrides node evaluation context will be extended with a variable |EXTENDED_NODE_VAR_NAME| that points to the source node. This can be used to build override types and modifiers that depend on the source node's values.
 
     .. rubric:: Examples
@@ -351,9 +353,17 @@ class extends:
                 # Source exists for this override
                 _inject_extended_node(extend_source_node, curr_override)
                 curr_override._parse_raw_key()
+
                 curr_override.value.types = (
-                    curr_override.value.types or extend_source_node.value.types)
-                curr_override.value.modifiers = curr_override.value.modifiers or extend_source_node.value.modifiers
+                    curr_override.value.types
+                    if (curr_override.value.types or
+                        curr_override._key_components['types'] is not None)
+                    else extend_source_node.value.types)
+                curr_override.value.modifiers = (
+                    curr_override.value.modifiers
+                    if (curr_override.value.modifiers or
+                        curr_override._key_components['modifiers'] is not None)
+                    else extend_source_node.value.modifiers)
 
             else:
                 # No source exists for this override

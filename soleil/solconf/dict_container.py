@@ -14,16 +14,16 @@ from . import exceptions
 
 
 def merge_decorator_values(decorator, eval_fxn):
-    if decorator is None:
-        return None
-    elif isinstance(decorator, str):
-        # 'int' or 'int,float' or 'None'
+
+    if isinstance(decorator, str):
+        # 'int' or 'int,float' or 'None' or '()'
         out = eval_fxn(decorator)
         return (None if out is None else
                 (out if isinstance(out, tuple) else (out,)))
 
     elif isinstance(decorator, list):
         # ['int', 'float']
+        # ['int', '(float,str)']
         out = []
         for _x in decorator:
             out.extend(merge_decorator_values(_x, eval_fxn))
@@ -239,11 +239,12 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'types'
             raw_value = self._key_components[component]
-            self.value.types = merge_decorator_values(raw_value, self.safe_eval)
+            self.value.types = None if raw_value is None else merge_decorator_values(
+                raw_value, self.safe_eval)
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
-            self.value.modifiers = merge_decorator_values(raw_value, self.safe_eval) or tuple()
+            self.value.modifiers = tuple() if raw_value is None else merge_decorator_values(raw_value, self.safe_eval)
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:

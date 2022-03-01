@@ -174,3 +174,20 @@ class TestDictContainer(TestCase):
         assert node is ac.node_tree.children['node0'].value.children['node1'].value
         assert node.qual_name == 'node0.node1'
         assert ac.node_tree.node_from_ref(node.qual_name) is node
+
+
+class TestFunctions(TestCase):
+    def test_merge_decorator_values(self):
+        parser = Parser()
+        self.assertEqual(mdl.merge_decorator_values('int', parser.safe_eval),
+                         (int,))
+        self.assertEqual(mdl.merge_decorator_values('int,float', parser.safe_eval),
+                         (int, float))
+        self.assertEqual(mdl.merge_decorator_values(['int', 'float'], parser.safe_eval),
+                         (int, float))
+        self.assertEqual(mdl.merge_decorator_values(['int', 'float,str'], parser.safe_eval),
+                         (int, float, str))
+        self.assertEqual(mdl.merge_decorator_values('None', parser.safe_eval),
+                         None)
+        self.assertEqual(mdl.merge_decorator_values('()', parser.safe_eval),
+                         ())
