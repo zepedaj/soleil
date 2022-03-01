@@ -59,12 +59,13 @@ Simple
             {"KeyNode@'*b'()": ["ParsedNode@'b'(types=(<class 'float'>,))"]},
             {"KeyNode@'*c'()": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))"]},
             {"KeyNode@'*d'()": ["ParsedNode@'d'()"]},
+            {"KeyNode@'*e'()": ["ParsedNode@'e'()"]},
             {"KeyNode@'*a'()": ["ParsedNode@'a'()"]}
         ]
     }
 
    >>> print(sc())
-   {'b': 3.0, 'c': 5.0, 'd': 4, 'a': 1}
+   {'b': 3.0, 'c': 5.0, 'd': 4.0, 'e': 6, 'a': 1}
 
 With ``x_`` cross-ref
 ^^^^^^^^^^^^^^^^^^^^^^

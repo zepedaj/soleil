@@ -244,7 +244,8 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
-            self.value.modifiers = tuple() if raw_value is None else merge_decorator_values(raw_value, self.safe_eval)
+            self.value.modifiers = tuple() if raw_value is None else (
+                merge_decorator_values(raw_value, self.safe_eval) or tuple())
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:
