@@ -245,6 +245,7 @@ class KeyNode(ParsedNode, Container):
             component = 'modifiers'
             raw_value = self._key_components[component]
             self.value.modifiers = tuple() if raw_value is None else (
+                # `or tuple()` below used to support disabling extended modifiers with None
                 merge_decorator_values(raw_value, self.safe_eval) or tuple())
         except exceptions.RawKeyComponentError:
             raise
