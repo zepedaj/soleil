@@ -5,7 +5,7 @@ from .parser import register
 from functools import partial
 import yaml
 from .nodes import FLAGS
-from .dict_container import KeyNode, DictContainer, as_tuple
+from .dict_container import KeyNode, DictContainer, merge_decorator_values
 from .containers import Container
 from .nodes import Node, ParsedNode
 from .solconf import SolConf
@@ -162,6 +162,8 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
 @register('promote')
 def promote(value_node: Node):
     """
+    Replaces the grand-parent dictionary container by the promoted value node.
+
     Valid only for nodes that are a value of a |KeyNode| node (the parent) within a |DictContainer| container node (the grand-parent). The grand-parent dictionary container will be replaced by the input ``value_node``. The grand-parent :class:`DictContainer` must contain a single child, otherwise an error is raised.
 
     .. rubric:: Workflow:
@@ -267,7 +269,7 @@ def raw_value(node: ParsedNode):
 @register('child')
 def child(node: Container):
     """
-    Returns the single child, if a single child exists, and raises an exception otherwise.
+    Returns the single child, if a single child exists, raising an exception otherwise.
     """
     with node.lock:
         children = list(node.children)
@@ -296,7 +298,9 @@ def _inject_extended_node(extend_source_node: KeyNode, override_node: KeyNode):
 @register('extends')
 class extends:
     """
-    Loads a sub-tree from the specified path (using :func:`load` -- this will be the *source tree*) and merges it to the contents of the node being modified (the *overrides node*). Any node raw value, type or modifier specified in the overrides node will take precedence. Non-specified values will be inherited from the source tree.
+    Merges the node with a sub-tree loaded from the specified path.
+
+    The loaded  sub-tree (loaded using :func:`load`) is referred to as the  *source tree* -- the node being modified is the *overrides node*. Any raw value, type or modifier specified in the overrides node will take precedence. Non-specified values will be inherited from the source tree.
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
@@ -371,72 +375,30 @@ def fuse(dict_node: DictContainer):
 
     .. rubric:: Example
 
-    Using string types and modifiers:
-
     .. doctest::
+      :options: +NORMALIZE_WHITESPACE, +ELLIPSIS
 
-      >>> from soleil import SolConf
+      >>> from soleil import SolConf      
 
       # Fuse-based syntax
       >>> sc_fused = SolConf(
       ...   {'base::fuse': {
       ...      'value': '$: 1+2',
-      ...      'types': 'int',
-      ...      'modifiers': 'noop'
-      ...   }}
-      ...  )
+      ...      'types': ['int', 'float'], # String type or list-of-string types
+      ...      'modifiers': 'noop'        # String modifier or list-of-string modifiers
+      ...   }})
+
+      >>> sc_fused.print_tree()
+      {"DictContainer@''()": [{"KeyNode@'*base'()": ["ParsedNode@'base'(types=(<class 'int'>, <class 'float'>), modifiers=(<function noop at 0x...>,))"]}]}
 
       # Equivalent raw key-based-syntax
-      >>> sc_rk = SolConf({'base:int:noop': '$: 1+2'})
+      >>> sc_rk = SolConf({'base:int,float:noop': '$: 1+2'})
+      >>> sc_rk.print_tree() # Same as sc_fused.print_tree()
+      {"DictContainer@''()": [{"KeyNode@'*base'()": ["ParsedNode@'base'(types=(<class 'int'>, <class 'float'>), modifiers=(<function noop at 0x...>,))"]}]}
 
-      >>> sc_fused['base'].types, sc_rk['base'].types
-      ((<class 'int'>,), (<class 'int'>,))
-
-      >>> sc_fused['base'].modifiers, sc_rk['base'].modifiers
-      ((<function noop at 0x...>,), (<function noop at 0x...>,))
-
-      >>> sc_fused['base'].raw_value, sc_rk['base'].raw_value
-      ('$: 1+2', '$: 1+2')
-
+      # Resolved outputs
       >>> sc_fused(), sc_rk()
       ({'base': 3}, {'base': 3})
-
-
-    Using string list types and modifiers:
-
-    .. doctest::
-
-      # Fuse-based syntax: lists
-      >>> sc_fused_2 = SolConf(
-      ...  {'base::fuse': {
-      ...     'value': '$: 1+2',
-      ...     'types': ['int', 'float'],
-      ...     'modifiers': ['noop', 'choices(1,2,3)']
-      ...      }}
-      ...  )
-
-      # Equivalent raw-key-based syntax
-      >>> sc_rk_2 = SolConf({'base:int,float:noop,choices(1,2,3)': '$: 1+2'})
-
-      >>> sc_fused_2['base'].types
-      (<class 'int'>, <class 'float'>)
-      >>> sc_rk_2['base'].types
-      (<class 'int'>, <class 'float'>)
-
-      >>> sc_fused_2['base'].modifiers
-      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
-      >>> sc_rk_2['base'].modifiers
-      (<function noop at 0x...>, <soleil.solconf.modifiers.choices object at 0x...>)
-
-      >>> sc_fused_2['base'].raw_value
-      '$: 1+2'
-      >>> sc_rk_2['base'].raw_value
-      '$: 1+2'
-
-      >>> sc_fused_2(), sc_rk_2()
-      ({'base': 3}, {'base': 3})
-
-
 
     """
 
@@ -456,18 +418,6 @@ def fuse(dict_node: DictContainer):
                 f'Invalid keys `{invalid_keys}` for fused meta values dictionary should come from {valid_keys}.')
 
         # Fuse
-        def merge_decorator_values(decorator, eval_fxn):
-            if isinstance(decorator, str):
-                # 'int' or 'int,float' or 'None'
-                return (eval_fxn(decorator),)
-            elif isinstance(decorator, list):
-                # ['int', 'float']
-                out = []
-                for _x in decorator:
-                    out.extend(merge_decorator_values(_x, eval_fxn))
-                return tuple(out)
-            else:
-                raise ValueError(f'Invalid decorator value `{decorator}`.')
 
         # Set types and modifiers
         for attr in ['types', 'modifiers']:
@@ -497,7 +447,7 @@ def cast(*args):
 
     .. rubric:: Syntax
 
-    * ``cast(callable)`` : Returns a modifier that applies the callable to the node's value after resolution.
+    * ``cast(callable)`` : Returns a modifier that appends the specified callable to the node's |Node.value_modifiers| attribute.
     * ``cast(callable, node)``: Adds the specified callable to the resolved node's |Node.value_modifiers|.
 
     """

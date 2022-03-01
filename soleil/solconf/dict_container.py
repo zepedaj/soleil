@@ -13,10 +13,23 @@ from threading import RLock
 from . import exceptions
 
 
-def as_tuple(component):
-    if component is None:
+def merge_decorator_values(decorator, eval_fxn):
+    if decorator is None:
         return None
-    return component if isinstance(component, tuple) else (component,)
+    elif isinstance(decorator, str):
+        # 'int' or 'int,float' or 'None'
+        out = eval_fxn(decorator)
+        return (None if out is None else
+                (out if isinstance(out, tuple) else (out,)))
+
+    elif isinstance(decorator, list):
+        # ['int', 'float']
+        out = []
+        for _x in decorator:
+            out.extend(merge_decorator_values(_x, eval_fxn))
+        return tuple(out)
+    else:
+        raise ValueError(f'Invalid decorator value `{decorator}`.')
 
 
 class _RawKeyPatterns:
@@ -226,26 +239,15 @@ class KeyNode(ParsedNode, Container):
             #
             component = 'types'
             raw_value = self._key_components[component]
-            self.value.types = self._parse_raw_key_component(raw_value)  # Sets self.value.types
+            self.value.types = merge_decorator_values(raw_value, self.safe_eval)
             #
             component = 'modifiers'
             raw_value = self._key_components[component]
-            self.value.modifiers = self._parse_raw_key_component(raw_value) or tuple()
+            self.value.modifiers = merge_decorator_values(raw_value, self.safe_eval) or tuple()
         except exceptions.RawKeyComponentError:
             raise
         except Exception as err:
             raise exceptions.RawKeyComponentError(self, component, raw_value) from err
-
-    def _parse_raw_key_component(self, component: Optional[str]):
-        """
-        Evaluates the component ('types' or 'modifiers') and returns its parsed value. If this is not a tuple, it is instead returned as a single-entry tuple.
-        """
-
-        if component is None:
-            return None
-        component = self.safe_eval(component) if component else tuple()
-        component = as_tuple(component)
-        return component
 
     def _unsafe_resolve(self):
         """
