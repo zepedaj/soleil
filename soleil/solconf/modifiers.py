@@ -297,13 +297,12 @@ def _inject_extended_node(extend_source_node: KeyNode, override_node: KeyNode):
 @register('extends')
 class extends:
     """
-    Merges the node with a sub-tree loaded from the specified path.
+
+    Merges the node with a sub-tree loaded from the specified path. Relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`.
 
     The loaded  sub-tree (loaded using :func:`load`) is referred to as the  *source tree* -- the node being modified is the *overrides node*. Any raw value, type or modifier specified in the overrides node will take precedence. Non-specified values will be inherited from the source tree.
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
-
-    .. todo:: Not too clear if this is working. The |EXTENDED_NODE_VAR_NAME| should be available in types and modifiers strings as well as parsed value nodes.
 
     When a source node exists for a given overrides node, the overrides node evaluation context will be extended with a variable |EXTENDED_NODE_VAR_NAME| that points to the source node. This can be used to build override types and modifiers that depend on the source node's values.
 
@@ -311,10 +310,14 @@ class extends:
 
     See the :ref:`extends cookbook examples <Extends recipes>` for usage examples.
 
-    .. todo::
+    .. todo:: 
 
-      * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``
-      * Support nested overrides: ``d.x.y: 4``
+      * Not too clear if |EXTENDED_NODE_VAR_NAME| is working correctly. The |EXTENDED_NODE_VAR_NAME| should be available in types and modifiers strings as well as parsed value nodes.
+      * Not clear how extends will work with non-dictionary source trees. 
+      * This modifier and |SolConfArg| have similar mandates - they should be refactored to share common functionality.
+      * Support nested overrides: ``d.x.y: 4`` -- |SolConfArg| already does this!
+      * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``. This requires fancier raw-key regex support.
+
     """
 
     def __init__(self, path):

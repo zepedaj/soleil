@@ -1,3 +1,6 @@
+"""
+"""
+
 from typing import List, Optional
 import yaml
 import re
@@ -12,11 +15,41 @@ class SolConfArg:
     """
     Enables |SolConf| arguments in |argparse| CLIs.
 
-    Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation). Assuming no :ref:`overrides <CLI overrides>` are specified, doing so will set the parsed value of that argument to
+    Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation). 
 
-    .. code-block::
+    Assuming no :ref:`overrides <CLI overrides>` are specified, doing so will set the parsed value of that argument to the resolved |SolConf| object loaded from the ``config_source`` initialization argument:
 
-      SolConf.load(config_source)
+    .. testsetup:: SolConfArg
+
+      import conf
+      from pathlib import Path
+      examples_root = str(Path(conf.__file__).parent / 'content') + '/'  # Necessary bc CWD changes between `make doctest` runs.
+      from soleil import SolConfArg
+      from rich import print
+
+
+    .. doctest:: SolConfArg
+
+      >>> from argparse import ArgumentParser
+      >>> from soleil.solconf.cli_tools import SolConfArg
+
+      >>> parser = ArgumentParser()
+      >>> parser.add_argument('sc', type=SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml'))
+      ReduceAction(...)
+      >>> parser.parse_args([])
+      Namespace(sc={'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'})
+
+    .. _argparse patches note:
+
+    .. note::
+
+      .. rubric:: Patching of Python builtin module |argparse|
+
+      |SolConfArg| integration with the Python builtin module |argparse| requires that patches be applied to the :class:`ArgumentParser` class of that module. The patches should not affect normal operation of that module.
+
+      Patches are only applied once :mod:`soleil.solconf.cli_tools` (or a member) is imported and hence all :class:`ArgumentParser` instances that will take |SolConfArg| argument types must be instantiated after importing :mod:`soleil.solconf.cli_tools`. 
+
+      See the source code in :mod:`soleil.solconf.cli_tools._argparse_patches` for the actual patches.
 
     .. rubric:: Number of consumed CLI arguments
 
@@ -25,13 +58,21 @@ class SolConfArg:
       * one-or-more CLI arguments when ``config_source`` is not provided, or 
       * zero-or-more CLI arguments when ``config_source`` is provided. 
 
-    This is done by internally setting the default keyword arguments ``nargs='+'`` or ``nargs='*'``, respectively, in the :meth:`argparse.ArgumentParser.add_argument` call. Users can override this behavior, e.g., by using ``nargs=1`` or ``nargs=0``, respectively.
+    Any extra CLI arguments besides ``config_source`` are treated as :ref:`CLI overrides`.
 
-    Any extra CLI arguments besides ``config_source`` are treated as :ref:`CLI overrides` that change the value of the loaded |SolConf| object.
+    This behavior is implement by internally setting the default keyword arguments  
 
-    .. note::  
+     * ``nargs='+'`` or ``nargs='*'``, respectively,
 
-      An |argparse| argument of type |SolConfArg| will by default consume an unbounded number of CLI arguments. Hence, it must either be the only argument added to the :class:`ArgumentParser` object, or an optional argument.
+    in the :meth:`argparse.ArgumentParser.add_argument` call. Users can change this behavior, e.g., by using 
+
+      * ``nargs=1`` or ``nargs=0``, respectively, 
+
+    in effect disabling :ref:`CLI overrides`.
+
+    .. note::
+
+      An |argparse| argument of type |SolConfArg| with the default ``nargs='+'`` or ``nargs='*'`` will consume an unbounded number of CLI arguments. Such arguments must either be the only argument added to the :class:`ArgumentParser` object, or an optional argument.
 
     .. note::
 
@@ -57,14 +98,6 @@ class SolConfArg:
 
     def __init__(self, config_source: str = None):
         """
-
-        .. testsetup:: SolConfArg
-
-          import conf
-          from pathlib import Path
-          examples_root = str(Path(conf.__file__).parent / 'content') + '/'  # Necessary bc CWD changes between `make doctest` runs.
-          from soleil import SolConfArg
-          from rich import print
 
         .. doctest:: SolConfArg
 
@@ -133,7 +166,7 @@ class SolConfArg:
 
         .. rubric:: Deeper overrides
 
-        The target of an override provided to the left of the override assignment operator can consist of any valid reference string:
+        The target of an override provided to the left of the override assignment operator can consist of any valid :ref:`reference string <with reference strings>`:
 
         .. doctest:: SolConfArg
            :options: +NORMALIZE_WHITESPACE
@@ -150,7 +183,7 @@ class SolConfArg:
         .. doctest:: SolConfArg
 
           >>> import argparse
-          >>> from soleil.solconf.cli_tools import ReduceAction
+          >>> import soleil.solconf.cli_tools # *** Must be done before ArgumentParser instantiation ***
           >>> parser = argparse.ArgumentParser()
 
           # Setting type=sca1 implicitly sets nargs='+' and action=ReduceAction by default.
@@ -177,7 +210,10 @@ class SolConfArg:
 
           *Help! I'm getting the error message* ``AttributeError: 'str' object has no attribute 'pop'`` *!*
 
-          Using :class:`SolConfArg` argument instances as the ``type`` keywork argument  in a ``ArgumentParser.add_argument`` call requires that ``action=ReduceAction``  keyword value be used as well. This keywork value is set by default when  ``type`` is a :class:`SolConfArg` instance. Have you explicitly set the ``action`` keyword argument to a different value?
+          There are two possible reasons for this error:
+
+            #. The :class:`ArgumentParser` class from the |argparse| module was instantiated before :mod:`soleil.solconf.cli_tools` was imported. See the :ref:`related note <argparse patches note>` on |argparse| patches.
+            #. Using :class:`SolConfArg` argument instances as the ``type`` keyword argument  in a ``ArgumentParser.add_argument`` call requires that the ``action=ReduceAction``  keyword-value pair be used as well. This keyword pair is used by default when ``type`` is a :class:`SolConfArg` instance. Have you explicitly set the ``action`` keyword argument to a different value?
 
         """
         self.config_source = config_source

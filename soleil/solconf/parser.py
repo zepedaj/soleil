@@ -41,7 +41,7 @@ BUILTIN_SCALAR_TYPES = (
 All these types from the ``builtins`` module are supported both as part of expressions and as node modifiers.
 """
 BUILTIN_ITERABLE_TYPES = (
-    'list', 'tuple', 'dict', 'set')  # Require __iter__
+    'list', 'tuple', 'dict', 'set', 'range')  # Require __iter__
 """
 All these types from the ``builtins`` module are supported both as part of expressions and as node modifiers.
 """

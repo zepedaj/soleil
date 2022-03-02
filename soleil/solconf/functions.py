@@ -1,3 +1,21 @@
+"""
+|SRPP|-registered utility functions and types.
+
+Types defined here can be used for type-checking and casting. Type alias ``dt64``, for example, is an alias to ``numpy.datetime64`` and can take an ISO-8601 string (e.g., ``'2014-03-07T17:52:05.245'`` or sub-part like ``'2014-03-01T17'``) and convert it ``numpy.datetime64``:
+
+.. doctest::
+  :options: +NORMALIZE_WHITESPACE
+
+  >>> from soleil import SolConf
+  >>> SolConf({
+  ...   'a::cast(dt64)': '2014-03-07T17:52:05.245',
+  ...   'b:dt64': "$: dt64('2014-03-01T17')"
+  ... })()
+  {'a': numpy.datetime64('2014-03-07T17:52:05.245'),
+   'b': numpy.datetime64('2014-03-01T17','h')}
+"""
+
+
 from .parser import register
 from pathlib import Path
 from typing import Union
@@ -40,10 +58,9 @@ def keys(x: dict):
     return x.values()
 
 
+# TODO: Not reflected in documentation!
+dt64 = np.datetime64
+"""
+(Sphinx Autodoc overwrites this doc string with an 'alias of ...' string -- the doc string is required however to have the 'alias of ...').
+"""
 register('dt64', np.datetime64)
-"""
-Takes an ISO-8601 string (e.g., '2014-03-07T17:52:00.000' or parts thereof) (or numpy.datetime64) and converts it numpy.datetime64.
-"""
-
-
-register('range', range)

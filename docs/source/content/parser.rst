@@ -3,7 +3,7 @@
 
 .. _SRPP:
 
-Soleil Restricted Python Parser (SRPP)
+Soleil restricted python parser (SRPP)
 =========================================
 
 The **Soleil Restricted Python Parser (SRPP)** is used to evaluate :ref:`dstrings` (after stripping the prefix) and :ref:`raw key <raw key syntax>` modifer and type strings.
@@ -43,6 +43,9 @@ The SRPP evaluates all strings using an automatically generated variable context
 * the types in :attr:`~parser.BUILTIN_SCALAR_TYPES` and :attr:`~parser.BUILTIN_ITERABLE_TYPES`, as well as 
 * the variables registered in modules :mod:`soleil.solconf.modifiers` and :mod:`soleil.solconf.functions`:
 
+
+.. todo:: Add a "Default context.rst"  file to the contents with a table with the autodoc's of all the contents of ``DEFAULT_CONTEXT``.
+
 .. testsetup:: DEFAULT_CONTEXT
 
    from rich import print
@@ -64,11 +67,11 @@ The SRPP evaluates all strings using an automatically generated variable context
         'tuple': <class 'tuple'>,
         'dict': <class 'dict'>,
         'set': <class 'set'>,
+        'range': <class 'range'>,
         'cwd': <function cwd at 0x...>,
         'values': <function values at 0x...>,
         'keys': <function keys at 0x...>,
         'dt64': <class 'numpy.datetime64'>,
-        'range': <class 'range'>,
         'noop': <function noop at 0x...>,
         'parent': <function parent at 0x...>,
         'hidden': <function hidden at 0x...>,

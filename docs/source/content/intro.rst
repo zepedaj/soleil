@@ -1,4 +1,3 @@
-
 .. currentmodule:: soleil.solconf
 
 |soleil| is *(1)* a **configuration manager** that is templated, hierarchical, and cross-referential; *(2)* a **CLI builder** ; and *(3)* **experiment launcher**. It is inspired by Facebook's `Hydra <https://hydra.cc/docs/intro/>`_.
@@ -9,8 +8,24 @@ The main aim of |soleil| is to increase flexibility while reducing the amount of
 
 Soleil is part of a family of ML research tools that includes :mod:`xerializer` and :mod:`ploteries`.
 
+Getting started
+===============
+
+Installation
+------------------
+
+.. code-block:: bash
+
+  pip install soleil
+
+
+Cookbook
+----------
+
+The best way to get started is to look at the examples in the :ref:`Cookbook`.
+
 Motivation
-==========
+--------------
 
 * [TODO] Leverages the :mod:`xerializer` package to support custom type type-checking and config file or CLI object representation.
 
@@ -41,18 +56,6 @@ Motivation
   * Configuration values cyclical dependencies detected automatically and signaled to the user.
   * [TODO] Config source file causing the error included in error message.
 
-
-Installation
-============
-
-.. code-block:: bash
-
-  pip install soleil
-
-Getting started
-===============
-
-Have a look at the examples in our :ref:`Cookbook`.
 
 
 Soleil configuration objects 
@@ -112,17 +115,17 @@ Compositions of the native types are also valid input:
      
 .. _dstrings:
 
-|dstrings|
+$-strings
 -----------
 
-The power of :class:`SolConf` objects comes from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using the :ref:`SRPP`:
+The power of :class:`SolConf` objects comes in part from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using the :ref:`SRPP`:
 
 .. testcode:: SolConf
 
   assert SolConf('$: 1+2')() == 3 # White space after ``'$:'`` is stripped.
   assert SolConf('$: {1:[0,1], 2:[2,3]}')() == {1:[0,1], 2:[2,3]}
 
-The :ref:`SRPP <SRPP>` is a  :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xref>`. 
+The |SRPP| is a  :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xref>`. 
 
 See :ref:`SRPP` for more information on supported Python grammar components, the default variable context and ways to extend it.
 
@@ -197,6 +200,14 @@ Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME|, |FILE_ROO
    {'var1': {'subvar1': 2, 'subvar2': 3}, 'var2': 2, 'var3': 3}
 
 See the :ref:`Cookbook` for more examples.
+
+
+Soleil-enabled CLIs
+======================
+
+Soleil provides the |SolConfArg| class, instances of which can be used as the value of the ``type`` keyword argument when defining |argparse| argument parsers.
+
+See the |SolConfArg| class documentation for usage.
 
 .. _Node system:
 
@@ -500,6 +511,14 @@ This indexing syntax is meant to make node indexing behave like standard diction
 ... with reference strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. todo:: 
+
+   Reference strings currently impose the constrain that all soleil dictionary keys contain valid variable names. This excludes generic python dictionaries, and does not even include all possible YAML or JSON-representable dictionaries. To remove this constraint:
+   
+     * Extend reference string suppor to include all YAML dictionary keys (ints, floats, None, bool, string).
+     * Use reference string syntax ``node(ref string)`` to support only some types of indexing, and require the more verbose index-based syntax ``node[idx0]..[idxN]()`` for full flexibility -- this would require dropping/changing :attr:`nodes.Node.qual_name`.
+
+
 Reference strings offer another way to refer to nodes in the node tree. Reference strings consist of a sequence of container indices separated by one or more ``'.'`` characters. 
 
 Using :math:`N>1` ``'.'`` characters will refer to the node's :math:`(N-1)`-th ancestor.
@@ -580,40 +599,3 @@ Note that a node's string representation consists of the node's type, followed b
    >>> print(r_['var2'][0])
    ParsedNode@'var2.0'
 
-
-Discussion on supporting non-variable name key :class:`~dict_container.DictContainer` objects
-===============================================================================================
-
-Pros and cons of extending dictionary support to non-variable name keys
-
-.. rubric:: Cons
-
-* Qualified names and ref strings would not be valid anymore.
-* Would loss simple syntax for from-CLI value modifications.
-* [FIXED BY ``promote``] Might complicate or invalidate the '{key}:{types}:{modifiers}' syntax - how would type and modifier decorations be applied to non-string nodes?
-* Would loss ``__call__(ref string)`` syntax, which is more intuitive than ``__call__[idx0]..[idxN]()`` syntax (easy to forget the parentheses).
-
-.. rubric:: Pros
-	    
-* Would be able to convert any python dictionary can be converted to a :class:`~solconf.SolConf` object. Even object keys valid if xerializable.
-* Can fix lack of support for some YAML dictionaries. E.g., the following YAML string would fail. '{-1: 1, -2 : 2, null : 3, 3.0 : 4, True : 5, False : 6}'
-* Can fix lack of support for some JSON dictionaries. E.g., '{"0" : 1, "1" : 2}'
-* Possible support for |dstring| keys -- but what's the use?
-
-.. rubric:: Possible implementations
-
-* Only support YAML-support dictionary keys (ints, floats, None, bool, string).
-* Use ``promote`` modifiers to modify the ``KeyNode`` attributes:
-
-  ..  doctest:: SolConf
-
-      # The key is the empty string here; the promoted node will be type-checked as `int` upon resolution.
-      >>> SolConf({'x:int:promote' : 0})() 
-      0
-
-      # The `hidden` modifier is applied to the parent promoted value node.
-      >>> SolConf({'_0': {'x:bool:promote,hidden' : False}, '_1': "$: r_['_0']()"})() 
-      {'_1': False}
-	 
-	 
-* Use reference strings to support only some types of indexing, and require the more verbose index-based syntax for full flexibility -- this would require dropping/changing :attr:`nodes.Node.qual_name`.

@@ -11,6 +11,7 @@ class ReduceAction(argparse._StoreAction):
     pass
 
 
+# TODO: Breaks if reloading the module!
 ORIG_GET_VALUES = argparse.ArgumentParser._get_values
 ORIG_ADD_ARGUMENT = argparse.ArgumentParser.add_argument
 
