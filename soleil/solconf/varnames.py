@@ -24,12 +24,16 @@ SPHINX_DEFS = f"""
 .. |ROOT_NODE_VAR_NAME| replace:: ``{ROOT_NODE_VAR_NAME}``
 .. |FILE_ROOT_NODE_VAR_NAME| replace:: ``{FILE_ROOT_NODE_VAR_NAME}``
 .. |EXTENDED_NODE_VAR_NAME| replace:: ``{EXTENDED_NODE_VAR_NAME}``
+.. |Node| replace:: :attr:`~soleil.solconf.nodes.Node`
 .. |Node.value_modifiers| replace:: :attr:`Node.value_modifiers <soleil.solconf.nodes.Node.value_modifiers>`
 .. |KeyNode| replace:: :class:`~soleil.solconf.dict_container.KeyNode`
-.. |KeyNode.attr| replace:: :attr:`KeyNode.attr <soleil.solconf.dict_container.KeyNode.attr>`
+.. |KeyNode.value| replace:: :attr:`KeyNode.value <soleil.solconf.dict_container.KeyNode.value>`
 .. |DictContainer| replace:: :attr:`~soleil.solconf.dict_container.DictContainer`
-.. |SolConf| replace:: :attr:`~soleil.solconf.solconf.SolConf`
+.. |SolConf| replace:: :class:`~soleil.solconf.solconf.SolConf`
+.. |SolConfArg| replace:: :class:`~soleil.solconf.cli_tools.solconfarg.SolConfArg`
 .. |DEFAULT_EXTENSION| replace:: ``.yaml``
+.. |argparse| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__
+.. |load| replace:: :meth:`~soleil.solconf.modifiers.load`
 """
 
 DEFAULT_EXTENSION = '.yaml'

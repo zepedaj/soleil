@@ -117,6 +117,11 @@ class KeyNode(ParsedNode, Container):
 
     """
 
+    value: Node
+    """
+    The single node contained by this KeyNode container.
+    """
+
     def __init__(self, raw_key: str, value: Node, parser: Parser, **kwargs):
         """
         :param raw_key: A string in the form |raw key format| (see :ref:`raw string`).

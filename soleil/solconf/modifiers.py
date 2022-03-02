@@ -394,21 +394,20 @@ def fuse(dict_node: DictContainer):
       >>> sc_fused = SolConf(
       ...   {'base::fuse': {
       ...      'value': '$: 1+2',
-      ...      'types': ['int', 'float'], # String type or list-of-string types
-      ...      'modifiers': 'noop'        # String modifier or list-of-string modifiers
+      ...      'types': ['int', 'float'], # (List of) python statement(s)
+      ...      'modifiers': 'noop'        # (List of) python statement(s)
       ...   }})
-
       >>> sc_fused.print_tree()
       {"DictContainer@''()": [{"KeyNode@'*base'()": ["ParsedNode@'base'(types=(<class 'int'>, <class 'float'>), modifiers=(<function noop at 0x...>,))"]}]}
+      >>> sc_fused()
+      {'base': 3}
 
-      # Equivalent raw key-based-syntax
+      # Equivalent raw key-based syntax
       >>> sc_rk = SolConf({'base:int,float:noop': '$: 1+2'})
       >>> sc_rk.print_tree() # Same as sc_fused.print_tree()
       {"DictContainer@''()": [{"KeyNode@'*base'()": ["ParsedNode@'base'(types=(<class 'int'>, <class 'float'>), modifiers=(<function noop at 0x...>,))"]}]}
-
-      # Resolved outputs
-      >>> sc_fused(), sc_rk()
-      ({'base': 3}, {'base': 3})
+      >>> sc_rk()
+      {'base': 3}
 
     """
 
@@ -431,10 +430,11 @@ def fuse(dict_node: DictContainer):
 
         # Set types and modifiers
         for attr in ['types', 'modifiers']:
-            modify_tree(lambda: dict_node[f'*{attr}'])
-            attr_value = merge_decorator_values(
-                dict_node(f'{attr}'), dict_node[f'*{attr}'].safe_eval)
-            setattr(dict_node['value'], attr, attr_value)
+            if attr in keys:
+                modify_tree(lambda: dict_node[f'*{attr}'])
+                attr_value = merge_decorator_values(
+                    dict_node(f'{attr}'), dict_node[f'*{attr}'].safe_eval)
+                setattr(dict_node['value'], attr, attr_value)
 
         # Reset dict_node types and modifiers
         dict_node['value'].modified = False

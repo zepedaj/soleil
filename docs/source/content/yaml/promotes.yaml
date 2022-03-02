@@ -1,0 +1,4 @@
+# Promote enables modification of non-key nodes.
+_:int:cast(int),choices(1,2,3),promote:
+  True
+  

@@ -1,19 +1,20 @@
-from soleil.solconf import cli_tools as mdl, SolConf
+from soleil.solconf.cli_tools import solconfarg as mdl
+from soleil.solconf.cli_tools import ReduceAction
 import argparse
-from .modifiers import build_config_files
+from ..modifiers import build_config_files
+from .._helpers import file_structure, DOCS_CONTENT_ROOT
 from unittest import TestCase
-
-from ._helpers import file_structure
 
 
 class TestSolConfArg(TestCase):
 
-    def test_all(self):
+    def test_argparse(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('req_arg', nargs='*', type=mdl.SolConfArg())
+        parser.add_argument('req_arg', nargs='*', type=mdl.SolConfArg(), action=ReduceAction)
         parser.add_argument('--opt_arg', nargs='*',
-                            type=mdl.SolConfArg('yaml/load_with_choices/config.yaml'),)
-        args = parser.parse_args(['yaml/load_with_choices/config.yaml'])
+                            type=mdl.SolConfArg(DOCS_CONTENT_ROOT/'yaml/load_with_choices/config.yaml'),
+                            action=ReduceAction)
+        args = parser.parse_args([str(DOCS_CONTENT_ROOT/'yaml/load_with_choices/config.yaml')])
 
     def test_all(self):
 
@@ -91,3 +92,7 @@ class TestSolConfArg(TestCase):
                 {'colors': {'derived': 'orange',
                             'primary': 'red'},
                  'numbers': [1, 3, 7]})
+
+    def test_clobber(self):
+        sca2 = mdl.SolConfArg(f'{DOCS_CONTENT_ROOT}/yaml/load_with_choices/config.yaml')
+        sca2(["typing_a*=soft"])

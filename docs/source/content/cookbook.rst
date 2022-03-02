@@ -100,6 +100,22 @@ With ``x_`` cross-ref
 Promotes
 ----------
 
+.. literalinclude:: yaml/promotes.yaml
+   :language: yaml
+   :caption:
+
+.. doctest:: Cookbook
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> sc = SolConf.load('yaml/promotes.yaml')
+
+   >>> sc.print_tree()
+   ParsedNode@''(types=(<class 'int'>,), modifiers=(functools.partial(<function cast at 0x...>, <class 'int'>), <soleil.solconf.modifiers.choices object at 0x...>, <function promote at 0x...>))
+
+   >>> sc()
+   1
+
+
 
 Loading
 ----------

@@ -285,6 +285,15 @@ class TestModifiers(TestCase):
         self.assertEqual(sc.root.modifiers, (mdl.noop,))
         self.assertEqual(sc(), 1)
 
+        # Fuse, partial keys
+        sc = SolConf({'_::fuse,promote':
+                      {'value': 1}
+                      })
+
+        self.assertEqual(sc(), 1)
+
+        #
+
     def test_docs(self):
 
         # Fuse-based syntax

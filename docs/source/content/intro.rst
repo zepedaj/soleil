@@ -84,7 +84,7 @@ A :class:`SolConf` object is built by passing **raw content** directly to the in
 
    sc = SolConf('abc')
 
-Calling a :class:`SolConf` object returns its **resolved** value. For simple raw content (raw content without modifiers or |dstrings|), the resolved value is the same as the original input:
+**Calling** a :class:`SolConf` object returns its **resolved** value. For simple raw content (raw content without modifiers or |dstrings|), the resolved value is the same as the original input:
 
 .. testcode:: SolConf
 
@@ -115,21 +115,21 @@ Compositions of the native types are also valid input:
 |dstrings|
 -----------
 
-The power of :class:`SolConf` objects comes from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using |soleil|'s :ref:`SRPP`:
+The power of :class:`SolConf` objects comes from their ability to interpret |dstrings| -- special strings indicated by a ``'$:'`` prefix that are evaluated using the :ref:`SRPP`:
 
 .. testcode:: SolConf
 
   assert SolConf('$: 1+2')() == 3 # White space after ``'$:'`` is stripped.
   assert SolConf('$: {1:[0,1], 2:[2,3]}')() == {1:[0,1], 2:[2,3]}
 
-|dstrings| are evaluated using a :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xref>`. 
+The :ref:`SRPP <SRPP>` is a  :class:`~soleil.solconf.parser.Parser` object that supports a subset of the standard Python syntax. Evaluation occurs within a user-extensible variable context (the |dstring| context) that includes several standard Python functions and types (e.g., ``range``, ``list``, ``dict``, ``int``, ``str``) as well as special node variables used in node :ref:`cross-referencing <xref>`. 
 
 See :ref:`SRPP` for more information on supported Python grammar components, the default variable context and ways to extend it.
 
 Escaping strings
 ^^^^^^^^^^^^^^^^^
 
-All strings in raw content that begin with ``'$: '`` are evaluated as Python expressions when the node containing the content is resolved. This behavior can be overriden by instead prefixing the string with ``'\:'``:
+All strings in raw content that begin with ``'$: '`` are evaluated as Python expressions when the node containing the content is resolved. The alternative prefix ``'\:'`` can be instead used to escape strings:
 
 .. testcode:: SolConf
 
@@ -168,10 +168,13 @@ Cross-references
 Raw content used to initialize :class:`~solconf.SolConf` objects can contain cross-references. To facilitate this, soleil automatically injects three nodes as variables into the |dstring| evaluation context:
 
   * **Root node variable** |ROOT_NODE_VAR_NAME| -- the *root node*;
-  * **Root node variable** |CURRENT_NODE_VAR_NAME| -- the node where the |dstring| is defined;
-  * **File root node variable** |FILE_ROOT_NODE_VAR_NAME| -- the current file's root node, *i.e.*, the highest-level node of the configuration file where the current node is defined.
+  * **Current node variable** |CURRENT_NODE_VAR_NAME| -- the node where the |dstring| is defined;
+  * **File root node variable** |FILE_ROOT_NODE_VAR_NAME| -- the current file's root node, *i.e.*, the highest-level node of the configuration file where the current node is defined;
+  * **Extended node variable**  |EXTENDED_NODE_VAR_NAME| -- Available during application of the :func:`~soleil.solconf.modifiers.extends` modifier.
 
-Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME| and |FILE_ROOT_NODE_VAR_NAME| could point to the same node. Any of the these variables can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
+Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME|, |FILE_ROOT_NODE_VAR_NAME| and |EXTENDED_NODE_VAR_NAME| could point to the same node. Any of the these variables can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
+
+.. todo:: Add examples for |FILE_ROOT_NODE_VAR_NAME| and |EXTENDED_NODE_VAR_NAME|.
 
 .. doctest:: SolConf
 
@@ -191,7 +194,9 @@ Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME| and |FILE_
 .. doctest:: SolConf
 
    >>> sc() # Resolve the object
-   {'var1': {'subvar1': 2, 'subvar2': 3}, 'var2': 2, 'var3': 3}   
+   {'var1': {'subvar1': 2, 'subvar2': 3}, 'var2': 2, 'var3': 3}
+
+See the :ref:`Cookbook` for more examples.
 
 .. _Node system:
 
@@ -302,6 +307,10 @@ Node types and modifiers are specified in raw content using string keys with one
 
 Both expressions will be evaluted using the :attr:`SolConf.parser <solconf.SolConf.parser>` object, hence using the same variable context as used for |dstrings|.
 
+Note that the types and modifiers defined in a raw key will be applied to the key node's |KeyNode.value| node.
+
+.. note:: The :func:`~soleil.solconf.modifiers.fuse` modifier offers an alternative syntax to specify node types and modifiers.
+
 
 Type checking
 ^^^^^^^^^^^^^^
@@ -344,7 +353,7 @@ Modifiers
 ^^^^^^^^^^
 
 
-A modifier is a callable that takes a :class:`~dict_container.KeyNode` object and optionally outputs a new node. A modifier or tuple of modifiers can be specified as part of a raw content string key (:ref:`syntax <raw key syntax>`). These modifiers will be applied sequentially to the associated :class:`KeyNode`. 
+A modifier is a callable that takes a |Node| object and optionally outputs a new node. A modifier or tuple of modifiers can be specified as part of a raw content string key (:ref:`syntax <raw key syntax>`). These modifiers will be applied sequentially to the associated :class:`KeyNode`. 
 
 If a modifier outputs a new node, subsequent modifiers will be applied to this returned noe, as illustrated by the following code snippet from the :meth:`KeyNode.modify <dict_container.KeyNode.modify>` method:
 
@@ -358,7 +367,26 @@ If a modifier outputs a new node, subsequent modifiers will be applied to this r
 
 Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results.
 
-.. todo:: Is there an example where modifier order affects the results?
+.. doctest:: SolConf
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> import traceback
+
+   # The choices modifier is applied to the fused node.
+   >>> try:
+   ...   SolConf({'_::fuse,choices(1,2,3)': {'value': 4}})()
+   ... except Exception:
+   ...   print(traceback.format_exc())
+    Traceback (most recent call last):
+    ...
+    ValueError: The resolved value of `ParsedNode@'_'` is `4`, but it must be one of `(1, 2, 3)`.
+    ...
+    soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@'_'`.
+
+   # The choices modifier is applied to the disarded, un-fused dictionary container node.
+   >>> SolConf({'_::choices(1,2,3),fuse': {'value': 4}})()
+   {'_': 4}
+   
 
 For a discussion of modifier evaluation timing protcols, see the :class:`~dict_container.KeyNode` and :class:`~solconf.SolConf` documentation.
 

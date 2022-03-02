@@ -9,8 +9,13 @@ from .dict_container import KeyNode
 from .nodes import Node
 from .containers import Container
 
+DEFAULT_MAX_ITERS = 100
+"""
+The maximum number of iterations to attempt as part of modification heuristics.
+"""
 
-def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters=10):
+
+def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters=DEFAULT_MAX_ITERS):
     """
     Traverses the tree top-down and calls the :meth:`~soleil.solconf.nodes.Node.modify` method of each node, by default iterating over these traversals until all nodes are modified.
 
@@ -52,14 +57,25 @@ def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters
     return num_modified
 
 
-def modify_ref_path(node, ref_components: List[str], iterative=True, max_iters=10):
+def modify_ref_path(node: Union[Node, Callable[[], Node]],
+                    ref_components: List[str],
+                    iterative=True, max_iters=DEFAULT_MAX_ITERS):
     """
     Traverses the path of ancestor nodes specified in ``ref_components`` and applies the modifications, iterating until all nodes are modified. The heuristic assumes that ``node`` is not invalidated by any of the modifiers along the path ``ref_components``. Since ref strings skip over ref nodes, if any of the children nodes in ``ref_components`` has a key node parent, that node is also modified.
 
     :param ref_components: A list of reference components. Can be obtained from a ref string using :meth:`Nodes._get_ref_components`.
     """
 
+    # Convert node to a callable if not the case.
+    if isinstance(node, Node):
+        def node_callable(x=node): return x
+    else:
+        node_callable = node
+
     for _ in range(max_iters + len(ref_components)):
+
+        # Get the node
+        node = node_callable()
 
         # Modify the node
         num_modified = int(not node.modified)

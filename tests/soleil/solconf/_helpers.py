@@ -5,6 +5,8 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 import yaml
 
+DOCS_CONTENT_ROOT = Path(__file__).parent.parent.parent.parent / 'docs' / 'source' / 'content'
+
 
 @contextmanager
 def file_structure(contents: Dict[str, Any]):

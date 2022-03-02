@@ -298,16 +298,16 @@ class Node(abc.ABC):
 
 class ParsedNode(Node):
     """
-    Parsed nodes are nodes that have no children but might contain node references and python expressions that need to be resolved.
+    Parsed nodes are leaf nodes that contain literal values or |dstrings|.
 
-    Parsed nodes are resolved in one of four ways depending on the input value (the `raw value`):
+    Parsed nodes are resolved in one of four ways depending on the raw input value:
 
     1. Raw values that are not strings are passed on without modification.
 
     For string raw values, the node's resolved content will depend on the raw value's first character:
 
-    2. The string starts with `'$:'`: the remainder of the string will be evaluated as a safe python expression returning the resolved value.
-    3. The string starts with `'\'`: that character will be stripped and the remainder used as the resolved value.
+    2. The string starts with ``'$:'``: the remainder of the string will be evaluated as a safe python expression returning the resolved value. Any whitespace after the prefix will be stripped.
+    3. The string starts with ``'\\:'``: that prefix will be stripped and the remainder used as the resolved value.
     4. For any other character, the string itself will be the resolved value.
 
     .. rubric:: Special context variables

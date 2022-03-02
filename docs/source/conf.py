@@ -215,8 +215,8 @@ todo_include_todos = True
 #
 rst_prolog = '\n'.join([
     SPHINX_DEFS,
-    '.. |dstring| replace:: **$-string**',
-    '.. |dstrings| replace:: **$-strings**',
+    '.. |dstring| replace:: :ref:`$-string <dstrings>`',
+    '.. |dstrings| replace:: :ref:`$-strings <dstrings>`',
     '.. |soleil| replace:: **Soleil**',
 ])
 
