@@ -61,7 +61,7 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
                     ref_components: List[str],
                     iterative=True, max_iters=DEFAULT_MAX_ITERS):
     """
-    Traverses the path of ancestor nodes specified in ``ref_components`` and applies the modifications, iterating until all nodes are modified. The heuristic assumes that ``node`` is not invalidated by any of the modifiers along the path ``ref_components``. Since ref strings skip over ref nodes, if any of the children nodes in ``ref_components`` has a key node parent, that node is also modified.
+    Traverses the path of ancestor nodes specified in ``ref_components`` and applies the modifications, iterating until all nodes are modified (except the very last node in the reference string). The heuristic assumes that ``node`` is not invalidated by any of the modifiers along the path ``ref_components``. Since ref strings skip over ref nodes, if any of the children nodes in ``ref_components`` has a key node parent, that node is also modified.
 
     :param ref_components: A list of reference components. Can be obtained from a ref string using :meth:`Nodes._get_ref_components`.
     """
@@ -83,13 +83,17 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
 
         # Modify descendants path
         child = node
-        for _comp in ref_components:
+        for _k, _comp in enumerate(ref_components):
             child = child._node_from_ref_component(_comp)
 
             # Modify parent key node, if any.
             if isinstance(parent := child.parent, KeyNode) and not parent.modified:
                 num_modified += 1
                 parent.modify()
+                break
+
+            # Do not modify the last node.
+            if _k == len(ref_components)-1:
                 break
 
             # Modify node.

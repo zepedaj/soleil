@@ -323,6 +323,11 @@ class ParsedNode(Node):
     The Python parser used to resolve :ref:`dstrings` and :ref:`raw key <raw key syntax>` type and modifier strings.
     """
 
+    raw_value: Any
+    """
+    The literal value or unparsed |dstring|.
+    """
+
     def __init__(self, raw_value, parser, **kwargs):
         self.raw_value = raw_value
         self.parser = parser

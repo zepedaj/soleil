@@ -43,9 +43,12 @@ class SolConfArg:
 
     Extra CLI arguments passed to an |argparse| argument of type |SolConfArg| specify overrides that change the values in the loaded |SolConf| object. Override specifiers can be of three types:
 
-        * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode` (or rather, if it exposes a :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` attribute), in which case it replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
-        * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. The target node, if any, is discarded, and and the new node added.
+        * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case the assignment replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value. This new value can be a literal or |dstring|.
+        * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. The target node, if any, is discarded, and the new node added.
         * **Source clobber (**=)**: Sets or replaces the ``config_source`` argument of the ``SolConfArg`` object. See :ref:`below <source clobber>`.
+
+
+    .. todo:: This class and |extends| share a lot of common functionality. Is it possible to merge the two?
 
     """
 
@@ -75,7 +78,7 @@ class SolConfArg:
           >>> sca2(["typing_a=c++", "typing_b=c++"]) 
           {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
 
-        The modifiers in each node prevent setting the final value directly:
+        Looking at the source file for :ref:`load_with_choices/config.yaml`, the |load| and |choices| modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
 
         .. doctest:: SolConfArg
           :options: +NORMALIZE_WHITESPACE
@@ -102,32 +105,47 @@ class SolConfArg:
         .. doctest:: SolConfArg
 
            >>> sca2(["typing_a*=soft"])
+           {'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'}
 
 
         .. _source clobber:
 
         .. rubric:: Source clobber
 
-        In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment:
+        In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment, *but doing so has a disadvantage*:
 
         .. doctest:: SolConfArg
 
-          # Use a source clobber assignmet **=<path> instead of this!
+          # Use a source clobber assignment **=<path> instead of this!
           >>> sca2(['.*={"_::load,promote": ' + examples_root + 'yaml/colors/colors_config.yaml}'])
-          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': 'chartreuse', 'layout': {'shape': 'spots', 'relative_position': 'random'}, 'alternate_layout': {'shape': 'arc', 'relative_position': 'contiguous'}, 'stroke_width': 5, 'temperature': 'cold', 'target_time': numpy.datetime64('2023-10-10T10:05')}
+          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': ...
 
-        One disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment is carried out. The **source clobber**  special syntax ``**=<path>`` has the same effect but avoids this drawback:
+        Besides verbosity, the disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment override is carried out. The **source clobber**  special syntax ``**=<path>`` has the same effect but is less verbose and avoids this drawback:
 
         .. doctest:: SolConfArg
 
-          # Source clobber assignment must be the first argument in the list
+          # Source clobber assignment must be the first argument in the overrides list
           >>> sca2([f'**={examples_root}/yaml/colors/colors_config.yaml'])
-          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': 'chartreuse', 'layout': {'shape': 'spots', 'relative_position': 'random'}, 'alternate_layout': {'shape': 'arc', 'relative_position': 'contiguous'}, 'stroke_width': 5, 'temperature': 'cold', 'target_time': numpy.datetime64('2023-10-10T10:05')}
+          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': ...
 
-        Note that the source clobber override must be the first item in the list.
+        Note that the source clobber override must be the first item in the overrides list.
 
 
-        .. rubric:: Using with ``argparse`` parsers
+        .. rubric:: Deeper overrides
+
+        The target of an override provided to the left of the override assignment operator can consist of any valid reference string:
+
+        .. doctest:: SolConfArg
+           :options: +NORMALIZE_WHITESPACE
+
+           >>> sca = SolConfArg(f'{examples_root}/yaml/colors/colors_config.yaml')
+           >>> sca()
+           {...'layout': {'shape': 'spots',...}
+           >>> sca(['layout.shape=square'])
+           {...'layout': {'shape': 'square',...}
+
+
+        .. rubric:: Usage with ``argparse`` parsers
 
         .. doctest:: SolConfArg
 
@@ -212,8 +230,7 @@ class SolConfArg:
             # This is required to e.g., apply load target overrides or load content that the
             # reference string refers to.
             components = Node._get_ref_components(ref_str)
-            if len(components) > 1:
-                modify_ref_path(sc.root, components[:-1])
+            modify_ref_path(sc.root, components)
 
             # Get node
             node = sc.root

@@ -122,10 +122,9 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
         #. The sub-tree is used to replace the original node in the node tree.
         #. All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
 
-
     .. rubric:: Choice-checking
 
-    The :meth:`load` modifier can be combined with :meth:`choices` to constrain both the valid paths as well as the loaded node values. See the :ref:`load_with_choices.yaml` cookbook recipe for an example.
+    The :meth:`load` modifier can be combined with :meth:`choices` to constrain both the valid paths as well as the loaded node values. See the :ref:`Load with choices` cookbook recipe for an example.
 
     """
 

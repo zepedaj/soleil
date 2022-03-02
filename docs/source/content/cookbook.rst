@@ -156,10 +156,12 @@ colors_config.yaml
        'target_time': numpy.datetime64('2023-10-10T10:05')
    }
 
-.. _load_with_choices.yaml:
+.. _Load with choices:
 
-load_with_choices.yaml
+Load with choices
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _load_with_choices/config.yaml:
 
 .. literalinclude:: yaml/load_with_choices/config.yaml
    :language: yaml
