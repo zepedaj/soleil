@@ -35,6 +35,7 @@ SPHINX_DEFS = f"""
 .. |argparse| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__
 .. |load| replace:: :meth:`~soleil.solconf.modifiers.load`
 .. |choices| replace:: :meth:`~soleil.solconf.modifiers.choices`
+.. |extends| replace:: :meth:`~soleil.solconf.modifiers.extends`
 """
 
 DEFAULT_EXTENSION = '.yaml'
