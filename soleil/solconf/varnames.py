@@ -36,6 +36,7 @@ SPHINX_DEFS = f"""
 .. |load| replace:: :meth:`~soleil.solconf.modifiers.load`
 .. |choices| replace:: :meth:`~soleil.solconf.modifiers.choices`
 .. |extends| replace:: :meth:`~soleil.solconf.modifiers.extends`
+.. |cast| replace:: :meth:`~soleil.solconf.modifiers.cast`
 .. |SRPP| replace:: :ref:`SRPP <SRPP>`
 """
 

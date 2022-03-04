@@ -20,6 +20,8 @@ from functools import partial
 class XZRL_POST_PROCESSOR:
     """
     Flag used as the default value for argument ``post_processor`` of  :meth:`SolConf.__init__`. It specifies that the default :mod:`xerializer`-based post processing be used.
+
+    .. todo:: The `permissive` option should be restricted to specific classes provided as the value of permissive. Doing otherwise will lead to silent errors (e.g., passing tuples).
     """
     @staticmethod
     def get():
@@ -44,7 +46,6 @@ class SolConf:
     After initializaion,
 
     3. upon invoking the object's :meth:`__call__` method, the node tree is resolved.
-
 
     """
 

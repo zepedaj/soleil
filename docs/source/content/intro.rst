@@ -154,7 +154,7 @@ Included context.
 Dictionaries with arbitrary keys
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently, soleil only supports :class:`DictContainer` nodes with string keys that are valid variable names. However, arbitrary dictionaries can be built in two different ways.
+Currently, soleil only supports :class:`DictContainer` nodes with string keys that are valid variable names. However, arbitrary dictionaries can be built in three different ways.
 
 One way is to use |dstrings|:
 
@@ -191,6 +191,14 @@ Using the post-processor further makes it possible to use any hashable registere
    {(0, 1): 0, numpy.datetime64('2020-10-10'): 1}
 
 .. todo:: Add explanation of post_processor and the default xerializer post-processor.
+
+
+Yet a third way to specify dictionaries with non-variable key names is to use the |cast| modifier:
+
+.. doctest:: SolConf
+
+   >>> print(SolConf({'_::cast(dict),promote': [[(0,1), 0], ["$: dt64(\'2020-10-10\')", 1]]})())
+   {(0, 1): 0, numpy.datetime64('2020-10-10'): 1}
 
 .. _xref:
 
