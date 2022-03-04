@@ -154,7 +154,9 @@ Included context.
 Dictionaries with arbitrary keys
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently, soleil only supports :class:`DictContainer` nodes with string keys that are valid variable names. However, arbitrary dictionaries can be built using |dstrings|:
+Currently, soleil only supports :class:`DictContainer` nodes with string keys that are valid variable names. However, arbitrary dictionaries can be built in two different ways.
+
+One way is to use |dstrings|:
 
 .. doctest:: SolConf
    
@@ -162,6 +164,33 @@ Currently, soleil only supports :class:`DictContainer` nodes with string keys th
    {True: 'abc', 2: 'def', 3.0: 'ghi', None: 'jkl'}
 
 .. todo:: Missing
+
+A second way to specify dictionaries with non-variable key names  is to leverage the default :mod:`xerializer` post-processor:
+
+.. doctest:: SolConf
+
+   >>> print(SolConf({
+   ...  '__type__': 'dict', 
+   ...  'value': [(True, 'abc'), 
+   ...             (2, 'def'), 
+   ...             (3.0, 'ghi'), 
+   ...             (None, 'jkl')]
+   ... })())
+   {True: 'abc', 2: 'def', 3.0: 'ghi', None: 'jkl'}
+
+Using the post-processor further makes it possible to use any hashable registered with :mod:`xerializer` as a dictionary key:
+
+.. doctest:: SolConf
+
+   >>> print(SolConf({
+   ...  '__type__': 'dict', 
+   ...  'value': [
+   ...     [{'__type__': 'tuple', 'value': [0,1]}, 0],
+   ...     [{'__type__': 'np.datetime64', 'value': '2020-10-10'}, 1]
+   ... ]})())
+   {(0, 1): 0, numpy.datetime64('2020-10-10'): 1}
+
+.. todo:: Add explanation of post_processor and the default xerializer post-processor.
 
 .. _xref:
 

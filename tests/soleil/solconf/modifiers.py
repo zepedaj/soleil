@@ -99,8 +99,8 @@ class TestModifiers(TestCase):
         # (config_file, (root_dat, file1_dat, file2_dat)):
         with build_config_files() as (config_file, expected):
             super_root = {'super_root::load': str(config_file.absolute())}
-            ac = SolConf(super_root)
-            resolved = ac.resolve()['super_root']
+            sc = SolConf(super_root)
+            resolved = sc()['super_root']
 
             self.assertEqual(expected, resolved)
 

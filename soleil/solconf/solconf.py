@@ -4,8 +4,8 @@
 
 import yaml
 from contextlib import nullcontext
-from typing import Optional
-from .containers import Container, ListContainer
+from typing import Optional, Callable, List
+from .containers import ListContainer
 from .modification_heuristics import modify_tree
 from .dict_container import DictContainer, KeyNode
 from .nodes import ParsedNode, Node
@@ -13,6 +13,17 @@ from .parser import Parser
 from threading import RLock
 from pathlib import Path
 from .utils import print_tree
+import xerializer
+from functools import partial
+
+
+class XZRL_POST_PROCESSOR:
+    """
+    Flag used as the default value for argument ``post_processor`` of  :meth:`SolConf.__init__`. It specifies that the default :mod:`xerializer`-based post processing be used.
+    """
+    @staticmethod
+    def get():
+        return partial(xerializer.Serializer().from_serializable, permissive=True)
 
 
 class SolConf:
@@ -47,7 +58,11 @@ class SolConf:
     """
     lock: RLock
     """
-    Threading lock used when modifying the object.<
+    Threading lock used when modifying the object.
+    """
+    post_processor: Callable[[Node], None]
+    """
+    Callable applied to the resolved output.
     """
 
     @property
@@ -57,16 +72,23 @@ class SolConf:
         """
         return self.node_tree
 
-    def __init__(self, raw_data, context: dict = {}, parser=None, modify=True):
+    def __init__(
+            self, raw_data, context: dict = {},
+            parser=None, modify=True,
+            post_processor: Optional[Callable[[Node], None]] = XZRL_POST_PROCESSOR):
         """
-        :param raw_data: The data to convert to an :class:`SolConf` object.
+        :param raw_data: The data to convert to a :class:`SolConf` object.
         :param context: Extra parameters to add to the parser context.
         :param parser: The parser to use (instantiated internally by default). If a parser is provided, ``context`` is ignored.
+        :param post_processor: A callable applied to the final resolved output. By default, this is :class:`xerializable.Serializer().from_serializable`.
         """
 
         self.parser = parser or Parser(context)
         root = self.build_node_tree(raw_data, parser=self.parser)
         self.lock = RLock()
+        self.post_processor = (post_processor.get() if post_processor is XZRL_POST_PROCESSOR
+                               else post_processor if post_processor is not None
+                               else lambda x: x)
         self.node_tree = None
         self.replace(None, root)
         if modify:
@@ -131,14 +153,10 @@ class SolConf:
 
     def __call__(self, *args):
         """
-        An alias to the :attr:`root` node's :meth:`__call__` method.
+        Calls the :attr:`root` node's :meth:`__call__` method and applies :attr:`post_processor`, if any.
         """
         with self.lock:
-            return self.node_tree(*args)
-
-    def resolve(self):
-        with self.lock:
-            return self.node_tree.resolve()
+            return self.post_processor(self.node_tree(*args))
 
     def replace(self, old_node: Optional[Node], new_node: Node):
         """
