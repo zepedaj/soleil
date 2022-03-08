@@ -295,6 +295,39 @@ class Node(abc.ABC):
         """
         return (f'{self.parent.get_child_qual_name(self)}' if self.parent else '')
 
+    def rel_name(self, ancestor: 'Node'):
+        """
+        Returns the name of this node, relative to the specified ancestor node.
+
+        .. doctest::
+
+          >>> from soleil import SolConf
+          >>> sc = SolConf({'greek': {'alpha': 'a', 'beta': 'b'}})
+          >>> sc.root.rel_name(sc.root)
+          ''
+          >>> sc.root['greek']['alpha'].rel_name(sc.root['greek'])
+          'alpha'
+
+        """
+
+        # Check that ancestor is an ancestor
+        ancestors = [node := self]
+        while node.parent:
+            ancestors.append(node := node.parent)
+
+        if ancestor not in ancestors:
+            raise Exception(f'{ancestor} is not an ancestor of {self}.')
+
+        # Get relative name
+        ancestor_qual_name = ancestor.qual_name
+        self_qual_name = self.qual_name
+        if ancestor_qual_name != self_qual_name[:len(ancestor_qual_name)]:
+            # Should never happen, since ancestry was verified above.
+            raise Exception('Unexpected error!')
+
+        #
+        return self_qual_name[len(ancestor_qual_name):].lstrip('.')
+
 
 class ParsedNode(Node):
     """

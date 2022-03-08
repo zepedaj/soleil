@@ -1,4 +1,5 @@
 import rich
+from itertools import chain
 
 
 class _Unassigned:
@@ -13,6 +14,20 @@ def node_info_str(node):
     if node.modifiers != ():
         decorator_strs.append(f'modifiers={node.modifiers}')
     return f"{node}({', '.join(decorator_strs) if decorator_strs else ''})"
+
+
+def traverse_tree(root):
+    """
+    Iterates top-down, depth-first over all nodes in a tree.
+    """
+    #
+    from soleil.solconf.containers import Container
+
+    if isinstance(root, Container):
+        yield root
+        yield from chain(*[traverse_tree(child) for child in root.children])
+    else:
+        yield root
 
 
 def print_tree(root, do_print=True, as_str=False):

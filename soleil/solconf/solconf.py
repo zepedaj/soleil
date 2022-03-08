@@ -169,8 +169,7 @@ class SolConf:
             # Check valid old node.
             if old_node and old_node is not self.root:
                 raise Exception(
-                    f'The provided target node `{old_node}` is not '
-                    f'at the root of the node tree `{self.root}`.')
+                    f'Attempted to replace the root of a SolConf object, but the provided target node `{old_node}` is not the root `{self.root}`.')
 
             # Remove self from old node.
             if old_node:
