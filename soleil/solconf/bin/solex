@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+import climax as clx
+from soleil.solconf.cli_tools import SolConfArg
+from rich import print
+
+
+@clx.command()
+@clx.argument('conf', type=SolConfArg(resolve=False),
+              help='The path of the configuration file to launch, and optionally, any argument overrides.')
+@clx.argument(
+    '--print', choices=['resolved', 'tree', 'tree-no-modifs'],
+    dest='print_what', default=None,
+    help='Prints the resolved contents (before applying the post-processor) or the node tree, optionally before applying modifications.')
+def solex(conf, print_what):
+    if print_what == 'resolved':
+        conf.modify_tree()
+        print(conf.root())
+    elif print_what == 'tree':
+        conf.modify_tree()
+        conf.print_tree()
+    elif print_what == 'tree-no-modifs':
+        conf.print_tree()
+    elif print_what is None:
+        # Executes  the post-processor, and hence any commands.
+        conf.modify_tree()
+        conf()
+    else:
+        raise Exception('Unexpected case.')
+
+
+if __name__ == '__main__':
+    solex()

@@ -8,6 +8,7 @@ from typing import Union, List, Callable
 from .dict_container import KeyNode
 from .nodes import Node
 from .containers import Container
+from .dict_container import DictContainer
 
 DEFAULT_MAX_ITERS = 100
 """
@@ -61,10 +62,20 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
                     ref_components: List[str],
                     iterative=True, max_iters=DEFAULT_MAX_ITERS):
     """
-    Traverses the path of ancestor nodes specified in ``ref_components`` and applies the modifications, iterating until all nodes are modified (except the very last node in the reference string). The heuristic assumes that ``node`` is not invalidated by any of the modifiers along the path ``ref_components``. Since ref strings skip over ref nodes, if any of the children nodes in ``ref_components`` has a key node parent, that node is also modified.
+    Traverses the path of ancestor nodes specified in ``ref_components`` and applies the modifications, iterating until all nodes in the path (except the last one) are modified. The heuristic assumes that ``node`` is not invalidated by any of the modifiers along the path ``ref_components``. If that is not the case, argument ``node`` should be a callable that always returns the correct node.
+
+    Since ref strings skip over ref nodes, if any of the children nodes in ``ref_components`` has a key node parent, that node is also modified.
+
+    Also, promoted dictionary keys are modified before applying any references to the parent dictionary.
 
     :param ref_components: A list of reference components. Can be obtained from a ref string using :meth:`Nodes._get_ref_components`.
     """
+
+    from .modifiers import promote
+
+    # If no ref components provided, return
+    if len(ref_components) == 0:
+        return 0
 
     # Convert node to a callable if not the case.
     if isinstance(node, Node):
@@ -72,35 +83,48 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
     else:
         node_callable = node
 
+    # Modify the path
     for _ in range(max_iters + len(ref_components)):
 
         # Get the node
-        node = node_callable()
+        child = node_callable()
+        num_modified = 0
 
-        # Modify the node
-        num_modified = int(not node.modified)
-        node.modify()
+        # Modify descendants path, except for the last one
+        for _k in range(len(ref_components)):
 
-        # Modify descendants path
-        child = node
-        for _k, _comp in enumerate(ref_components):
-            child = child._node_from_ref_component(_comp)
-
-            # Modify parent key node, if any.
+            # If the child has a parent key node, modify it.
             if isinstance(parent := child.parent, KeyNode) and not parent.modified:
                 num_modified += 1
                 parent.modify()
                 break
 
-            # Do not modify the last node.
-            if _k == len(ref_components)-1:
-                break
-
-            # Modify node.
+            # Modify the child
             if not child.modified:
                 num_modified += 1
                 child.modify()
                 break
+
+            # If child is a dictionary with a promoted child key, modify the child key.
+            if (
+                    isinstance(child, DictContainer)
+                    and len(child.children) == 1
+                    and not (key_node := list(child.children)[0]).value.modified
+            ):
+                key_node._parse_raw_key()
+                if promote in key_node.value.modifiers:
+                    key_node.modify()
+                    key_node.value.modify()
+                    num_modified += 2
+                    break
+
+            # Move to next child -- note that the last one is not modified
+            child = child._node_from_ref_component(ref_components[_k])
+
+        # If the last node has a parent KeyNode, modify the parent
+        if isinstance(parent := child.parent, KeyNode) and not parent.modified:
+            child.parent.modify()
+            num_modified = 1
 
         if num_modified == 0 or not iterative:
             break

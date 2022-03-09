@@ -72,7 +72,7 @@ class SolConfArg:
 
     .. note::
 
-      An |argparse| argument of type |SolConfArg| with the default ``nargs='+'`` or ``nargs='*'`` will consume an unbounded number of CLI arguments. Such arguments must either be the only argument added to the :class:`ArgumentParser` object, or an optional argument.
+      An |argparse| argument of type |SolConfArg| with the default ``nargs='+'`` or ``nargs='*'`` will consume an unbounded number of CLI arguments. Such arguments must either be the last non-optional argument added to the :class:`ArgumentParser` object, or an optional argument.
 
     .. note::
 
@@ -96,8 +96,11 @@ class SolConfArg:
     _OVERRIDE_PATTERN = re.compile(
         f'(?P<ref_str>{Node._FULL_REF_STR_PATTERN_RAW})(?P<assignment_type>\\=|\\*\\=)(?P<raw_content>.*)')
 
-    def __init__(self, config_source: str = None):
+    def __init__(self, config_source: str = None, resolve=True):
         """
+
+        :param config_source: The path to the configuration file to load.
+        :param resolve: Whether :meth:`__call__` returns the resolved content, or the un-modified and un-resolved :class:`SolConfArg` object (after applying any overrides).
 
         .. doctest:: SolConfArg
 
@@ -217,6 +220,7 @@ class SolConfArg:
 
         """
         self.config_source = config_source
+        self.resolve = resolve
 
     @property
     def DFLT_ARGPARSE_KWARGS(self):
@@ -293,11 +297,14 @@ class SolConfArg:
                 node = sc.root.node_from_ref(ref_str)
                 (node.parent if node.parent else node.sol_conf_obj).replace(node, new_node)
 
-        # Modify all remaining non-modified parts.
-        sc.modify_tree()
+        if self.resolve:
+            # Modify all remaining non-modified parts.
+            sc.modify_tree()
 
-        # Resolve the tree
-        return sc()
+            # Resolve the tree
+            return sc()
+        else:
+            return sc
 
     @classmethod
     def _parse_override_str(cls, override: str):

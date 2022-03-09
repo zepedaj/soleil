@@ -14,7 +14,7 @@ from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned, traverse_tree
 from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME
-from .modification_heuristics import modify_tree
+from .modification_heuristics import modify_tree, modify_ref_path
 
 
 @register('noop')
@@ -312,12 +312,12 @@ class extends:
 
     See the :ref:`extends cookbook examples <Extends recipes>` for usage examples.
 
-    .. todo:: 
+    .. todo::
 
-      * Not clear how extends will work with non-dictionary source trees. 
+      * Not clear how extends will work with non-dictionary source trees.
       * This modifier and |SolConfArg| have similar mandates - they should be refactored to share common functionality.
       * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``. This requires fancier raw-key regex support.
-      * Support adding, removing and clobbering nodes.
+      * Support adding, removing and clobbering nodes - use special 'add', 'remove', and 'clobber' modifiers that simply act as flags for `extends`. Ideally these would check that a parent (or ancesotr) node is being extended.
 
     """
 
@@ -328,13 +328,18 @@ class extends:
             if not path.suffix:
                 path = path.with_suffix(DEFAULT_EXTENSION)
             self.source = path
+            self.source_qual_name = None
         elif isinstance(source, DictContainer):
             self.source = source.copy()
+            # The copied node will have qual_name '', as it will be its own root.
+            # Keep the original source qual_name to use to display useful error messages --
+            # it is used in __str__.
+            self.source_qual_name = source.qual_name
         else:
             raise TypeError(f'Expected `str`, `Path` or `DictContainer`, but got `{type(source)}`.')
 
     def __str__(self):
-        return f'extends<{self.source}>'
+        return f'extends<{self.source_qual_name or self.source}>'
 
     def __call__(self, overrides_tree: DictContainer):
         """
@@ -366,8 +371,10 @@ class extends:
 
             # TODO: Append modification will fail, as the node does not exist.
             # TODO: The node needs modification of all ancestors to exist!
-            source_node = source_tree.node_from_ref(
-                curr_override.rel_name(overrides_tree))
+            ref_str = curr_override.rel_name(overrides_tree)
+            components = Node._get_ref_components(ref_str)
+            modify_ref_path(source_tree, components)
+            source_node = source_tree.node_from_ref(ref_str)
 
             if isinstance(source_node, KeyNode):
                 source_node._parse_raw_key()
