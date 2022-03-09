@@ -7,6 +7,18 @@ class _Unassigned:
     pass
 
 
+def kw_only(name):
+    """
+    Provides kw-only functionality for versions ``dataclasses.field`` that do not support it.
+
+    .. TODO:: Use dataclass's ``kw_only`` support (`https://stackoverflow.com/a/49911616`).
+    """
+    def kw_only():
+        raise Exception(f"Required keyword `{name}` missing")
+
+    return kw_only
+
+
 def node_info_str(node):
     decorator_strs = []
     if node.types is not None:

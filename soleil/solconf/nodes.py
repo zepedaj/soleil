@@ -4,7 +4,7 @@ from .autonamed_pattern import AutonamedPattern
 from threading import RLock
 from .exceptions import (
     InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError, ModificationError)
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import abc
 from .parser import Parser
 from typing import Any, Set, Optional, Tuple, Callable, List
@@ -13,17 +13,9 @@ from . import varnames
 import re
 from .resolving_node import ResolvingNode
 from pathlib import Path
+from .utils import kw_only
 
 # TODO: Remove this
-
-
-def _kw_only():
-    """
-    Provides kw-only functionality for versions ``dataclasses.field`` that do not support it.
-
-    .. TODO:: Use dataclass's ``kw_only`` support (`https://stackoverflow.com/a/49911616`).
-    """
-    raise Exception("Required keyword missing")
 
 
 class FLAGS(Enum):
@@ -137,6 +129,14 @@ class Node(abc.ABC):
                 except Exception as err:
                     raise ModificationError(self,  modifier) from err
 
+    def copy(self, **kwargs):
+        """
+        Returns a copy of the sub-tree with this node as the root.
+        """
+        out = replace(self, **kwargs)
+        out.parent = None
+        return out
+
     @property
     def file_root(self):
         """
@@ -149,7 +149,7 @@ class Node(abc.ABC):
 
     def __str__(self):
         return f"{type(self).__name__}@'{self.qual_name}'" + (
-            f'<{self.source_file}>' if self.source_file else '')
+            f'<{self.source_file}>' if self._source_file else '')
 
     def __repr__(self):
         return str(self)
@@ -329,7 +329,32 @@ class Node(abc.ABC):
         return self_qual_name[len(ancestor_qual_name):].lstrip('.')
 
 
-class ParsedNode(Node):
+@dataclass
+class EvaledNode(Node):
+    """
+    Adds a :attr:`parser` attribute and :meth:`safe_eval` method to the standard Node.
+    """
+
+    parser: Parser = field(default_factory=kw_only('parser'))
+    """
+    The Python parser used to resolve :ref:`dstrings` and :ref:`raw key <raw key syntax>` type and modifier strings.
+    """
+
+    def safe_eval(self, py_expr: str, context=None):
+        """
+        Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME|, ``self.root`` as |ROOT_NODE_VAR_NAME| and ``self.file_root`` as |FILE_ROOT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
+        """
+        context = {
+            varnames.CURRENT_NODE_VAR_NAME: self,
+            varnames.ROOT_NODE_VAR_NAME: self.root,
+            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root,
+            **(context or {})}
+
+        return self.parser.safe_eval(py_expr, context)
+
+
+@dataclass
+class ParsedNode(EvaledNode):
     """
     Parsed nodes are leaf nodes that contain literal values or |dstrings|.
 
@@ -349,36 +374,18 @@ class ParsedNode(Node):
 
     * Variable |CURRENT_NODE_VAR_NAME| points to ``self``.
     * Variable |FILE_ROOT_NODE_VAR_NAME| points to ``self``'s closest ancestor (including ``self``) that was loaded from a file. If no ancestor was loaded from a file, the variable is not present.
+
+    .. todo:: Change the name of this node to DollarNode or LeafNode.
     """
 
-    parser: Parser = field(default_factory=_kw_only)
-    """
-    The Python parser used to resolve :ref:`dstrings` and :ref:`raw key <raw key syntax>` type and modifier strings.
-    """
-
-    raw_value: Any
+    raw_value: Any = field(default_factory=kw_only('raw_value'))
     """
     The literal value or unparsed |dstring|.
     """
 
-    def __init__(self, raw_value, parser, **kwargs):
+    def __init__(self, raw_value, **kwargs):
         self.raw_value = raw_value
-        self.parser = parser
         super().__init__(**kwargs)
-
-    def safe_eval(self, py_expr: str, context=None):
-        """
-        Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME|, ``self.root`` as |ROOT_NODE_VAR_NAME| and ``self.file_root`` as |FILE_ROOT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
-        """
-        context = {
-            varnames.CURRENT_NODE_VAR_NAME: self,
-            varnames.ROOT_NODE_VAR_NAME: self.root,
-            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root,
-            **(context or {})}
-
-        return self.parser.safe_eval(py_expr, context)
-
-    raw_value: str = field(default_factory=_kw_only)
 
     def _unsafe_resolve(self) -> Any:
         if isinstance(self.raw_value, str):

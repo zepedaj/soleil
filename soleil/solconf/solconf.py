@@ -135,7 +135,7 @@ class SolConf:
             out = DictContainer()
             for key, val in raw_data.items():
                 key_node = KeyNode(
-                    key, cls.build_node_tree(val, parser), parser=parser)
+                    raw_key=key, value=cls.build_node_tree(val, parser), parser=parser)
                 out.add(key_node)  # Sets parent.
 
         elif isinstance(raw_data, list):

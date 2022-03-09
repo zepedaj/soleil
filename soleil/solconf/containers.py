@@ -1,5 +1,5 @@
 import re
-from .exceptions import NotAChildOfError
+from .exceptions import NotAChildOfError, NodeHasParent
 import abc
 from .nodes import Node
 from typing import List, Union
@@ -17,8 +17,19 @@ class Container(Node):
         Returns an iterable over the container's children
         """
 
+    def copy(self):
+        out = super().copy()
+        for child in self.children:
+            child_copy = child.copy()
+            child_copy.parent = None
+            out.add(child_copy)
+        return out
+
     def __len__(self):
         return len(self.children)
+
+    def is_child(self, node):
+        return node in self.children
 
     @abc.abstractmethod
     def add(self, node: Node):
@@ -70,6 +81,8 @@ class ListContainer(Container):
 
     def add(self, node: Node):
         with self.lock:
+            if node.parent is not None:
+                raise NodeHasParent(node, self)
             node.parent = self
             self.children.append(node)
 

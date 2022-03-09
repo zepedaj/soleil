@@ -123,15 +123,15 @@ class SolConfArg:
           ...   print(traceback.format_exc())
           Traceback (most recent call last):
               ...
-          ValueError: The resolved value of `ParsedNode@'typing_a'<...>` is `soft`, 
+          ValueError: The resolved value of `ParsedNode@'typing_a'` is `soft`, 
             but it must be one of `('python', 'c++')`.
               ...
           soleil.solconf.exceptions.ResolutionError: Error while resolving node 
-            `ParsedNode@'typing_a'<...>`.
+            `ParsedNode@'typing_a'`.
               ...
           soleil.solconf.exceptions.ModificationError: Error while applying modifier 
             `functools.partial(<function load at 0x...>, subdir='typing', ext='.yaml')` 
-            to node `ParsedNode@'typing_a'<...>`.
+            to node `ParsedNode@'typing_a'`.
 
         This problem can be avoided using a root clobber override:
 

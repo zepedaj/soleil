@@ -55,17 +55,17 @@ Simple
 
    >>> sc.print_tree()
     {
-        "DictContainer@''(modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
+        "DictContainer@''<yaml/extends/simple/config_source.yaml>()": [
+            {"KeyNode@'*a'()": ["ParsedNode@'a'()"]},
             {"KeyNode@'*b'()": ["ParsedNode@'b'(types=(<class 'float'>,))"]},
             {"KeyNode@'*c'()": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))"]},
             {"KeyNode@'*d'()": ["ParsedNode@'d'()"]},
-            {"KeyNode@'*e'()": ["ParsedNode@'e'()"]},
-            {"KeyNode@'*a'()": ["ParsedNode@'a'()"]}
+            {"KeyNode@'*e'()": ["ParsedNode@'e'()"]}
         ]
     }
 
    >>> print(sc())
-   {'b': 3.0, 'c': 5.0, 'd': 4.0, 'e': 6, 'a': 1}
+   {'a': 1, 'b': 3.0, 'c': 5.0, 'd': 4.0, 'e': 6}
 
 With ``x_`` cross-ref
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -85,16 +85,16 @@ With ``x_`` cross-ref
    >>> sc = SolConf.load('yaml/extends/cross_ref/config_extends.yaml')
    >>> sc.print_tree()
     {
-        "DictContainer@''(modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
+        "DictContainer@''<yaml/extends/cross_ref/config_source.yaml>()": [
             {"KeyNode@'*a'()": ["ParsedNode@'a'(modifiers=(<function noop at 0x...>,))"]},
-            {"KeyNode@'*d'()": ["ParsedNode@'d'()"]},
             {"KeyNode@'*b'()": ["ParsedNode@'b'()"]},
-            {"KeyNode@'*c'()": ["ParsedNode@'c'()"]}
+            {"KeyNode@'*c'()": ["ParsedNode@'c'()"]},
+            {"KeyNode@'*d'()": ["ParsedNode@'d'()"]}
         ]
     }
 
    >>> print(sc())
-    {'a': 0, 'd': 4, 'b': 2, 'c': 3}
+    {'a': 0, 'b': 2, 'c': 3, 'd': 4}
 
 
 Promotes

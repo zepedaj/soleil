@@ -56,3 +56,8 @@ class InvalidOverridePattern(Exception):
 class KeyNodeRequired(TypeError):
     def __init__(self, node):
         super().__init__(f'`KeyNode` required but got {node} of type `{type(node)}`.')
+
+
+class NodeHasParent(Exception):
+    def __init__(node, self):
+        super().__init__('Attempted to add `{node}` with parent `{node.parent}` to `{self}`.')

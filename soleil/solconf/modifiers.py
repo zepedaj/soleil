@@ -1,6 +1,7 @@
 """
 Base node modifiers included by default in :class:`soleil.solconf.parser.Parser` contexts.
 """
+from typing import Union
 from .parser import register
 from functools import partial
 import yaml
@@ -320,15 +321,20 @@ class extends:
 
     """
 
-    def __init__(self, path):
+    def __init__(self, source: Union[str, Path, DictContainer]):
         # Set default extension
-        path = Path(path)
-        if not path.suffix:
-            path = path.with_suffix(DEFAULT_EXTENSION)
-        self.path = path
+        if isinstance(source, (str, Path)):
+            path = Path(source)
+            if not path.suffix:
+                path = path.with_suffix(DEFAULT_EXTENSION)
+            self.source = path
+        elif isinstance(source, DictContainer):
+            self.source = source.copy()
+        else:
+            raise TypeError(f'Expected `str`, `Path` or `DictContainer`, but got `{type(source)}`.')
 
     def __str__(self):
-        return f'extends<{self.path}>'
+        return f'extends<{self.source}>'
 
     def __call__(self, overrides_tree: DictContainer):
         """
@@ -341,10 +347,15 @@ class extends:
                             'that is the value of a `KeyNode`.')
 
         # Load the template to extend
-        path = _abs_path(overrides_tree, self.path)
-        source_tree = SolConf.load(path, modify=False).root
-        source_tree._sol_conf_obj = None
-        # TODO: Modify the source_tree source file path to be the override tree's file path (if any).
+        if isinstance(self.source, Path):
+            path = _abs_path(overrides_tree, self.source)
+            source_tree = SolConf.load(path, modify=False).root
+            # TODO: Modify the source_tree source file path to be the override tree's file path (if any).
+            source_tree._sol_conf_obj = None
+        elif isinstance(self.source, DictContainer):
+            source_tree = self.source.copy()
+        else:
+            raise Exception('Unexpected case.')
 
         # Apply overrides to source tree
         for curr_override in traverse_tree(overrides_tree):

@@ -69,8 +69,8 @@ class TestKeyNode(TestCase):
     def get_node(cls, key='my_key'):
         parser = Parser({'add_val': add_val_modif})
         node = mdl.KeyNode(
-            f'{key}:int:add_val(0, "abc"),add_val(1,2),add_val(2,True)',
-            ParsedNode('$:10+1', parser),
+            raw_key=f'{key}:int:add_val(0, "abc"),add_val(1,2),add_val(2,True)',
+            value=ParsedNode('$:10+1', parser=parser),
             parser=parser)
         return node
 
@@ -109,6 +109,19 @@ class TestKeyNode(TestCase):
                     "Error while applying modifier `functools.partial(<function parent at 0x") +
                 r'\w+' + re.escape(">, 4)` to node `ParsedNode@'abc'`.")):
             SolConf({'abc::parent(4)': 1})()
+
+    def test_copy(self):
+        node = self.get_node()
+        orig_val = node()
+        node2 = node.copy()
+
+        self.assertEqual(node, node2)
+        self.assertIsNot(node.value, node2.value)
+
+        node2.value.raw_value = 0
+
+        self.assertEqual(node(), orig_val)
+        self.assertEqual(node2(), ('my_key', 0))
 
 
 class TestDictContainer(TestCase):
@@ -170,7 +183,7 @@ class TestDictContainer(TestCase):
 
         # Refer to the value node.
         node = ac['node0']['node1']
-        assert type(node) is mdl.ParsedNode
+        assert type(node) is ParsedNode
         assert node is ac.node_tree.children['node0'].value.children['node1'].value
         assert node.qual_name == 'node0.node1'
         assert ac.node_tree.node_from_ref(node.qual_name) is node

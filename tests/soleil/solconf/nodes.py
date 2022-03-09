@@ -48,8 +48,8 @@ class TestNode(TestCase):
         parser = Parser()
 
         #
-        node = KeyNode('my_name', value_node := mdl.ParsedNode(
-            '$:n_', parser=parser), parser=parser)
+        node = KeyNode(raw_key='my_name', value=(value_node := mdl.ParsedNode(
+            '$:n_', parser=parser)), parser=parser)
         self.assertEqual(node(), ('my_name', value_node))
 
     def test_node_from_ref(self):
@@ -93,7 +93,7 @@ class TestNode(TestCase):
                   ParsedNode, _raw_data['node0']['node1']),
             ]),
             # ParsedNode
-            (_root := ParsedNode('abc', None),
+            (_root := ParsedNode('abc', parser=None),
              [
                  ('', _root, ParsedNode, 'abc'),
             ]),
@@ -146,8 +146,8 @@ class TestParsedNode(TestCase):
         parser = Parser()
 
         #
-        node = KeyNode('my_name', value_node := mdl.ParsedNode(
-            '$:n_', parser=parser), parser=parser)
+        node = KeyNode(raw_key='my_name', value=(value_node := mdl.ParsedNode(
+            '$:n_', parser=parser)), parser=parser)
         self.assertEqual(resolved := node.resolve(), ('my_name', value_node))
         self.assertIs(resolved[1], value_node)
 
@@ -163,3 +163,13 @@ class TestParsedNode(TestCase):
         ) as (path, expected):
             ac = SolConf.load(path)
             self.assertEqual(ac(), expected)
+
+    def test_copy(self):
+        parser = Parser()
+        for raw_value in ['$:1+1']:
+
+            node1 = mdl.ParsedNode(raw_value, parser=parser)
+            node2 = node1.copy()
+
+            self.assertIsNot(node1, node2)
+            self.assertEqual(node1(), node2())

@@ -6,10 +6,10 @@ from contextlib import contextmanager, nullcontext
 from typing import Union, Dict, Optional
 import re
 from .autonamed_pattern import pxs, AutonamedPattern
-from .parser import Parser
+from dataclasses import dataclass, field, InitVar, replace
+from .utils import kw_only
 from .containers import Container
-from .nodes import Node, ParsedNode, FLAGS
-from threading import RLock
+from .nodes import Node, EvaledNode, FLAGS
 from . import exceptions
 
 
@@ -79,7 +79,8 @@ def _keynode_unimplemented(name):
     raise NotImplementedError(f'`KeyNode`s do not implement `{name}`.')
 
 
-class KeyNode(ParsedNode, Container):
+@dataclass
+class KeyNode(EvaledNode, Container):
     """
     Key nodes represent a Python dictionary entry and as such, they must always be used as :class:`DictContainer` children. They implement part of the :class:`Container` interface. Key nodes have
 
@@ -117,33 +118,45 @@ class KeyNode(ParsedNode, Container):
 
     """
 
-    value: Node
+    raw_key: str = field(default_factory=kw_only('raw_key'))
+    """
+    A string in the form |raw key format| (see :ref:`raw string`).
+    """
+
+    value: Node = field(default_factory=kw_only('value'))
     """
     The single node contained by this KeyNode container.
+
+    .. todo:: Rename this attribute to ``value_node``.
     """
 
-    def __init__(self, raw_key: str, value: Node, parser: Parser, **kwargs):
-        """
-        :param raw_key: A string in the form |raw key format| (see :ref:`raw string`).
-        :param value: The value node. The parent of this node will be set to ``self`` during initialization.
-        :param kwargs: This object is a dataclass, all class attributes (including those inherited) can be used as keyword args.
-        """
+    # Defined here to be copied automatically by the dataclasses.replace function
+    _do_post_init: InitVar[bool] = True  # Set to false to skip post-initialization
+    _key_components: dict = None
+    _key: str = None
+    _raw_key_parsed = False
 
-        # Extract data from raw key.
-        self._key_components = self._split_raw_key(raw_key)
-        self._key = self._key_components['key']
-        self._raw_key_parsed = False
-        #
-        value.parent = self
-        self.value = value
-        self.lock = RLock()
-        super().__init__(self, parser=parser, **kwargs)
-        #
-        self.modified = False
+    def __post_init__(self, _do_post_init):
+        if _do_post_init:
+            # This switch is used by the copy method to avoid
+            # parsing the raw_key and setting the value's parent
+            # when a copy is going on.
+            self._key_components = self._split_raw_key(self.raw_key)
+            self._key = self._key_components['key']
+            if self.value.parent:
+                raise exceptions.NodeHasParent(self.value, self)
+            self.value.parent = self
 
     @property
     def hidden(self):
         return super().hidden or FLAGS.HIDDEN in self.value.flags
+
+    def copy(self):
+        value_copy = self.value.copy()
+        out = replace(self, _do_post_init=False)
+        out.value = value_copy
+        out.value.parent = out
+        return out
 
     @property
     def children(self):
@@ -358,7 +371,7 @@ class DictContainer(Container):
             if not isinstance(node, KeyNode):
                 raise exceptions.KeyNodeRequired(node)
             if node.parent is not None:
-                raise Exception('Attempted to add a node that already has a parent.')
+                raise exceptions.NodeHasParent(node, self)
             # Remove node of same key, if it exists.
             self.remove(node, safe=True)
             # Add the new node.

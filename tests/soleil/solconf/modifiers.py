@@ -67,8 +67,8 @@ class TestModifiers(TestCase):
     def test_parent(self):
         parser = Parser()
         key_node = KeyNode(
-            'my_name',
-            value_node := ParsedNode('$:(n_, parent(n_))', parser=parser),
+            raw_key='my_name',
+            value=(value_node := ParsedNode('$:(n_, parent(n_))', parser=parser)),
             parser=parser)
         self.assertEqual(resolved := key_node.resolve(), ('my_name', (value_node, key_node)))
         self.assertIs(resolved[1][0], value_node)
@@ -252,6 +252,20 @@ class TestModifiers(TestCase):
             self.assertEqual(
                 sc(),
                 {'a': 0, 'b': 2, 'c': 3, 'd': {'e': 11}})
+
+    def test_extends_node(self):
+        sc = SolConf(
+            {'a::noop': 1,
+             'b::extends(r_["d"])': {'e': 4},
+             'c:int': 3,
+             'd': {'e:int:noop': 10, 'f': 11}})
+
+        self.assertEqual(
+            sc(),
+            {'a': 1,
+             'b': {'e': 4, 'f': 11},
+             'c': 3, 'd': {'e': 10, 'f': 11}}
+        )
 
     def test_fuse(self):
 
