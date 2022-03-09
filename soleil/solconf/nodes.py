@@ -347,7 +347,8 @@ class EvaledNode(Node):
         context = {
             varnames.CURRENT_NODE_VAR_NAME: self,
             varnames.ROOT_NODE_VAR_NAME: self.root,
-            varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root,
+            **({varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root}
+               if self.file_root is not None else {}),
             **(context or {})}
 
         return self.parser.safe_eval(py_expr, context)
