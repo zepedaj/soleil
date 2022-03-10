@@ -14,7 +14,7 @@ from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned, traverse_tree
 from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME
-from .modification_heuristics import modify_tree, modify_ref_path
+from .modification_heuristics import modify_tree, modify_ref_path, as_literal
 
 
 @register('noop')
@@ -300,13 +300,16 @@ def _inject_extended_node(source_node: KeyNode, patched_node: KeyNode):
 class extends:
     """
 
-    Merges the sub-tree of the input node with a sub-tree loaded from the specified path. Relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`.
+    Merges the sub-tree of the input node with a sub-tree loaded from the specified source. When ``source`` is a path, relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`. ``source`` can also be a :class:`Node` object. 
 
-    The loaded  sub-tree (loaded using :func:`load`) is referred to as the  *source tree* -- the node being modified is the *overrides tree*. Any raw value, type or modifier specified in the overrides tree will take precedence. Non-specified values will be inherited from the source tree.
+     The tree with ``source`` as the root is referred to as the *source tree* -- the tree with the node being modified as the root is the *overrides tree*. Any raw value, type or modifier specified in the overrides tree will take precedence. Non-specified values will be inherited from the source tree.
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
     When a source node exists for a given override node, the override node evaluation context will be extended with a variable |EXTENDED_NODE_VAR_NAME| that points to the source node. This can be used to build override types and modifiers that depend on the source node's values.
+
+    .. note:: When the ``source`` argument is a |Node|, the entire source sub-tree will be modified and all |ParsedNode.raw_value| attributes will be converted to their literal value. A copy of the resulting node is made subsequently and used as the source tree. This is required to make modifiers that depend on |FILE_ROOT_NODE_VAR_NAME| work correctly.
+
 
     .. rubric:: Examples
 
@@ -314,7 +317,7 @@ class extends:
 
     .. todo::
 
-      * Not clear how extends will work with non-dictionary source trees.
+      * Not clear how extends will work with non-dictionary source trees. Currently works with dictionary source trees with nested lists, and the list entries can be extended.
       * This modifier and |SolConfArg| have similar mandates - they should be refactored to share common functionality.
       * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``. This requires fancier raw-key regex support.
       * Support adding, removing and clobbering nodes - use special 'add', 'remove', and 'clobber' modifiers that simply act as flags for `extends`. Ideally these would check that a parent (or ancesotr) node is being extended.
@@ -322,6 +325,10 @@ class extends:
     """
 
     def __init__(self, source: Union[str, Path, DictContainer]):
+        """
+        :param source: A path or node. If a path, it will be loaded and partially modified using :func:`modify_ref_path` along the reference paths specified by the overrides. If a node, the whole source tree will be modified before a copy is made.
+        """
+
         # Set default extension
         if isinstance(source, (str, Path)):
             path = Path(source)
@@ -330,11 +337,18 @@ class extends:
             self.source = path
             self.source_qual_name = None
         elif isinstance(source, DictContainer):
-            self.source = source.copy()
-            # The copied node will have qual_name '', as it will be its own root.
-            # Keep the original source qual_name to use to display useful error messages --
-            # it is used in __str__.
+            #
+            # 1) Modify the tree and convert ParseNode.raw_value to their literal value in case, e.g.,
+            # there are any `f_` references in the modifiers or the raw values.
+            #
+            # 2) Keep the original source qual_name to display useful error messages that
+            # rely on __str__. Otherwise, the copied node would have qual_name '', as it
+            # will be its own root.
+            #
             self.source_qual_name = source.qual_name
+            as_literal(source)
+            self.source = source.copy()
+
         else:
             raise TypeError(f'Expected `str`, `Path` or `DictContainer`, but got `{type(source)}`.')
 

@@ -249,26 +249,28 @@ class KeyNode(EvaledNode, Container):
 
         This function will only have an effect the first time its called.
         """
-        if self._raw_key_parsed:
-            return
-        self._raw_key_parsed = True
+        with self.lock:
+            if self._raw_key_parsed:
+                return
+            self._raw_key_parsed = True
 
-        try:
-            #
-            component = 'types'
-            raw_value = self._key_components[component]
-            self.value.types = None if raw_value is None else merge_decorator_values(
-                raw_value, self.safe_eval)
-            #
-            component = 'modifiers'
-            raw_value = self._key_components[component]
-            self.value.modifiers = tuple() if raw_value is None else (
-                # `or tuple()` below used to support disabling extended modifiers with None
-                merge_decorator_values(raw_value, self.safe_eval) or tuple())
-        except exceptions.RawKeyComponentError:
-            raise
-        except Exception as err:
-            raise exceptions.RawKeyComponentError(self, component, raw_value) from err
+            try:
+                #
+                component = 'types'
+                raw_value = self._key_components[component]
+                self.value.types = None if raw_value is None else merge_decorator_values(
+                    raw_value, self.safe_eval)
+                #
+                component = 'modifiers'
+                raw_value = self._key_components[component]
+                self.value.modifiers = tuple() if raw_value is None else (
+                    # `or tuple()` below used to support disabling extended modifiers with None
+                    merge_decorator_values(raw_value, self.safe_eval) or tuple())
+                self.value.modified = False
+            except exceptions.RawKeyComponentError:
+                raise
+            except Exception as err:
+                raise exceptions.RawKeyComponentError(self, component, raw_value) from err
 
     def _unsafe_resolve(self):
         """

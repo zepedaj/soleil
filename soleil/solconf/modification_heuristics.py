@@ -9,6 +9,7 @@ from .dict_container import KeyNode
 from .nodes import Node
 from .containers import Container
 from .dict_container import DictContainer
+from .utils import traverse_tree
 
 DEFAULT_MAX_ITERS = 100
 """
@@ -134,3 +135,21 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
             f'Could note finalize node path modifications after `{max_iters}` iterations.')
 
     return num_modified
+
+
+def as_literal(root):
+    """
+    :param root: The root of the (sub-)tree to modify.
+
+    Modifies the (sub-)tree and then replaces all contents |ParsedNode.raw_value| node attributes containing |dstrings| with their literal value.
+
+    This is used by the :class:`~soleil.solconf.modifiers.extends` extends modifier to avoid problems with resolution of extended nodes containing |FILE_ROOT_NODE_VAR_NAME| references.
+    """
+
+    from .nodes import ParsedNode
+
+    modify_tree(root)
+
+    for node in traverse_tree(root):
+        if isinstance(node, ParsedNode):
+            node.raw_value = node()

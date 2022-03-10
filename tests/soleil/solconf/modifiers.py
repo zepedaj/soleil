@@ -4,6 +4,7 @@ import traceback
 import numpy as np
 from ._helpers import file_structure
 from soleil.solconf.modifiers import noop
+from soleil.solconf.modification_heuristics import modify_tree
 import re
 from soleil.solconf.parser import Parser
 from soleil.solconf.nodes import ParsedNode
@@ -253,19 +254,40 @@ class TestModifiers(TestCase):
                 sc(),
                 {'a': 0, 'b': 2, 'c': 3, 'd': {'e': 11}})
 
-    def test_extends_node(self):
+    def test_extends__node(self):
         sc = SolConf(
-            {'a::noop': 1,
+            {'a::noop': {'a0': "$:2-1"},
              'b::extends(r_["d"])': {'e': 4},
              'c:int': 3,
-             'd': {'e:int:noop': 10, 'f': 11}})
+             'd': {'e:int:noop': 10, 'f': "$: 10+1", 'g::extends(r_["a"])': {}}},
+            modify=False)
+
+        # Check that ParseNode raw values are converted to literal values.
+        modify_tree(sc['*b'])
+        self.assertEqual(sc['d']['f'].raw_value, 11)
+        self.assertEqual(sc['a']['a0'].raw_value, 1)
+
+        #
+        sc.modify_tree()
 
         self.assertEqual(
             sc(),
-            {'a': 1,
-             'b': {'e': 4, 'f': 11},
-             'c': 3, 'd': {'e': 10, 'f': 11}}
+            {'a': {'a0': 1},
+             'b': {'e': 4, 'f': 11, 'g': {'a0': 1}},
+             'c': 3, 'd': {'e': 10, 'f': 11, 'g': {'a0': 1}}}
         )
+
+    def test_extends__node_chained(self):
+        sc = SolConf(
+            {'a::noop': {'a0': "$:2-1", 'b0': '$:3-1', 'c0': '$:4-1'},
+             'b::extends(r_["a"])': {'a0': -1},
+             'c::extends(r_["b"])': {'b0': -2}},
+            modify=False)
+        #
+        modify_tree(sc['*c'])
+        self.assertTrue(sc['a'].modified)
+        self.assertTrue(sc['b'].modified)
+        self.assertTrue(sc['c'].modified)
 
     def test_fuse(self):
 

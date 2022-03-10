@@ -118,6 +118,11 @@ class Node(abc.ABC):
         else:
             self.modified = True
 
+        # Obtain the modifiers from the parent KeyNode's raw key, if any.
+        from .dict_container import KeyNode
+        if isinstance(self.parent, KeyNode):
+            self.parent.modify()
+
         # Apply node modifiers.
         node = self
         if self.modifiers:

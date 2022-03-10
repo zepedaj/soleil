@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from importlib import import_module
 import climax as clx
 from soleil.solconf.cli_tools import SolConfArg
 from rich import print
@@ -8,10 +9,17 @@ from rich import print
 @clx.argument('conf', type=SolConfArg(resolve=False),
               help='The path of the configuration file to launch, and optionally, any argument overrides.')
 @clx.argument(
-    '--print', choices=['resolved', 'tree', 'tree-no-modifs'],
+    '--print', choices=['final', 'resolved', 'tree', 'tree-no-modifs'],
     dest='print_what', default=None,
-    help='Prints the resolved contents (before applying the post-processor) or the node tree, optionally before applying modifications.')
-def solex(conf, print_what):
+    help="Prints the ('final') the final value, ('resolved') the resolved contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') before applying modifications.")
+@clx.argument(
+    '--modules', nargs='*',
+    help='The modules to load before execution - can be used to register xerializable handlers.')
+def solex(conf, print_what, modules):
+
+    for _mdl in modules:
+        import_module(_mdl)
+
     if print_what == 'resolved':
         conf.modify_tree()
         print(conf.root())
@@ -20,10 +28,12 @@ def solex(conf, print_what):
         conf.print_tree()
     elif print_what == 'tree-no-modifs':
         conf.print_tree()
-    elif print_what is None:
+    elif print_what in [None, 'final']:
         # Executes  the post-processor, and hence any commands.
         conf.modify_tree()
-        conf()
+        out = conf()
+        if print_what == 'final':
+            print(out)
     else:
         raise Exception('Unexpected case.')
 

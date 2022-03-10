@@ -1,6 +1,8 @@
 TODO List
 =========
 
+General to-do's
+----------------
 .. todo::
 
    * Add xerializable type support.
@@ -17,5 +19,10 @@ TODO List
      * Supports an @parargs and @prodargs command.
      * Creates and uses a virtual environment with copies of all local modules so that development can continue while training is taking places. When parallelization is used, the copy is the same for all parallel runs in a single job group.
 
-   * Deploy to github   
+   * Deploy to github
      
+
+
+Project-wide to-do's
+---------------------
+.. todolist::

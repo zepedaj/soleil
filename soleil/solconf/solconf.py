@@ -17,15 +17,20 @@ import xerializer
 from functools import partial
 
 
-class XZRL_POST_PROCESSOR:
+class _XZRL_POST_PROCESSOR:
     """
-    Flag used as the default value for argument ``post_processor`` of  :meth:`SolConf.__init__`. It specifies that the default :mod:`xerializer`-based post processing be used.
+    Lazy wrapper around :class:`xerializer.Serializer` used as the default value for argument ``post_processor`` of  :meth:`SolConf.__init__`. It instantiates the :class:`xerializer.Serializer` object until it is absolutely required to enable registering other modules.
 
     .. todo:: The `permissive` option should be restricted to specific classes provided as the value of permissive. Doing otherwise will lead to silent errors (e.g., passing tuples).
     """
-    @staticmethod
-    def get():
-        return partial(xerializer.Serializer().from_serializable, permissive=True)
+
+    _from_serializable = None
+
+    def __call__(self, obj):
+        if self._from_serializable is None:
+            self._from_serializable = partial(
+                xerializer.Serializer().from_serializable, permissive=True)
+        return self._from_serializable(obj)
 
 
 class SolConf:
@@ -76,7 +81,7 @@ class SolConf:
     def __init__(
             self, raw_data, context: dict = {},
             parser=None, modify=True,
-            post_processor: Optional[Callable[[Node], None]] = XZRL_POST_PROCESSOR):
+            post_processor: Optional[Callable[[Node], None]] = _XZRL_POST_PROCESSOR()):
         """
         :param raw_data: The data to convert to a :class:`SolConf` object.
         :param context: Extra parameters to add to the parser context.
@@ -87,8 +92,7 @@ class SolConf:
         self.parser = parser or Parser(context)
         root = self.build_node_tree(raw_data, parser=self.parser)
         self.lock = RLock()
-        self.post_processor = (post_processor.get() if post_processor is XZRL_POST_PROCESSOR
-                               else post_processor if post_processor is not None
+        self.post_processor = (post_processor if post_processor is not None
                                else lambda x: x)
         self.node_tree = None
         self.replace(None, root)
