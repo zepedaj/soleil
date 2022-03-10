@@ -245,7 +245,7 @@ class SolConfArg:
 
         """
 
-        overrides = overrides or []
+        overrides = list(overrides or [])
 
         if overrides and (root_clobber := re.match(r'^\*\*\=(?P<path>.*$)', overrides[0])):
             # Check for source clobber

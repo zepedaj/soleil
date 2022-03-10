@@ -23,6 +23,10 @@ def build_config_files(
         file1_updates=None, file1_expected_updates=None,
         file2_updates=None, file2_expected_updates=None):
 
+    #######################################################
+    # USE ._helpers.file_structure INSTEAD OF THIS METHOD!
+    #######################################################
+
     # ./root.yaml
     root_dat = dict((f'root_{k}', k) for k in range(5))
     root_dat['root_5::load'] = 'subdir1/file1'
@@ -240,6 +244,7 @@ class TestModifiers(TestCase):
             self.assertEqual((sc['a1'].types, sc['a1'].modifiers), (None, ()))
             self.assertEqual(sc(), {'a': 1, 'b': 3, 'c': 3, 'd': 4, 'a1': 10, 'e': {'f': 12}})
 
+    def test_extends__xrefs(self):
         # With x_ cross-ref
         with file_structure({
             'config_source.yaml': {'a::noop': 1, 'b': 2, 'c:int': 3, 'd': {'e:int:noop': 10}},
@@ -264,9 +269,6 @@ class TestModifiers(TestCase):
 
         # Check that ParseNode raw values are converted to literal values.
         modify_tree(sc['*b'])
-        self.assertEqual(sc['d']['f'].raw_value, 11)
-        self.assertEqual(sc['a']['a0'].raw_value, 1)
-
         #
         sc.modify_tree()
 
@@ -284,10 +286,22 @@ class TestModifiers(TestCase):
              'c::extends(r_["b"])': {'b0': -2}},
             modify=False)
         #
-        modify_tree(sc['*c'])
+        modify_tree(sc['c'])
         self.assertTrue(sc['a'].modified)
         self.assertTrue(sc['b'].modified)
         self.assertTrue(sc['c'].modified)
+
+        self.assertEqual(
+            sc(),
+            {'a': {'a0': 1, 'b0': 2, 'c0': 3},
+             'b': {'a0': -1, 'b0': 2, 'c0': 3},
+             'c': {'a0': -1, 'b0': -2, 'c0': 3}})
+
+    def test_extends__decorators(self):
+        sc = SolConf(
+            {'a:dict': {'a0': 1},
+             'b::extends(r_["a"])': {'a0:int:promote': '$:x_()'}})
+        sc()
 
     def test_fuse(self):
 

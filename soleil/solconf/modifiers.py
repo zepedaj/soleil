@@ -1,19 +1,19 @@
 """
 Base node modifiers included by default in :class:`soleil.solconf.parser.Parser` contexts.
 """
+#
 from typing import Union
 from .parser import register
 from functools import partial
 import yaml
-from .nodes import FLAGS
 from .dict_container import KeyNode, DictContainer, merge_decorator_values
 from .containers import Container
-from .nodes import Node, ParsedNode
+from .nodes import Node, ParsedNode, FLAGS, EvaledNode
 from .solconf import SolConf
 from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned, traverse_tree
-from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME
+from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME, FILE_ROOT_NODE_VAR_NAME
 from .modification_heuristics import modify_tree, modify_ref_path, as_literal
 
 
@@ -334,6 +334,7 @@ class extends:
             path = Path(source)
             if not path.suffix:
                 path = path.with_suffix(DEFAULT_EXTENSION)
+            self.orig_source = None
             self.source = path
             self.source_qual_name = None
         elif isinstance(source, DictContainer):
@@ -346,8 +347,23 @@ class extends:
             # will be its own root.
             #
             self.source_qual_name = source.qual_name
-            as_literal(source)
+
+            # Modify one level in order to support extending nodes that are extended.
+            source.modify()
+
+            # Keep a pointer to the original source to set context variables.
+            self.orig_source = source
+
+            # Copy the source at modifier definition before it is modified since
+            # modification overrides will not be applied once the source is modified.
             self.source = source.copy()
+
+            # Set the file root node variable to the original file root node variable for all node
+            # to make all modifier and resolution references to `f_` work correctly.
+            for node in traverse_tree(self.source):
+                if isinstance(node, EvaledNode):
+                    orig_node = source.node_from_ref(node.rel_name(self.source))
+                    node.eval_context.update({FILE_ROOT_NODE_VAR_NAME: orig_node.file_root})
 
         else:
             raise TypeError(f'Expected `str`, `Path` or `DictContainer`, but got `{type(source)}`.')
@@ -372,9 +388,13 @@ class extends:
             # TODO: Modify the source_tree source file path to be the override tree's file path (if any).
             source_tree._sol_conf_obj = None
         elif isinstance(self.source, DictContainer):
+            # Make another copy of the source tree to make the modifier state-less
             source_tree = self.source.copy()
         else:
             raise Exception('Unexpected case.')
+
+        # Used to set context variables
+        orig_source = self.orig_source or source_tree
 
         # Apply overrides to source tree
         for curr_override in traverse_tree(overrides_tree):
@@ -395,7 +415,13 @@ class extends:
 
             # Add variable x_ to the eval context
             # and parse raw keys.
-            _inject_extended_node(source_node, curr_override)
+            for _node in [source_node, curr_override]:
+                if isinstance(_node, EvaledNode):
+                    _node.eval_context.update(
+                        {
+                            EXTENDED_NODE_VAR_NAME: orig_source.node_from_ref(ref_str)
+                        }
+                    )
             if isinstance(curr_override, KeyNode):
                 curr_override._parse_raw_key()
 
@@ -420,10 +446,17 @@ class extends:
 
         # Replace overrides_tree by source_tree
         # (overrides_tree.parent or overrides_tree.sol_conf_obj).replace(
-        #    overrides_tree, source_tree)
-        overrides_tree.parent.replace(overrides_tree, source_tree)
+        #     overrides_tree, source_tree)
+        # return source_tree
 
-        return source_tree
+        # Update the original overrides tree instead of replacing it by source tree
+        # in order to supported extension of extended nodes.
+        for child in list(source_tree.children):
+            source_tree.remove(child)
+            if child in overrides_tree.children:
+                overrides_tree.remove(overrides_tree.children[child.key])
+            overrides_tree.add(child)
+        return None
 
 
 @register('fuse')

@@ -102,7 +102,7 @@ class SolConf:
     @classmethod
     def load(self, path, **kwargs) -> 'SolConf':
         """
-        Returns an :class:`SolConf` object built using raw data retrieved from the specified file.
+        Returns a :class:`SolConf` object built using raw data retrieved from the specified file.
 
         :param path: The path to the file to load the raw data from.
         :param kwargs: Extra arguments to pass to the :class:`SolConf` initializer.

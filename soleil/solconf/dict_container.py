@@ -417,7 +417,7 @@ class DictContainer(Container):
         """
         return dict(child.resolve() for child in self.children.values() if not child.hidden)
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str, modify=True):
         """
         Returns the resolved value for the specified key.
 
@@ -427,10 +427,15 @@ class DictContainer(Container):
         """
         if not isinstance(key, str):
             raise Exception(f'Expected a string key but got `{key}`.')
+        if modify:
+            self.modify()
         if key[:1] == '*':
             return self.children[key[1:]]
         else:
-            return self.children[key].value
+            key_node = self.children[key]
+            if modify:
+                key_node.modify()
+            return key_node.value
 
     def get_child_qual_name(self, node: KeyNode):
         """

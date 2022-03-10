@@ -72,6 +72,9 @@ def modify_ref_path(node: Union[Node, Callable[[], Node]],
     :param ref_components: A list of reference components. Can be obtained from a ref string using :meth:`Nodes._get_ref_components`.
     """
 
+    if True:
+        return
+
     from .modifiers import promote
 
     # If no ref components provided, return

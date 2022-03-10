@@ -90,6 +90,19 @@ class Node(abc.ABC):
     If the node is part of a tree in an :class:`SolConf` object, returns that object.
     """
 
+    def __getitem__(self, key, modify=True):
+        """
+        By default, :class:`Node` objects are not subscriptable. However, some modifiers (e.g., |load|) will alter the node type. This catch-all :meth:`__getitem__` modifies the node and, if the modified node is different than ``self``, calls the :meth:`__getitem__`` method of that the new node.
+
+        Otherwise, a ``TypeError`` is raised indicating that the node is not subscriptable.
+
+        Parameter ``modify`` is provided for compatibility with other node types. Setting it to ``True`` will cause  the above described ``TypeError`` exception to be raised.
+        """
+        if not modify or (node := self.modify()) is self:
+            raise TypeError(f"'{type(self).__name__}' object is not subscriptable")
+        else:
+            return node[key]
+
     @property
     def hidden(self):
         # """
@@ -114,7 +127,7 @@ class Node(abc.ABC):
 
         # Check if the modifiers have been applied.
         if self.modified:
-            return
+            return self
         else:
             self.modified = True
 
@@ -133,6 +146,8 @@ class Node(abc.ABC):
                     raise
                 except Exception as err:
                     raise ModificationError(self,  modifier) from err
+
+        return node
 
     def copy(self, **kwargs):
         """
@@ -284,7 +299,8 @@ class Node(abc.ABC):
                     node = node.parent
             return node
         else:
-            raise InvalidRefStrComponent(self, ref_component)
+            return self[ref_component]
+            # raise InvalidRefStrComponent(self, ref_component)
 
     def __call__(self, ref: str = '.', calling_node=None):
         """
@@ -345,6 +361,11 @@ class EvaledNode(Node):
     The Python parser used to resolve :ref:`dstrings` and :ref:`raw key <raw key syntax>` type and modifier strings.
     """
 
+    eval_context: dict = field(default_factory=dict)
+    """
+    Extra context variables injected to the parser evaluation context.
+    """
+
     def safe_eval(self, py_expr: str, context=None):
         """
         Evaluates the python expression ``py_expr``, injecting ``self`` as variable |CURRENT_NODE_VAR_NAME|, ``self.root`` as |ROOT_NODE_VAR_NAME| and ``self.file_root`` as |FILE_ROOT_NODE_VAR_NAME| in the parser evaluation context. If the node or one of its ancestors was loaded from a file, that node will also be injected to the parser evaluation context as variable |FILE_ROOT_NODE_VAR_NAME|.
@@ -354,7 +375,8 @@ class EvaledNode(Node):
             varnames.ROOT_NODE_VAR_NAME: self.root,
             **({varnames.FILE_ROOT_NODE_VAR_NAME: self.file_root}
                if self.file_root is not None else {}),
-            **(context or {})}
+            **self.eval_context,
+            **(context or {}), }
 
         return self.parser.safe_eval(py_expr, context)
 

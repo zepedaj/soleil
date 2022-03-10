@@ -49,11 +49,13 @@ class Container(Node):
         Replaces an old node with a new node.
         """
 
-    def __getitem__(self, *args) -> Node:
+    def __getitem__(self, key, modify=True) -> Node:
         """
         Returns the specified node or nodes.
         """
-        return self.children.__getitem__(*args)
+        if modify:
+            self.modify()
+        return self.children[key]
 
     @abc.abstractmethod
     def get_child_qual_name(self, child_node):
