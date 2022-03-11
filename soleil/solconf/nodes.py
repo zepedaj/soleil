@@ -238,7 +238,7 @@ class Node(abc.ABC):
 
     def __getitem__(self, ref, modify=True):
         """
-        Returns the node indicated by the input :ref:`reference string <with reference strings>` relative to the current node. By default (unless ``modify=False``), all nodes referenced along the path defined by ``ref`` -- including ``self`` but excluding  the final node along the path -- will be modified. This ensures that node content that depends on modifiers such as |load| is available. This is also the reason why even non-container nodes have a :meth:`__getitem__` method: the node's modifiers can possibly change the node type.
+        Returns the node indicated by the input :ref:`reference string <with reference strings>` relative to the current node. By default (unless ``modify=False``), all nodes referenced along the path defined by ``ref`` -- including ``self`` but excluding  the final node along the path -- will be modified. This ensures that node content that depends on modifiers such as |load| is available. This is also the reason why even non-|Container| nodes have a :meth:`__getitem__` method: the node's modifiers can possibly change the node type. If the node returned by the modification is still not a |Container| node, a ``TypeError`` exception is raised indicating that the node is not node is not subscriptable.
 
 
         .. rubric:: Examples

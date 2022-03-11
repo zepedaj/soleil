@@ -30,6 +30,7 @@ SPHINX_DEFS = f"""
 .. |KeyNode.value| replace:: :attr:`KeyNode.value <soleil.solconf.dict_container.KeyNode.value>`
 .. |ParsedNode.raw_value| replace:: :attr:`ParsedNode.raw_value <soleil.solconf.nods.ParsedNode.raw_value>`
 .. |DictContainer| replace:: :attr:`~soleil.solconf.dict_container.DictContainer`
+.. |Container| replace:: :attr:`~soleil.solconf.container.Container`
 .. |SolConf| replace:: :class:`~soleil.solconf.solconf.SolConf`
 .. |SolConf.post_processor| replace:: :class:`~soleil.solconf.solconf.SolConf.post_processor`
 .. |SolConfArg| replace:: :class:`~soleil.solconf.cli_tools.solconfarg.SolConfArg`

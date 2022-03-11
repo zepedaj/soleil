@@ -13,7 +13,8 @@ from .solconf import SolConf
 from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned, traverse_tree
-from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME, FILE_ROOT_NODE_VAR_NAME
+from .varnames import (DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME,
+                       FILE_ROOT_NODE_VAR_NAME, ROOT_NODE_VAR_NAME, CURRENT_NODE_VAR_NAME)
 from .modification_heuristics import modify_tree
 
 
@@ -279,36 +280,20 @@ def child(node: Container):
         return children[0]
 
 
-def _inject_extended_node(source_node: KeyNode, patched_node: KeyNode):
-    """
-    Monkey-patches method :meth:`~soleil.solconf.nodes.ParsedNode.safe_eval` of ``patched_node`` so that the eval context will have node ``source_node`` injected as variable {EXTENDED_NODE_VAR_NAME}.
-    """
-
-    if hasattr(patched_node, 'safe_eval'):
-        prev_safe_eval = patched_node.safe_eval
-
-        def new_safe_eval(py_expr: str, context=None):
-            context = {
-                EXTENDED_NODE_VAR_NAME: source_node,
-                **(context or {})}
-            return prev_safe_eval(py_expr, context)
-
-        patched_node.safe_eval = new_safe_eval
-
-
 @register('extends')
 class extends:
     """
+    Merges the sub-tree of the input node -- the *overrides tree* -- with a sub-tree loaded from the source specified at initialization -- the *source tree*. Any raw value, type or modifier specified in the overrides tree will take precedence. Non-specified values will be inherited from the source tree.
 
-    Merges the sub-tree of the input node with a sub-tree loaded from the specified source. When ``source`` is a path, relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`. ``source`` can also be a :class:`Node` object. 
+    Argument ``source`` can be a path or a |Node|.
 
-     The tree with ``source`` as the root is referred to as the *source tree* -- the tree with the node being modified as the root is the *overrides tree*. Any raw value, type or modifier specified in the overrides tree will take precedence. Non-specified values will be inherited from the source tree.
+    When ``source`` is a path, relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`. ``source`` can also be a :class:`Node` object. 
+
+    When ``source`` is a node, all overrides are applied to a copy of the node. The original source node is not altered in any way.
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
     When a source node exists for a given override node, the override node evaluation context will be extended with a variable |EXTENDED_NODE_VAR_NAME| that points to the source node. This can be used to build override types and modifiers that depend on the source node's values.
-
-    .. note:: When the ``source`` argument is a |Node|, the entire source sub-tree will be modified and all |ParsedNode.raw_value| attributes will be converted to their literal value. A copy of the resulting node is made subsequently and used as the source tree. This is required to make modifiers that depend on |FILE_ROOT_NODE_VAR_NAME| work correctly.
 
 
     .. rubric:: Examples
@@ -317,6 +302,7 @@ class extends:
 
     .. todo::
 
+      * Still not too clear how this works in more complex situations -- e.g., and how will it respond to e.g., nodes loaded from different files, nested loads, source trees with ??? values (is the value for ??? set everywhere?).
       * Not clear how extends will work with non-dictionary source trees. Currently works with dictionary source trees with nested lists, and the list entries can be extended.
       * This modifier and |SolConfArg| have similar mandates - they should be refactored to share common functionality.
       * Support complex types in overrides that depend on ``x_``: ``d:types(x_)+(int,):modifiers(x_)+(modif1,modif2): 4``. This requires fancier raw-key regex support.
@@ -339,23 +325,19 @@ class extends:
             self.source_qual_name = None
         elif isinstance(source, DictContainer):
             #
-            # 1) Modify the tree and convert ParseNode.raw_value to their literal value in case, e.g.,
-            # there are any `f_` references in the modifiers or the raw values.
-            #
-            # 2) Keep the original source qual_name to display useful error messages that
+            # Keep the original source qual_name to display useful error messages that
             # rely on __str__. Otherwise, the copied node would have qual_name '', as it
             # will be its own root.
             #
             self.source_qual_name = source.qual_name
 
             # Modify one level in order to support extending nodes that are extended.
-            source.modify()
+            # source.modify()
 
             # Keep a pointer to the original source to set context variables.
             self.orig_source = source
 
-            # Copy the source at modifier definition before it is modified since
-            # modification overrides will not be applied once the source is modified.
+            # Copy the source at modifier definition to keep a frozen copy.
             self.source = source.copy()
 
             # Set the file root node variable to the original file root node variable for all node
@@ -363,7 +345,11 @@ class extends:
             for node in traverse_tree(self.source):
                 if isinstance(node, EvaledNode):
                     orig_node = source[node.rel_name(self.source)]
-                    node.eval_context.update({FILE_ROOT_NODE_VAR_NAME: orig_node.file_root})
+                    node.eval_context.update({
+                        # CURRENT_NODE_VAR_NAME: orig_node,
+                        # ROOT_NODE_VAR_NAME: orig_node.root,
+                        **({FILE_ROOT_NODE_VAR_NAME: orig_node.file_root} if orig_node.file_root else {})
+                    })
 
         else:
             raise TypeError(f'Expected `str`, `Path` or `DictContainer`, but got `{type(source)}`.')
@@ -376,10 +362,9 @@ class extends:
         :param overrides_tree: Sub-tree containing overrides that will be applied to the source tree.
         """
         # Check input
-        if not (isinstance(overrides_tree, DictContainer)
-                and isinstance(key_node := overrides_tree.parent, KeyNode)):
-            raise TypeError(f'Expected arg `overrides_tree` to be a `DictContainer` '
-                            'that is the value of a `KeyNode`.')
+        if not isinstance(overrides_tree, DictContainer):
+            raise TypeError(
+                f'Expected arg `overrides_tree` to be a `DictContainer` but got `{type(overrides_tree).__name__}`.')
 
         # Load the template to extend
         if isinstance(self.source, Path):
@@ -404,24 +389,20 @@ class extends:
                 continue
 
             # TODO: Append modification will fail, as the node does not exist.
-            # TODO: The node needs modification of all ancestors to exist!
             ref_str = curr_override.rel_name(overrides_tree)
             source_node = source_tree[ref_str]
 
-            if isinstance(source_node, KeyNode):
-                source_node._parse_raw_key()
-
-            # Add variable x_ to the eval context
-            # and parse raw keys.
             for _node in [source_node, curr_override]:
                 if isinstance(_node, EvaledNode):
+                    # Add variable x_ to the eval context
                     _node.eval_context.update(
                         {
                             EXTENDED_NODE_VAR_NAME: orig_source[ref_str]
                         }
                     )
-            if isinstance(curr_override, KeyNode):
-                curr_override._parse_raw_key()
+                if isinstance(_node, KeyNode):
+                    # Parse the raw keys.
+                    _node._parse_raw_key()
 
             # Set ParsedNode raw_value
             if isinstance(curr_override, ParsedNode):
@@ -441,14 +422,16 @@ class extends:
                     isinstance(curr_override.parent, KeyNode) and
                     curr_override.parent._key_components['modifiers'] is not None)
                 else source_node.modifiers) or tuple()
+            if curr_override.modifiers:
+                source_node.modified = False
 
-        # Replace overrides_tree by source_tree
+        # # Replace overrides_tree by source_tree
         # (overrides_tree.parent or overrides_tree.sol_conf_obj).replace(
         #     overrides_tree, source_tree)
         # return source_tree
 
         # Update the original overrides tree instead of replacing it by source tree
-        # in order to supported extension of extended nodes.
+        # in order to support extension of extended nodes.
         for child in list(source_tree.children):
             source_tree.remove(child)
             if child in overrides_tree.children:

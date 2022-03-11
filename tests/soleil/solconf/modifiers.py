@@ -301,7 +301,10 @@ class TestModifiers(TestCase):
         sc = SolConf(
             {'a:dict': {'a0': 1},
              'b::extends(r_["a"])': {'a0:int:promote': '$:x_()'}})
-        sc()
+        self.assertEqual(
+            sc(),
+            {'a': {'a0': 1},
+             'b': 1})
 
     def test_fuse(self):
 

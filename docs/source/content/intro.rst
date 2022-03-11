@@ -556,9 +556,24 @@ This indexing syntax is meant to make node indexing behave like standard diction
      * Use reference string syntax ``node(ref string)`` to support only some types of indexing, and require the more verbose index-based syntax ``node[idx0]..[idxN]()`` for full flexibility -- this would require dropping/changing :attr:`nodes.Node.qual_name`.
 
 
-Reference strings offer another way to refer to nodes in the node tree. Reference strings consist of a sequence of container indices separated by one or more ``'.'`` characters. 
+Reference strings offer another way to refer to nodes in the node tree. Reference strings consist of a sequence of container indices separated by one or more ``'.'`` characters. They can be used as arguments to a node's :meth:`soleil.solconf.nodes.Node.__getitem__` method to get another node from the tree, or to the :meth:`soleil.solconf.nodes.Node.__call__` to get the resolved value of that node.
 
-Using :math:`N>1` ``'.'`` characters will refer to the node's :math:`(N-1)`-th ancestor.
+.. doctest:: SolConf
+
+   >>> r_['var2.2']
+   ParsedNode(..., raw_value='$:1+3')
+   >>> r_('var2.2')
+   4
+
+
+In both cases, the reference string is interpreted relative to the node that it is applied to:
+
+.. doctest:: SolConf
+
+   >>> r_['var2.0']  is r_['var2']['0'] # r_['var2'][0] also valid
+   True
+
+A sequence of :math:`N>1` ``'.'`` characters in a reference string can be used to refer to the node's :math:`(N-1)`-th ancestor:
 
 .. testcode:: SolConf
 

@@ -419,6 +419,19 @@ class DictContainer(Container):
         """
         return dict(child.resolve() for child in self.children.values() if not child.hidden)
 
+    def is_promoted(self):
+        """
+        Returns ``True`` if the dictionary contains a single node that is promoted.
+
+        .. note:: If the dictionary has a single child, its |KeyNode| is modified.
+        """
+        from .modifiers import child, promote
+        if len(self.children) == 1:
+            (key_node := child(self)).modify()
+            return promote in key_node.value.modifiers
+        else:
+            return False
+
     def _getitem(self, key: str, modify=True):
         """
         Returns the resolved value for the specified key.
@@ -426,11 +439,19 @@ class DictContainer(Container):
         By default, the returned node is the :class:`ValueNode` child of the referred :class:`KeyNode`.
 
         To instead the obtain the :class:`KeyNode`, prepended the input key string with a ``'*'`` character.
+
+        .. noted:: Will promote the dictionary's single child if the dictionary's :meth:`is_promoted` returns true.
         """
         if not isinstance(key, str):
             raise Exception(f'Expected a string key but got `{key}`.')
         if modify:
             self.modify()
+
+        if self.is_promoted():
+            key_node = next(iter(self.children))
+            key_node.modify()
+            return key_node.value.modify()
+
         if key[:1] == '*':
             return self.children[key[1:]]
         else:

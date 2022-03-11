@@ -188,6 +188,13 @@ class TestDictContainer(TestCase):
         assert node.qual_name == 'node0.node1'
         assert ac.node_tree[node.qual_name] is node
 
+    def test_is_promoted(self):
+        sc = SolConf({'a': {'_': 0}, 'b': {'_::promote': 1}}, modify=False)
+        self.assertFalse(sc['a'].is_promoted())
+        self.assertTrue(sc['b'].is_promoted())
+        sc.modify_tree()
+        self.assertTrue(sc(), {'a': {'_': 0}, 'b': 1})
+
 
 class TestFunctions(TestCase):
     def test_merge_decorator_values(self):

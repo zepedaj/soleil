@@ -239,7 +239,7 @@ class SolConfArg:
         2) For each override:
 
           1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
-          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitely with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are |load| targets. Because of this application of modifiers, the order in which overrides are provided is important.
+          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitly with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are |load| targets. Because of this application of modifiers, the order in which overrides are provided is important.
           3) Assign the override value depending on the :ref:`override type <CLI overrides>`.
 
         """
