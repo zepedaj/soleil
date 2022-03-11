@@ -4,7 +4,6 @@
 from typing import List, Optional
 import yaml
 import re
-from soleil.solconf.modification_heuristics import modify_ref_path
 from soleil.solconf.exceptions import InvalidOverridePattern
 from soleil.solconf.nodes import Node
 from soleil.solconf.solconf import SolConf
@@ -240,7 +239,7 @@ class SolConfArg:
         2) For each override:
 
           1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
-          2) Apply all modifiers of the path implicit in the reference string (except for the last component) using :func:`~modification_heuristics.modify_ref_path`. This enables e..g, modifying ``load`` targets. Because of this application of modifiers, the order in which overrides are provided is important.
+          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitely with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are |load| targets. Because of this application of modifiers, the order in which overrides are provided is important.
           3) Assign the override value depending on the :ref:`override type <CLI overrides>`.
 
         """
@@ -266,16 +265,10 @@ class SolConfArg:
             #
             raw_content = yaml.safe_load(raw_content_str)
 
-            # Modify all nodes in the specified path.
+            # Modify all nodes in the specified path as part of __getitem__.
             # This is required to e.g., apply load target overrides or load content that the
             # reference string refers to.
-            components = Node._get_ref_components(ref_str)
-            modify_ref_path(sc.root, components)
-
-            # Get node
-            node = sc.root
-            for _component in components:
-                node = node._node_from_ref_component(_component)
+            node = sc.root[ref_str]
 
             # Apply assignment
             if assignment_type == '=':
@@ -294,7 +287,7 @@ class SolConfArg:
                 new_node = SolConf.build_node_tree(raw_content, parser=sc.parser)
 
                 # Replace the new node as the value in the original KeyNode.
-                node = sc.root.node_from_ref(ref_str)
+                node = sc.root[ref_str]
                 (node.parent if node.parent else node.sol_conf_obj).replace(node, new_node)
 
         if self.resolve:

@@ -19,12 +19,6 @@ class InvalidRefStr(Exception):
         super().__init__(f'Invalid reference string `{ref}`.')
 
 
-class InvalidRefStrComponent(Exception):
-    def __init__(self, node, ref_component: str):
-        self.ref_component = ref_component
-        super().__init__(f'Node `{node}` cannot handle ref string component `{ref_component}`.')
-
-
 class ModificationError(Exception):
     def __init__(self, node, modifier=None):
         super().__init__(

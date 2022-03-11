@@ -179,14 +179,14 @@ class TestDictContainer(TestCase):
         assert type(node) is mdl.KeyNode
         assert node is ac.node_tree.children['node0'].value.children['node1']
         assert node.qual_name == 'node0.*node1'
-        assert ac.node_tree.node_from_ref(node.qual_name) is node
+        assert ac.node_tree[node.qual_name] is node
 
         # Refer to the value node.
         node = ac['node0']['node1']
         assert type(node) is ParsedNode
         assert node is ac.node_tree.children['node0'].value.children['node1'].value
         assert node.qual_name == 'node0.node1'
-        assert ac.node_tree.node_from_ref(node.qual_name) is node
+        assert ac.node_tree[node.qual_name] is node
 
 
 class TestFunctions(TestCase):

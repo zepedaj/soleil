@@ -165,7 +165,7 @@ One way is to use |dstrings|:
 
 .. todo:: Missing
 
-A second way to specify dictionaries with non-variable key names  is to leverage the default :mod:`xerializer` post-processor:
+A second way to specify dictionaries with non-variable key names is to leverage the default :mod:`xerializer` post-processor:
 
 .. doctest:: SolConf
 
@@ -563,8 +563,8 @@ Using :math:`N>1` ``'.'`` characters will refer to the node's :math:`(N-1)`-th a
 .. testcode:: SolConf
 
    assert (
-     r_.node_from_ref('var2.2..0') is 
-     r_.node_from_ref('var2.0') )
+     r_['var2.2..0'] is 
+     r_['var2.0'] )
 
 A reference string can also be passed directly to a node's :meth:`~Node.__call__` method in order to resolve the referenced node using more compact syntax:
 
@@ -576,7 +576,7 @@ A reference string can also be passed directly to a node's :meth:`~Node.__call__
    assert r_['var2'][0]() == 2 # Equivalent index-based syntax.
 
    # From node
-   node = r_.node_from_ref('var2')
+   node = r_['var2']
    assert node('2..0') == 2
    assert node('0') == 2
    assert node[0]() == 2 # Equivalent index-based syntax.
@@ -585,8 +585,8 @@ Note that, similarly to index references, reference strings skip nodes of type :
 
 .. doctest:: SolConf
 
-  >>> key_node = r_.node_from_ref('*var2')  # Access the key node.
-  >>> value_node = r_.node_from_ref('var2') # Access the key node's value node.
+  >>> key_node = r_['*var2']  # Access the key node.
+  >>> value_node = r_['var2'] # Access the key node's value node.
 
   >>> print(key_node, '|', value_node)
   KeyNode@'*var2' | ListContainer@'var2'
@@ -599,7 +599,7 @@ Key node skipping also happens when accessing ancestors using dot sequences:
 
   >>> print(value_node.parent)
   KeyNode@'*var2'
-  >>> print(value_node.node_from_ref('..'))
+  >>> print(value_node['..'])
   DictContainer@''    
 
 
@@ -612,11 +612,11 @@ Nodes expose a :ref:`qualified name <qualified name>` in attribute :attr:`~Node.
 
 .. doctest:: SolConf
 
-   >>> node = r_.node_from_ref('var2.2..0')
+   >>> node = r_['var2.2..0']
    >>> print(node)
    ParsedNode@'var2.0'
    >>> assert node.qual_name == 'var2.0'
-   >>> print(r_.node_from_ref(node.qual_name))
+   >>> print(r_[node.qual_name])
    ParsedNode@'var2.0'
 
 Being root-relative reference strings in canonical form, qualified names can also be used to conveniently refer to a node's resolved value:

@@ -3,7 +3,7 @@
 from .autonamed_pattern import AutonamedPattern
 from threading import RLock
 from .exceptions import (
-    InvalidRefStr, InvalidRefStrComponent, ResolutionError, ResolutionCycleError, ModificationError)
+    InvalidRefStr, ResolutionError, ResolutionCycleError, ModificationError)
 from dataclasses import dataclass, field, replace
 import abc
 from .parser import Parser
@@ -89,19 +89,6 @@ class Node(abc.ABC):
     """
     If the node is part of a tree in an :class:`SolConf` object, returns that object.
     """
-
-    def __getitem__(self, key, modify=True):
-        """
-        By default, :class:`Node` objects are not subscriptable. However, some modifiers (e.g., |load|) will alter the node type. This catch-all :meth:`__getitem__` modifies the node and, if the modified node is different than ``self``, calls the :meth:`__getitem__`` method of that the new node.
-
-        Otherwise, a ``TypeError`` is raised indicating that the node is not subscriptable.
-
-        Parameter ``modify`` is provided for compatibility with other node types. Setting it to ``True`` will cause  the above described ``TypeError`` exception to be raised.
-        """
-        if not modify or (node := self.modify()) is self:
-            raise TypeError(f"'{type(self).__name__}' object is not subscriptable")
-        else:
-            return node[key]
 
     @property
     def hidden(self):
@@ -228,9 +215,31 @@ class Node(abc.ABC):
     _REF_STR_COMPONENT_PATTERN_OR_DOTS = re.compile(_REF_STR_COMPONENT_PATTERN_OR_DOTS_RAW)
     _FULL_REF_STR_PATTERN = re.compile(str(_FULL_REF_STR_PATTERN_RAW))
 
-    def node_from_ref(self, ref: str = ''):
+    @classmethod
+    def _split_ref(cls, ref: str):
+        # Check ref string
+        if not re.fullmatch(cls._FULL_REF_STR_PATTERN, ref):
+            raise InvalidRefStr(ref)
+
+        # Break up ref string into list of components.
+        return [x['component_or_dots']
+                for x in re.finditer(cls._REF_STR_COMPONENT_PATTERN_OR_DOTS, ref)]
+
+    @abc.abstractmethod
+    def _getitem(self, ref, modify):
         """
-        Returns the node indicated by the input :ref:`reference string <with reference strings>`.
+        Helper method for magic method :meth:`__getitem__`.
+
+        :param ref: A subscript, possibly in string form.
+        :param modify: Whether to modify the node before attempting to subscript it. Modification is necessary for tree-altering modifiers that might change the contents of the node.
+        """
+        # In order to support reference strings in __getitem__, instantiations of this method must support string values for argument ref.
+        pass
+
+    def __getitem__(self, ref, modify=True):
+        """
+        Returns the node indicated by the input :ref:`reference string <with reference strings>` relative to the current node. By default (unless ``modify=False``), all nodes referenced along the path defined by ``ref`` -- including ``self`` but excluding  the final node along the path -- will be modified. This ensures that node content that depends on modifiers such as |load| is available. This is also the reason why even non-container nodes have a :meth:`__getitem__` method: the node's modifiers can possibly change the node type.
+
 
         .. rubric:: Examples
 
@@ -243,71 +252,58 @@ class Node(abc.ABC):
           r_ = SolConf(raw_data).root
 
           # From the root node
-          assert (r_.node_from_ref('') is 
-                  r_)
-          assert (r_.node_from_ref('my_key0.1') is 
+          assert (r_[''] is r_)
+          assert (r_['.'] is r_)
+          assert (r_['my_key0.1'] is 
                   r_['my_key0'][1])          
 
           # Ancestor access
-          assert (r_.node_from_ref('my_key0..') is
+          assert (r_['my_key0..'] is
                   r_)
-          assert (r_.node_from_ref('my_key0.0...') is
+          assert (r_['my_key0.0...'] is
                   r_)
 
           # From a child node
-          node = r_.node_from_ref('my_key0..')
-          assert (node.node_from_ref('my_key1.2') is
+          node = r_['my_key0..']
+          assert (node['my_key1.2'] is
                   node['my_key1'][2])
 
         :param ref: A string of dot-separated keys, indices or empty strings (:ref:`syntax <with reference strings>`).
 
         """
-        #
-        _ref_components = self._get_ref_components(ref)
-        node = self
-        for _component in _ref_components:
-            node = node._node_from_ref_component(_component)
+        # This method relies on helper method self._getitem. See the documentation of EvaledNode._getitem for an explanation of
+        # why non-container nodes also need a __getitem__.
+
+        from .dict_container import KeyNode
+
+        if not isinstance(ref, str):
+            # Non string key.
+            return self._getitem(ref, modify=modify)
+        else:
+            # Reference-string key.
+            ref_components = self._split_ref(ref)
+            node = self
+            for component in ref_components:
+
+                if re.fullmatch(r'\.+', component):
+                    # Matches a sequence of dots (e.g., "....")
+                    for _ in range(len(component)-1):
+                        node = node.parent
+                        if isinstance(node, KeyNode):
+                            # Skip over KeyNode's for user friendliness
+                            node = node.parent
+                else:
+                    node = node._getitem(component, modify=modify)
 
         return node
 
-    @classmethod
-    def _get_ref_components(cls, ref: str):
-        # Check ref string
-        if not re.fullmatch(cls._FULL_REF_STR_PATTERN, ref):
-            raise InvalidRefStr(ref)
-
-        # Break up ref string into list of components.
-        return [x['component_or_dots']
-                for x in re.finditer(cls._REF_STR_COMPONENT_PATTERN_OR_DOTS, ref)]
-
-    def _node_from_ref_component(self, ref_component: str):
-        """
-        Each node type should know how to handle specific string ref component patterns.
-        If the ref component is not recognied by the type, it should punt handling to the parent
-        type. The implementation in :meth:`Node._node_from_ref_component` is the last resort, and it can only handle
-        dot-references to parents (e.g., "....") or self (e.g., ".").
-
-        This method also provides a hacky way for ref strings to skip :class:`KeyNode`s when these are parents in ref strings.
-        """
-        from .dict_container import KeyNode
-        if re.fullmatch(r'\.+', ref_component):
-            # Matches a sequence of dots (e.g., "....")
-            node = self
-            for _ in range(len(ref_component)-1):
-                node = node.parent
-                if isinstance(node, KeyNode):
-                    node = node.parent
-            return node
-        else:
-            return self[ref_component]
-            # raise InvalidRefStrComponent(self, ref_component)
-
-    def __call__(self, ref: str = '.', calling_node=None):
+    def __call__(self, ref: str = '.'):
         """
         Retrieves the node with the specified reference string relative to ``self`` and resolves it.
+
+        This is equivalent to calling ``node[ref].resolve()``.
         """
-        node = self.node_from_ref(ref)
-        return node.resolve()
+        return self[ref].resolve()
 
     @property
     def qual_name(self):
@@ -365,6 +361,19 @@ class EvaledNode(Node):
     """
     Extra context variables injected to the parser evaluation context.
     """
+
+    def _getitem(self, key, modify):
+        """
+        By default, :class:`EvaledNode` objects are not subscriptable. However, some modifiers (e.g., |load|) will alter the node type. This catch-all :meth:`__getitem__` modifies the node and, if the modified node is different than ``self``, calls the :meth:`__getitem__`` method of that new node.
+
+        Otherwise, a ``TypeError`` is raised indicating that the node is not subscriptable.
+
+        Parameter ``modify`` is provided for compatibility with other node types. Setting it to ``False`` will cause  the above described ``TypeError`` exception to be raised.
+        """
+        if not modify or (node := self.modify()) is self:
+            raise TypeError(f"'{type(self).__name__}' object is not subscriptable")
+        else:
+            return node[key]
 
     def safe_eval(self, py_expr: str, context=None):
         """

@@ -49,14 +49,6 @@ class Container(Node):
         Replaces an old node with a new node.
         """
 
-    def __getitem__(self, key, modify=True) -> Node:
-        """
-        Returns the specified node or nodes.
-        """
-        if modify:
-            self.modify()
-        return self.children[key]
-
     @abc.abstractmethod
     def get_child_qual_name(self, child_node):
         """
@@ -75,11 +67,19 @@ class ListContainer(Container):
 
     children: List[Node] = None
 
-    _REF_COMPONENT_PATTERN = re.compile(r'(0|[1-9]\d*)')
-
     def __init__(self, **kwargs):
         self.children = []
         super().__init__(**kwargs)
+
+    def _getitem(self, key, modify=True) -> Node:
+        """
+        Returns the specified node or nodes.
+        """
+        if isinstance(key, str):
+            key = int(key)
+        if modify:
+            self.modify()
+        return self.children[key]
 
     def add(self, node: Node):
         with self.lock:
@@ -139,9 +139,3 @@ class ListContainer(Container):
                 return self._derive_qual_name(str(k))
         #
         raise NotAChildOfError(child_node, self)
-
-    def _node_from_ref_component(self, ref_component: str):
-        if re.fullmatch(self._REF_COMPONENT_PATTERN, ref_component):
-            return self[int(ref_component)]
-        else:
-            return super()._node_from_ref_component(ref_component)

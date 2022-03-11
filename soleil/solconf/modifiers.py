@@ -14,7 +14,7 @@ from pathlib import Path
 from .functions import cwd
 from .utils import _Unassigned, traverse_tree
 from .varnames import DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME, FILE_ROOT_NODE_VAR_NAME
-from .modification_heuristics import modify_tree, modify_ref_path, as_literal
+from .modification_heuristics import modify_tree
 
 
 @register('noop')
@@ -326,7 +326,7 @@ class extends:
 
     def __init__(self, source: Union[str, Path, DictContainer]):
         """
-        :param source: A path or node. If a path, it will be loaded and partially modified using :func:`modify_ref_path` along the reference paths specified by the overrides. If a node, the whole source tree will be modified before a copy is made.
+        :param source: A path or node.
         """
 
         # Set default extension
@@ -362,7 +362,7 @@ class extends:
             # to make all modifier and resolution references to `f_` work correctly.
             for node in traverse_tree(self.source):
                 if isinstance(node, EvaledNode):
-                    orig_node = source.node_from_ref(node.rel_name(self.source))
+                    orig_node = source[node.rel_name(self.source)]
                     node.eval_context.update({FILE_ROOT_NODE_VAR_NAME: orig_node.file_root})
 
         else:
@@ -406,9 +406,7 @@ class extends:
             # TODO: Append modification will fail, as the node does not exist.
             # TODO: The node needs modification of all ancestors to exist!
             ref_str = curr_override.rel_name(overrides_tree)
-            components = Node._get_ref_components(ref_str)
-            modify_ref_path(source_tree, components)
-            source_node = source_tree.node_from_ref(ref_str)
+            source_node = source_tree[ref_str]
 
             if isinstance(source_node, KeyNode):
                 source_node._parse_raw_key()
@@ -419,7 +417,7 @@ class extends:
                 if isinstance(_node, EvaledNode):
                     _node.eval_context.update(
                         {
-                            EXTENDED_NODE_VAR_NAME: orig_source.node_from_ref(ref_str)
+                            EXTENDED_NODE_VAR_NAME: orig_source[ref_str]
                         }
                     )
             if isinstance(curr_override, KeyNode):

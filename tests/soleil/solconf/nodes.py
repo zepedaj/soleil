@@ -52,7 +52,7 @@ class TestNode(TestCase):
             '$:n_', parser=parser)), parser=parser)
         self.assertEqual(node(), ('my_name', value_node))
 
-    def test_node_from_ref(self):
+    def test_getitem(self):
         #
         for root, ref__expected_node__tuples in [
             (r_ :=
@@ -63,10 +63,10 @@ class TestNode(TestCase):
                      [5, {'d': 6, 'e': 7}, 8],
                  ]).node_tree,
              [
-                 (r_.node_from_ref('1.b..c'),
+                 (r_['1.b..c'],
                   r_[1]['c']),
                  #
-                 (r_[1]['c'].node_from_ref('...2.1.d'),
+                 (r_[1]['c']['...2.1.d'],
                   r_[2][1]['d'])]
              )]:
 
@@ -111,7 +111,7 @@ class TestNode(TestCase):
             for ref, expected_node, expected_type, expected_value in \
                     ref_str__exp_node__exp_type__exp_value:
                 #
-                actual_node = root.node_from_ref(ref)
+                actual_node = root[ref]
                 assert type(expected_node) is expected_type
                 assert type(actual_node) is expected_type
                 assert actual_node is expected_node

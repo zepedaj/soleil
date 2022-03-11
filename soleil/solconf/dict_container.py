@@ -170,7 +170,9 @@ class KeyNode(EvaledNode, Container):
 
     # Unimplemented methods from the Container interface.
     def add(self, *args): _keynode_unimplemented(f'add (args: {args})')
-    def __getitem__(self, *args): _keynode_unimplemented(f'__getitem__ (args: {args})')
+
+    def _getitem(self, key, modify): _keynode_unimplemented(
+        f'_getitem (key: {key}, modify: {modify})')
 
     def modify(self):
         """
@@ -417,7 +419,7 @@ class DictContainer(Container):
         """
         return dict(child.resolve() for child in self.children.values() if not child.hidden)
 
-    def __getitem__(self, key: str, modify=True):
+    def _getitem(self, key: str, modify=True):
         """
         Returns the resolved value for the specified key.
 
@@ -447,9 +449,3 @@ class DictContainer(Container):
                 return self._derive_qual_name(f'*{node.key}')
 
         raise exceptions.NotAChildOfError(child_node, self)
-
-    def _node_from_ref_component(self, ref_component: str):
-        if re.fullmatch(self._REF_COMPONENT_PATTERN, ref_component):
-            return self[ref_component]
-        else:
-            return super()._node_from_ref_component(ref_component)
