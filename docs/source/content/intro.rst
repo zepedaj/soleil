@@ -84,6 +84,7 @@ A :class:`SolConf` object is built by passing **raw content** directly to the in
 .. testcode:: SolConf
 
    from soleil import SolConf
+   import traceback
 
    sc = SolConf('abc')
 
@@ -253,6 +254,30 @@ Node system
 
 :class:`~solconf.SolConf` objects construct  a node-tree from raw input content. Understanding the structure of this tree is useful for advanced use. 
 
+Workflow
+----------
+
+.. graphviz::
+   :caption: |SolConf| creation, modification and and resolution workflow.
+
+   digraph foo {
+
+   node [shape=box,style=rounded]
+
+   "YAML file" -> "Load file" -> "YAML-parse" -> "SolConf()" -> "Apply CLI overrides" -> "SolConf.modify_tree()" -> "Resolve nodes + modify values" -> "Post-process\n(xerializer-based by default)";
+   "Python object" -> "SolConf()";
+   "CLI overrides" -> "YAML-parse values" -> "Apply CLI overrides";
+
+   # Input nodes
+   "YAML file" [shape=diamond];
+   "CLI overrides" [shape=diamond];
+   "Python object" [shape=diamond];
+
+   # Code blocks.
+   "SolConf()" [fontname="Courier"]
+   "SolConf.modify_tree()" [fontname="Courier"]
+   }
+
 Node types
 -----------
 
@@ -328,12 +353,9 @@ The object's node tree will have the following structure:
 Key nodes
 ----------
 
-Key nodes offer special functionality that enables **node typing** with automatic type-checking, and special node behavior through **node modifiers** -- callables that can modify nodes or the node tree.
+Key nodes offer special syntax that enables **node typing** with automatic type-checking, and special node behavior through **node modifiers** -- callables that can modify nodes or the node tree.
 
-One example application of node modifiers is to mark a node as **hidden**, meaning that it is visible to the parser and hence |dstrings|, but its resolved content is not included in the :class:`~solconf.SolConf` object's final resolved content. This behavior is useful to define meta-data used to create the configuration that is however not part of the configuration.
-
-Another useful application of node modifiers is to **promote** value nodes inside single-key :class:`~dict_containers.DictContainer` nodes -- i.e., to replace the container node by its single value node, in effect extending typing and modifier support to non-:class:`~dict_container.KeyNode` nodes. See :ref:`Decorating non-key nodes`.
-
+.. note:: The :func:`~soleil.solconf.modifiers.fuse` modifier offers an alternative syntax to specify node types and modifiers.
 
 .. _raw key syntax:
 
@@ -356,8 +378,6 @@ Node types and modifiers are specified in raw content using string keys with one
 Both expressions will be evaluted using the :attr:`SolConf.parser <solconf.SolConf.parser>` object, hence using the same variable context as used for |dstrings|.
 
 Note that the types and modifiers defined in a raw key will be applied to the key node's |KeyNode.value| node.
-
-.. note:: The :func:`~soleil.solconf.modifiers.fuse` modifier offers an alternative syntax to specify node types and modifiers.
 
 
 Type checking
@@ -397,13 +417,40 @@ Type tuples are also valid:
 
 .. todo:: Add docs for typing with xerializer string signatures.
 
-Modifiers
-^^^^^^^^^^
+Node modifiers
+---------------
+
+Node modifiers are callables that take a :class:`Node` as an argument and optionally output a new node. They are used to modify the node or node tree and are created using the :ref:`raw-key syntax <raw key syntax>` or the specifal |fuse| modifier.
 
 
-A modifier is a callable that takes a |Node| object and optionally outputs a new node. A modifier or tuple of modifiers can be specified as part of a raw content string key (:ref:`syntax <raw key syntax>`). These modifiers will be applied sequentially to the associated :class:`KeyNode`. 
+One example application of node modifiers is to mark a node as **hidden**, meaning that it is visible to the parser and hence |dstrings|, but its resolved content is not included in the :class:`~solconf.SolConf` object's final resolved content. This behavior is useful to define meta-data used to create the configuration that is however not part of the configuration.
 
-If a modifier outputs a new node, subsequent modifiers will be applied to this returned noe, as illustrated by the following code snippet from the :meth:`KeyNode.modify <dict_container.KeyNode.modify>` method:
+.. doctest:: SolConf
+
+   >>> SolConf({'a': '$:r_("b")+1', 'b::hidden': 2})()
+   {'a': 3}
+
+Another useful application of node modifiers is to **promote** value nodes inside single-key :class:`~dict_containers.DictContainer` nodes -- i.e., to replace the container node by its single value node, in effect extending typing and modifier support to non-:class:`~dict_container.KeyNode` nodes (see also :ref:`Decorating non-key nodes`):
+
+.. doctest:: SolConf
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> SolConf({'a:int:promote':  0})()
+   0
+   >>> try:
+   ...   SolConf({'a:int:promote':  0.0})()
+   ... except:
+   ...   print(traceback.format_exc())
+    Traceback (most recent call last):
+    ...
+    TypeError: Invalid type <class 'float'>. Expected one of (<class 'int'>,).
+    ...
+    soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@''`.
+
+Chaining
+^^^^^^^^^
+
+Nodes can have a tuple of modifiers as their :attr:`Node.modifiers <soleil.solconf.nodes.Node.modifiers>` attribute that will be applied sequentially. Each modifier in the sequence can optionally output a new node object, in which case subsequent modifiers will be applied to this returned node, as illustrated by the following code snippet from the :meth:`KeyNode.modify <dict_container.KeyNode.modify>` method:
 
 .. code-block::
 
@@ -413,12 +460,10 @@ If a modifier outputs a new node, subsequent modifiers will be applied to this r
 
 .. rubric:: Effect of modifier order
 
-Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results.
+Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results:
 
 .. doctest:: SolConf
    :options: +NORMALIZE_WHITESPACE
-
-   >>> import traceback
 
    # The choices modifier is applied to the fused node.
    >>> try:
@@ -429,9 +474,9 @@ Applying modifiers sequentially to the returned node, as illustrated above, incr
     ...
     ValueError: The resolved value of `ParsedNode@'_'` is `4`, but it must be one of `(1, 2, 3)`.
     ...
-    soleil.solconf.exceptions.ResolutionError: Error while resolving node `ParsedNode@'_'`.
 
    # The choices modifier is applied to the disarded, un-fused dictionary container node.
+   # The discarded node is never evaluated, and hence `choices` is not enforced.
    >>> SolConf({'_::choices(1,2,3),fuse': {'value': 4}})()
    {'_': 4}
    
@@ -440,10 +485,20 @@ For a discussion of modifier evaluation timing protcols, see the :class:`~dict_c
 
 A list of builtin modifiers automatically injected into the parser context can be found in the documentation for module :mod:`soleil.solconf.modifiers`.
 
+``__getitem__`` automatic modification
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Node modifications is delayed as much as possible in order to enable :ref:`CLI overrides` to be applied that will affect, e.g., the way in which |load| modifiers operate. Generally, the tree is first built completely and then the entire tree is modified recursively. The recursive tree modification is required because there are various modifiers (|load|, |extends|, |fuse|, |promote|) that modify the node tree. 
+
+The  |extends| modifier, in particular, will further depend on other nodes. In order to make these dependencies transparent to the user, |Node| implements a special :meth:`~soleil.solconf.nodes.Node.__getitem__` method that modifies each node before attempting to get one of its children. Hence, any call to :meth:`~soleil.solconf.nodes.Node.__getitem__` (or :meth:`~soleil.solconf.nodes.Node.__call__`) will modify the tree partially. This can interfere with the way in which overrides operate on nodes with |load| modifiers.
+
+.. todo:: Examples of problem? Solution for this?
+
 .. _Decorating non-key nodes:
 
 Non-key node types and modifiers
 ---------------------------------
+
+.. todo:: Need to discuss |fuse| as well.
 
 Modifiers and types can only be specified from raw content for key nodes, but the ``promote`` modifier offers a workaround that enables modification and typing of non-key nodes. 
 
@@ -479,7 +534,6 @@ Modifiers will likewise be applied to the promoted value node, enabling, for exa
 .. doctest:: SolConf
    :options: +NORMALIZE_WHITESPACE
 
-   >>> import traceback
    >>> SolConf({'_:int:promote,choices(1,2,3)': 3})()
    3
 
