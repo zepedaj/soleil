@@ -243,11 +243,43 @@ See the :ref:`Cookbook` for more examples.
 Soleil-enabled CLIs
 ======================
 
+``SolConfArg`` support for ``argparse``
+---------------------------------------------------------
+
 Soleil provides the |SolConfArg| class, instances of which can be used as the value of the ``type`` keyword argument when defining |argparse| argument parsers.
 
 See the |SolConfArg| class documentation for usage.
 
+
+Executing/examining configurations with ``solex``
+--------------------------------------------------
+
+Soleil includes the ``solex`` script that, together with ``xerializable``-enabled configurations that load ``serializable`` callables, can be used to execute configuration files without the need for any extra glue code. Internally, ``solex`` employs a single |SolConfArg| argument that supports override nodes or their values directly from the CLI -- see the |SolConfArg| documentation for syntax.
+
+The ``solex`` script takes a ``--print`` argument that can be used to examine the contents of the configuration file without executing the configuration (configuration execution is carried out by the post-processor). See the ``solex`` help message for usage:
+
+.. todo:: Make the contents of this block be taken directly from the solex command.
+
+.. code-block:: bash
+
+    user@machine:~$ solex -h
+    usage: solex [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}] conf [conf ...]
+
+    positional arguments:
+      conf                  The path of the configuration file to launch, and optionally, any argument overrides.
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --modules [MODULES [MODULES ...]]
+			    The modules to load before execution - can be used to register xerializable handlers.
+      --print {final,resolved,tree,tree-no-modifs}
+			    Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved 
+			    contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') 
+			    before applying modifications.
+
 .. _Node system:
+
+
 
 Node system
 ============
