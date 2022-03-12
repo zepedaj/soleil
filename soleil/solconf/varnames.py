@@ -32,7 +32,8 @@ SPHINX_DEFS = f"""
 .. |DictContainer| replace:: :attr:`~soleil.solconf.dict_container.DictContainer`
 .. |Container| replace:: :attr:`~soleil.solconf.container.Container`
 .. |SolConf| replace:: :class:`~soleil.solconf.solconf.SolConf`
-.. |SolConf.post_processor| replace:: :class:`~soleil.solconf.solconf.SolConf.post_processor`
+.. |SolConf.post_processor| replace:: :class:`SolConf.post_processor < soleil.solconf.solconf.SolConf.post_processor>`
+.. |SolConf.load| replace:: :class:`SolConf.load <soleil.solconf.solconf.SolConf.load>`
 .. |SolConfArg| replace:: :class:`~soleil.solconf.cli_tools.solconfarg.SolConfArg`
 .. |DEFAULT_EXTENSION| replace:: ``.yaml``
 .. |argparse| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__

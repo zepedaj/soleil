@@ -243,18 +243,17 @@ See the :ref:`Cookbook` for more examples.
 Soleil-enabled CLIs
 ======================
 
-``SolConfArg`` support for ``argparse``
+|SolConfArg| : |argparse| support
 ---------------------------------------------------------
 
 Soleil provides the |SolConfArg| class, instances of which can be used as the value of the ``type`` keyword argument when defining |argparse| argument parsers.
 
 See the |SolConfArg| class documentation for usage.
 
-
-Executing/examining configurations with ``solex``
+``solex`` : Examining/executing configs
 --------------------------------------------------
 
-Soleil includes the ``solex`` script that, together with ``xerializable``-enabled configurations that load ``serializable`` callables, can be used to execute configuration files without the need for any extra glue code. Internally, ``solex`` employs a single |SolConfArg| argument that supports override nodes or their values directly from the CLI -- see the |SolConfArg| documentation for syntax.
+Soleil includes the ``solex`` script that, together with ``xerializable``-enabled configurations that load ``serializable`` callables, can be used to execute configuration files without the need for any extra glue code. Internally, ``solex`` employs a single |SolConfArg| argument that supports overriding nodes or their values directly from the CLI -- see the |SolConfArg| documentation for syntax.
 
 The ``solex`` script takes a ``--print`` argument that can be used to examine the contents of the configuration file without executing the configuration (configuration execution is carried out by the post-processor). See the ``solex`` help message for usage:
 
@@ -290,49 +289,58 @@ Workflow
 ----------
 
 .. graphviz::
-   :caption: |SolConf| creation, modification and resolution workflow.
+   :layout: dot
+   :caption: |SolConf| creation, modification and resolution workflow illustrating the three main ways to instantiate a |SolConf| object -- through |SolConfArg|, with classmethod |SolConf.load|, or directly from a composition of serializable Python objects using |SolConf|.
 
-   digraph foo {       
-       node [shape=box,style="filled",fillcolor=azure3];
+   digraph foo {
+      rankdir = TB;
+      compound = true;
+      fontsize = 12;
+      node [shape=box,style="filled",fillcolor=azure3,fontsize=12];
 
-       subgraph cluster_0 {	 
-        label = "SolConfArg()"
-	fontname = "courier"
-	style = filled
-	fillcolor = chocolate1	
-	subgraph cluster_1 {
-	  fillcolor = cadetblue2
-	  label = "SolConf.load()"
-	  "YAML file" -> "Read file" -> "YAML parse" -> "SolConf1";
-	 }	 
-	 "SolConf1" -> "Apply CLI overrides"
-	 "CLI overrides" -> "YAML parse values" -> "Apply CLI overrides" -> "SolConf.modify_tree()" ;
-       }
-       "SolConf.modify_tree()" -> resolve
 
-       subgraph cluster_2 {
-         style=filled
-         fillcolor=gold1
-         "Python object" -> SolConf2;
-       }
-       SolConf2 -> resolve
-       
+      subgraph cluster_solconfarg {        
+       label = "SolConfArg()"
+       fontname = "courier"
+       style = filled
+       fillcolor = chocolate1	
 
-       #
-       resolve -> "Post-process\n(xerializer-based by default)";
+       subgraph cluster_solconf_load {	  
+	 fillcolor = cadetblue2
+	 label = "SolConf.load()"
+	 "YAML file" -> "Read file" -> "YAML parse";
 
-       # Input nodes       
-       "YAML file" [shape=diamond, fillcolor=limegreen];
-       "CLI overrides" [shape=diamond, fillcolor=limegreen];
-       "Python object" [shape=diamond, fillcolor=limegreen];
+	 subgraph cluster_solconf {
+	   label = "SolConf()"
+	   style=filled
+	   fillcolor=gold1
+	   "Python object" -> SolConf;
+	 }
 
-       # Code blocks.       
-       SolConf1 [fontname="Courier", label="SolConf()"]
-       SolConf2 [fontname="Courier", label="SolConf()"]
-       "SolConf.modify_tree()" [fontname="Courier"]
+	}	 
+	"SolConf" -> "Apply CLI overrides"
+	"CLI overrides" -> "YAML parse values" -> "Apply CLI overrides" -> "SolConf.modify_tree()" ;
+      }
+      "YAML parse" -> "Python object" [lhead=cluster_solconf];
+      "SolConf.modify_tree()" -> resolve
+      SolConf -> resolve
 
-       # Other blocks
-       resolve [label="Resolve nodes + modify values"]
+      #
+      resolve -> "Post-process\n(xerializer-based by default)" -> "Output Python object";
+
+
+      # Input nodes       
+      "YAML file" [shape=diamond, fillcolor=limegreen];
+      "CLI overrides" [shape=diamond, fillcolor=limegreen];
+      "Python object" [shape=diamond, fillcolor=limegreen];
+      "Output Python object" [shape=diamond, fillcolor=white];
+
+      # Code blocks.       
+      SolConf [fontname="Courier", label="SolConf()"]
+      "SolConf.modify_tree()" [fontname="Courier"]
+
+      # Other blocks
+      resolve [label="Resolve nodes + modify values"]
 
    }
 
