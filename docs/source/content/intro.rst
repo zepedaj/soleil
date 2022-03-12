@@ -526,7 +526,7 @@ Nodes can have a tuple of modifiers as their :attr:`Node.modifiers <soleil.solco
 
 .. rubric:: Effect of modifier order
 
-Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results:
+Applying modifiers sequentially to the returned node, as illustrated above, increases modifier flexibility. One consequence of this mechanism to keep in mind, however, is that modifier order might affect the results when modifiers include node-tree altering modifiers suchas as |fuse| or |load|:
 
 .. doctest:: SolConf
    :options: +NORMALIZE_WHITESPACE
