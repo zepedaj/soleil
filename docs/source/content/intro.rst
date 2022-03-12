@@ -276,6 +276,15 @@ The ``solex`` script takes a ``--print`` argument that can be used to examine th
 			    contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') 
 			    before applying modifications.
 
+The ``solex`` script further reads extra ``modules`` to be loaded automatically from a ``.solex`` file in YAML format at the same position as the configuration file:
+
+.. code-block:: yaml
+
+   # Example contents for file <conf root>/.solex
+   modules:
+     - module.one
+     - module.two
+
 .. _Node system:
 
 

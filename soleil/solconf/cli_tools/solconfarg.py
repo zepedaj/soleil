@@ -297,6 +297,7 @@ class SolConfArg:
             # Resolve the tree
             return sc()
         else:
+            sc.solconfarg_config_source = config_source
             return sc
 
     @classmethod
