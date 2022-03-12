@@ -290,24 +290,50 @@ Workflow
 ----------
 
 .. graphviz::
-   :caption: |SolConf| creation, modification and and resolution workflow.
+   :caption: |SolConf| creation, modification and resolution workflow.
 
-   digraph foo {
+   digraph foo {       
+       node [shape=box,style="filled",fillcolor=azure3];
 
-   node [shape=box,style=rounded]
+       subgraph cluster_0 {	 
+        label = "SolConfArg()"
+	fontname = "courier"
+	style = filled
+	fillcolor = chocolate1	
+	subgraph cluster_1 {
+	  fillcolor = cadetblue2
+	  label = "SolConf.load()"
+	  "YAML file" -> "Read file" -> "YAML parse" -> "SolConf1";
+	 }	 
+	 "SolConf1" -> "Apply CLI overrides"
+	 "CLI overrides" -> "YAML parse values" -> "Apply CLI overrides" -> "SolConf.modify_tree()" ;
+       }
+       "SolConf.modify_tree()" -> resolve
 
-   "YAML file" -> "Load file" -> "YAML-parse" -> "SolConf()" -> "Apply CLI overrides" -> "SolConf.modify_tree()" -> "Resolve nodes + modify values" -> "Post-process\n(xerializer-based by default)";
-   "Python object" -> "SolConf()";
-   "CLI overrides" -> "YAML-parse values" -> "Apply CLI overrides";
+       subgraph cluster_2 {
+         style=filled
+         fillcolor=gold1
+         "Python object" -> SolConf2;
+       }
+       SolConf2 -> resolve
+       
 
-   # Input nodes
-   "YAML file" [shape=diamond];
-   "CLI overrides" [shape=diamond];
-   "Python object" [shape=diamond];
+       #
+       resolve -> "Post-process\n(xerializer-based by default)";
 
-   # Code blocks.
-   "SolConf()" [fontname="Courier"]
-   "SolConf.modify_tree()" [fontname="Courier"]
+       # Input nodes       
+       "YAML file" [shape=diamond, fillcolor=limegreen];
+       "CLI overrides" [shape=diamond, fillcolor=limegreen];
+       "Python object" [shape=diamond, fillcolor=limegreen];
+
+       # Code blocks.       
+       SolConf1 [fontname="Courier", label="SolConf()"]
+       SolConf2 [fontname="Courier", label="SolConf()"]
+       "SolConf.modify_tree()" [fontname="Courier"]
+
+       # Other blocks
+       resolve [label="Resolve nodes + modify values"]
+
    }
 
 Node types
