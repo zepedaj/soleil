@@ -257,24 +257,40 @@ Soleil includes the ``solex`` script that, together with ``xerializable``-enable
 
 The ``solex`` script takes a ``--print`` argument that can be used to examine the contents of the configuration file without executing the configuration (configuration execution is carried out by the post-processor). See the ``solex`` help message for usage:
 
-.. todo:: Make the contents of this block be taken directly from the solex command.
+.. todo:: Any way to use the command (without ``subprocess.check_output``) directly below, while keeping the actual command output?
+   
 
-.. code-block:: bash
+.. doctest:: solex
+   :options: +NORMALIZE_WHITESPACE
 
-    user@machine:~$ solex -h
-    usage: solex [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}] conf [conf ...]
-
-    positional arguments:
-      conf                  The path of the configuration file to launch, and optionally, any argument overrides.
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --modules [MODULES [MODULES ...]]
-			    The modules to load before execution - can be used to register xerializable handlers.
-      --print {final,resolved,tree,tree-no-modifs}
-			    Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved 
-			    contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') 
-			    before applying modifications.
+   # (Equivalent to shell command `solex -h`)
+   ############################################
+   >>> import subprocess
+   >>> print(subprocess.check_output(['solex', '-h']).decode())
+   usage: solex [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}] 
+                conf [conf ...]
+   <BLANKLINE>
+   Executes a configuration file, or optionally prints its contents at various points of the parsing 
+   process. If a `.solex` file is found next to the specified configuration file, it is intereted as a 
+   YAML file and any extra modules in root-level list `modules` are appended to the contenst of the 
+   CLI-specified modules to load.
+   <BLANKLINE>
+   positional arguments:
+     conf                  The path of the configuration file to launch and, optionally, any argument 
+                           overrides.
+   <BLANKLINE>
+   optional arguments:
+     -h, --help            show this help message and exit
+     --modules [MODULES [MODULES ...]]
+			   The modules to load before execution - can be used to register soleil 
+			   parser context variables or xerializable handlers. Any module specified as 
+			   part of a list `modules` in a `.solex` YAML file at the same level as the 
+			   configuration file will also be loaded.
+     --print {final,resolved,tree,tree-no-modifs}
+			   Prints ('final') the final value, after the post-processor is applied, 
+			   ('resolved') the resolved contents before applying the post-processor or 
+			   ('tree') the node tree, optionally ('tree-no-modifs') before applying 
+			   modifications.
 
 The ``solex`` script further reads extra ``modules`` to be loaded automatically from a ``.solex`` file in YAML format at the same position as the configuration file:
 
