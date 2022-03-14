@@ -50,6 +50,8 @@ class SolConfArg:
 
       See the source code in :mod:`soleil.solconf.cli_tools._argparse_patches` for the actual patches.
 
+    .. _number of consumed cli arguments:
+
     .. rubric:: Number of consumed CLI arguments
 
     If  ``config_source`` is not provided at |SolConfArg| initialization, the first CLI argument will be used in its place. Accordingly CLI arguments of type |SolConfArg| will by default consume 

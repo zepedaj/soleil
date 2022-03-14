@@ -36,7 +36,9 @@ SPHINX_DEFS = f"""
 .. |SolConf.load| replace:: :class:`SolConf.load <soleil.solconf.solconf.SolConf.load>`
 .. |SolConfArg| replace:: :class:`~soleil.solconf.cli_tools.solconfarg.SolConfArg`
 .. |DEFAULT_EXTENSION| replace:: ``.yaml``
-.. |argparse| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__
+.. |argparse| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse>`__
+.. |ArgumentParser.add_argument| replace:: `ArgumentParser.add_argument <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__
+.. |argparse.ArgumentParser| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser>`__
 .. |load| replace:: :meth:`~soleil.solconf.modifiers.load`
 .. |choices| replace:: :meth:`~soleil.solconf.modifiers.choices`
 .. |extends| replace:: :meth:`~soleil.solconf.modifiers.extends`

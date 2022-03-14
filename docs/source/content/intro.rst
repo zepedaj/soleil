@@ -250,6 +250,8 @@ Soleil provides the |SolConfArg| class, instances of which can be used as the va
 
 See the |SolConfArg| class documentation for usage.
 
+.. _solex script:
+
 ``solex`` : Examining/executing configs
 --------------------------------------------------
 
@@ -303,9 +305,12 @@ The ``solex`` script further reads extra ``modules`` to be loaded automatically 
      - module.one
      - module.two
 
+Customization
+^^^^^^^^^^^^^^
+
+A custom version of the ``solex`` script can be created using the :func:`soleil.solconf.cli_tools.solex` decorator.
+
 .. _Node system:
-
-
 
 Node system
 ============

@@ -1,5 +1,0 @@
-#!/usr/bin/env python
-from soleil.solconf.cli_tools._bin import solex
-
-if __name__ == '__main__':
-    solex()
