@@ -255,6 +255,8 @@ See the |SolConfArg| class documentation for usage.
 
 Soleil includes the ``solex`` script that, together with ``xerializable``-enabled configurations that load ``serializable`` callables, can be used to execute configuration files without the need for any extra glue code. Internally, ``solex`` employs a single |SolConfArg| argument that supports overriding nodes or their values directly from the CLI -- see the |SolConfArg| documentation for syntax.
 
+.. todo:: Add an example illustrating the above.
+
 The ``solex`` script takes a ``--print`` argument that can be used to examine the contents of the configuration file without executing the configuration (configuration execution is carried out by the post-processor). See the ``solex`` help message for usage:
 
 .. todo:: Any way to use the command (without ``subprocess.check_output``) directly below, while keeping the actual command output?
@@ -270,9 +272,9 @@ The ``solex`` script takes a ``--print`` argument that can be used to examine th
    usage: solex [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}] 
                 conf [conf ...]
    <BLANKLINE>
-   Executes a configuration file, or optionally prints its contents at various points of the parsing 
-   process. If a `.solex` file is found next to the specified configuration file, it is intereted as a 
-   YAML file and any extra modules in root-level list `modules` are appended to the contenst of the 
+   Executes a configuration file and/or, optionally, prints its contents at various points of the parsing 
+   process. If a `.solex` file is found next to the specified configuration file, it is intepreted as a
+   YAML file and any extra modules in root-level list `modules` are appended to the contents of the 
    CLI-specified modules to load.
    <BLANKLINE>
    positional arguments:
