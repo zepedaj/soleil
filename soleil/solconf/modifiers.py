@@ -390,7 +390,11 @@ class extends:
 
             # TODO: Append modification will fail, as the node does not exist.
             ref_str = curr_override.rel_name(overrides_tree)
-            source_node = source_tree[ref_str]
+            try:
+                source_node = source_tree[ref_str]
+            except KeyError as err:
+                raise Exception(
+                    f'The target extension node `{ref_str}` is not part of the source tree `{orig_source}`.') from err
 
             for _node in [source_node, curr_override]:
                 if isinstance(_node, EvaledNode):
