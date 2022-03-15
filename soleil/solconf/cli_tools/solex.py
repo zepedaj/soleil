@@ -98,7 +98,7 @@ def solex(fxn=None):
         """
 
         # Load any extra modules specified in the .solex file.
-        modules = load_dot_solex(conf.solconfarg_config_source, modules)
+        modules = load_dot_solex(conf.solconfarg_config_source, modules) or []
 
         for _mdl in modules:
             import_module(_mdl)

@@ -287,9 +287,9 @@ class extends:
 
     Argument ``source`` can be a path or a |Node|.
 
-    When ``source`` is a path, relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`. ``source`` can also be a :class:`Node` object. 
+    When ``source`` is a path, relative paths are interpreted using the same :ref:`path conventions <path conventions>` as for :func:`load`.
 
-    When ``source`` is a node, all overrides are applied to a copy of the node. The original source node is not altered in any way.
+    When ``source`` is a node, all overrides are applied to a copy of the node. The original source node is not altered in any way. All nodes in the copy will have their evaluation context injected with variable |FILE_ROOT_NODE_VAR_NAME| that points the file root node of the ``source``.
 
     .. rubric:: Source node context variable |EXTENDED_NODE_VAR_NAME|
 
