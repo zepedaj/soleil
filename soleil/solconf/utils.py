@@ -30,7 +30,7 @@ def node_info_str(node):
 
 def traverse_tree(root):
     """
-    Iterates top-down, depth-first over all nodes in a tree.
+    Iterates top-down, depth-first over all nodes in a tree. No nodes are modified during traversal.
     """
     #
     from soleil.solconf.containers import Container

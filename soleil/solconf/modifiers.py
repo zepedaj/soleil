@@ -16,6 +16,7 @@ from .utils import _Unassigned, traverse_tree
 from .varnames import (DEFAULT_EXTENSION, EXTENDED_NODE_VAR_NAME,
                        FILE_ROOT_NODE_VAR_NAME, ROOT_NODE_VAR_NAME, CURRENT_NODE_VAR_NAME)
 from .modification_heuristics import modify_tree
+from pglib.py import strict_zip
 
 
 @register('noop')
@@ -342,9 +343,10 @@ class extends:
 
             # Set the file root node variable to the original file root node variable for all node
             # to make all modifier and resolution references to `f_` work correctly.
-            for node in traverse_tree(self.source):
+            for node, orig_node in strict_zip(traverse_tree(self.source), traverse_tree(source)):
+                assert node.rel_name(self.source) == orig_node.rel_name(source)
                 if isinstance(node, EvaledNode):
-                    orig_node = source[node.rel_name(self.source)]
+                    # orig_node = source[node.rel_name(self.source)]
                     node.eval_context.update({
                         # CURRENT_NODE_VAR_NAME: orig_node,
                         # ROOT_NODE_VAR_NAME: orig_node.root,
@@ -441,6 +443,9 @@ class extends:
             if child in overrides_tree.children:
                 overrides_tree.remove(overrides_tree.children[child.key])
             overrides_tree.add(child)
+
+        # overrides_tree._source_file = self.orig_source.source_file
+
         return None
 
 

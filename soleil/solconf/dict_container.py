@@ -180,7 +180,7 @@ class KeyNode(EvaledNode, Container):
         """
         # Parse the raw modifiers and types strings before applying modifiers
         self._parse_raw_key()
-        super().modify()
+        return super().modify()
 
     def remove(self, node: Node):
         """
