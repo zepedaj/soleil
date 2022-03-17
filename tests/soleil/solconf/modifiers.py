@@ -119,6 +119,15 @@ class TestModifiers(TestCase):
             resolved = sc()
             self.assertEqual(resolved, {'_': expected['root_5']})
 
+    def test_load__substitution(self):
+        with file_structure({
+                'config_source.yaml': {'a': 1, "b::load(vars={'d':7.0})": 'config_load'},
+                'config_load.yaml': {'c': 3.0, 'd:float': 5.0}}
+        ) as (tmp_dir, paths):
+            self.assertEqual(
+                SolConf.load(paths['config_source.yaml'])(),
+                {'a': 1, 'b': {'c': 3.0, 'd': 7.0}})
+
     def test_promote(self):
 
         sc = SolConf({'a': {'x:int:promote': 0}})

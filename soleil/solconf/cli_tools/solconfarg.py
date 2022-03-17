@@ -134,8 +134,8 @@ class SolConfArg:
             `ParsedNode@'typing_a'`.
               ...
           soleil.solconf.exceptions.ModificationError: Error while applying modifier 
-            `functools.partial(<function load at 0x...>, subdir='typing', ext='.yaml')` 
-            to node `ParsedNode@'typing_a'`.
+            `functools.partial(<function load at 0x...>, subdir='typing', 
+            ext='.yaml', vars=None)` to node `ParsedNode@'typing_a'`.
 
         This problem can be avoided using a root clobber override:
 

@@ -94,7 +94,7 @@ def _abs_path(node, path, subdir=None, ext=DEFAULT_EXTENSION):
 
 
 @register('load')
-def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
+def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None):
     """
     Loads the sub-tree from the source file with path obtained by resolving the node's value. The loaded sub-tree will replace the original node.
 
@@ -134,9 +134,9 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     # Check if this is a modification call or a modifier definition call.
     node = node
     if node is _Unassigned:
-        return partial(load, ext=ext)
+        return partial(load, subdir=subdir, ext=ext, vars=vars)
     elif isinstance(node, (str, Path)):
-        return partial(load, subdir=node, ext=ext)
+        return partial(load, subdir=node, ext=ext, vars=vars)
     elif not isinstance(node, Node):
         raise ValueError('Invalid input for argument node.')
 
@@ -154,6 +154,10 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION):
     ac = node.sol_conf_obj
     new_node = SolConf.build_node_tree(raw_data, parser=ac.parser)
     new_node._source_file = path
+
+    # Carry out the specified substitutions of ParsedNodes:
+    for key, val in (vars or {}).items():
+        new_node[key].raw_value = val
 
     # Replace the new node as the value in the original container.
     node.parent.replace(node, new_node)
