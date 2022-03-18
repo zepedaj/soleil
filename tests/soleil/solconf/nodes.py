@@ -85,11 +85,11 @@ class TestNode(TestCase):
              [
                  ('', _root, DictContainer,
                   _raw_data),
-                 ('node0', _root.children['node0'].value, DictContainer,
+                 ('node0', _root['*node0'].value, DictContainer,
                   _raw_data['node0']),
-                 ('*node0', _root.children['node0'], KeyNode,
+                 ('*node0', _root['*node0'], KeyNode,
                   ('node0', _raw_data['node0'])),
-                 ('node0.node1', _root.children['node0'].value.children['node1'].value,
+                 ('node0.node1', _root['*node0'].value['*node1'].value,
                   ParsedNode, _raw_data['node0']['node1']),
             ]),
             # ParsedNode

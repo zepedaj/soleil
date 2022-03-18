@@ -108,8 +108,8 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
 
     If the resolved path is a relative path, two possibilities exist:
 
-        #. **Relative to ancestor file**: The node or one of its ancestors was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the directory of that ancestor file. The closest ancestor is used if more than one ancestors were loaded from a file.
-        #. **Relative to working directory**: No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
+        # . **Relative to ancestor file**: The node or one of its ancestors was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the directory of that ancestor file. The closest ancestor is used if more than one ancestors were loaded from a file.
+        # . **Relative to working directory**: No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
 
     Paths can be explicitly made to be relative to the current working directory by post-concatenating relative paths to the output of registered function :func:`functions.cwd`.
 
@@ -119,11 +119,11 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
 
     The normal ``load`` workflow is usually triggered during an iterative tree modification heuristic (usually carried out by :meth:`SolConf.modify_tree <soleil.solconf.solconf.SolConf.modify_tree>` as part of |SolConf| initialization):
 
-        #. A node's ``load`` modifier call is started.
-        #. The target file path is obtained by resolving the node, using the :ref:`relative path interpretation <path conventions>` described above.
-        #. The data in the target file is loaded and used to build a sub-tree. The modifiers of all nodes in the loaded sub-tree are not applied immediately -- this will happen in latter iterations of the tree modification heuristic.
-        #. The sub-tree is used to replace the original node in the node tree.
-        #. All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
+        # . A node's ``load`` modifier call is started.
+        # . The target file path is obtained by resolving the node, using the :ref:`relative path interpretation <path conventions>` described above.
+        # . The data in the target file is loaded and used to build a sub-tree. The modifiers of all nodes in the loaded sub-tree are not applied immediately -- this will happen in latter iterations of the tree modification heuristic.
+        # . The sub-tree is used to replace the original node in the node tree.
+        # . All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
 
     .. rubric:: Choice-checking
 
@@ -174,13 +174,13 @@ def promote(value_node: Node):
 
     .. rubric:: Workflow:
 
-    #. *Before* ``promote`` *modifier call*: All modifiers up to and including ``promote`` are applied to ``value_node``.
-    #. *During* ``promote`` *modifier call*:
+    # . *Before* ``promote`` *modifier call*: All modifiers up to and including ``promote`` are applied to ``value_node``.
+    # . *During* ``promote`` *modifier call*:
 
-      #. Node ``value_node`` replaces the grand-parent dictionary container. Modifiers of node ``value_node`` are not applied immediately -- they will be applied in a latter iteration of the recursive tree node modification.
+      # . Node ``value_node`` replaces the grand-parent dictionary container. Modifiers of node ``value_node`` are not applied immediately -- they will be applied in a latter iteration of the recursive tree node modification.
 
-    #. *After* ``promote`` *modifier call*: Since the grand-parent dictionary container was replaced by ``value_node``, all modifiers from the original grand-parent after ``promote`` are applied to the promoted ``value_node`` node.
-    #. In a latter tree modification iteration, modifiers of ``value_node`` are applied to that node.
+    # . *After* ``promote`` *modifier call*: Since the grand-parent dictionary container was replaced by ``value_node``, all modifiers from the original grand-parent after ``promote`` are applied to the promoted ``value_node`` node.
+    # . In a latter tree modification iteration, modifiers of ``value_node`` are applied to that node.
 
     """
 
@@ -202,7 +202,7 @@ def promote(value_node: Node):
     with value_node.lock, key_node.lock, dict_node.lock, dict_node_container.lock:
 
         # Check that the container has only one child.
-        if (num_children := len(dict_node.children)) != 1:
+        if (num_children := len(dict_node)) != 1:
             raise Exception(
                 f'Node `{value_node}` promotion requires that the DictContainer `{dict_node}`'
                 f'have a single child, but `{num_children}` were found.')
@@ -283,6 +283,73 @@ def child(node: Container):
             raise Exception(
                 f'Expected a single child node for container node `{node}` but found `{len(children)}`.')
         return children[0]
+
+
+@register('derives')
+class derives:
+    """
+    Inherits the contents of ``super_container`` and extends it dynamically with the contents of the modified node.
+
+    .. rubric:: Examples
+
+    The decorated dictionary will include the super container's entries:
+
+    .. doctest::
+      :options: +NORMALIZE_WHITESPACE
+
+      >>> from soleil import SolConf
+      >>> SolConf(
+      ...  {'x': {'a': 0, 'b': 1, 'c': 2}, 
+      ...   'y::derives(r_["x"])': {'c': -2, 'd':3}
+      ...  })()
+      {'x': {'a': 0, 'b': 1, 'c': 2},
+       'y': {'c': -2, 'd': 3, 'a': 0, 'b': 1}}
+
+    Derivations can be chained:
+
+    .. doctest::
+      :options: +NORMALIZE_WHITESPACE
+
+      >>> from soleil import SolConf
+      >>> SolConf(
+      ...   {'x': {'a': 0, 'b': 1, 'c': 2}, 
+      ...    'y::derives(r_["x"])': {'c': -2, 'd': 3}, 
+      ...    'z::derives(r_["y"])': {'e': 4}
+      ...   })()
+      {'x': {'a': 0, 'b': 1, 'c': 2}, 
+       'y': {'c': -2, 'd': 3, 'a': 0, 'b': 1}, 
+       'z': {'e': 4, 'c': -2, 'd': 3, 'a': 0, 'b': 1}}
+
+    The nodes of ``super_container``, however, will not have access to contents overloaded in the modified node:
+
+    .. doctest::
+      :options: +NORMALIZE_WHITESPACE
+
+      >>> from soleil import SolConf
+      >>> SolConf(
+      ...   {'x': {'a': 0, 'b': '$:n_("..a")'},
+      ...    'y::derives(r_["x"])': {'a': 1},
+      ...   })()
+      {'x': {'a': 0, 'b': 0},
+       'y': {'a': 1, 'b': 0}}
+
+
+    """
+
+    def __init__(self, super_container):
+        """
+        :param super_container: The node to derive from.
+        """
+        self.super_container = super_container
+
+    def __call__(self, node):
+        """
+        Sets the specified node's ``super_container`` attribute to the modifier's homonymous attribute.
+        """
+        self.super_container = self.super_container.modify() or self.super_container
+        if not isinstance(self.super_container, DictContainer):
+            raise Exception("'DictContainer' required, but got {type(self.super_container)}.")
+        node.super_container = self.super_container
 
 
 @register('extends')
@@ -445,7 +512,7 @@ class extends:
         for child in list(source_tree.children):
             source_tree.remove(child)
             if child in overrides_tree.children:
-                overrides_tree.remove(overrides_tree.children[child.key])
+                overrides_tree.remove(overrides_tree['*' + child.key])
             overrides_tree.add(child)
 
         # overrides_tree._source_file = self.orig_source.source_file

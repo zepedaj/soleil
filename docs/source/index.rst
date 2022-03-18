@@ -15,6 +15,7 @@ Soleil: Lucid configuration
    content/glossary
    content/modules
    content/todo   
+   content/discussion
    
 
 Indices and tables

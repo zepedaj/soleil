@@ -410,3 +410,60 @@ class TestModifiers(TestCase):
         out = SolConf({'_:dt64:cast(dt64),promote': '2020-10-10'})()
         self.assertIsInstance(out, np.datetime64)
         self.assertEqual(out, np.datetime64('2020-10-10'))
+
+    def test_derives(self):
+        # Vanilla
+        with file_structure({
+            'config_source.yaml': {'x::load()': 'config_derives', 'y::derives(f_["x"])': {}},
+            'config_derives.yaml': {'c': 2, 'd': 3, 'e': 4}
+        }) as (temp_dir, path_mappings):
+            out = SolConf.load(path_mappings['config_source.yaml'])()
+            self.assertEqual(
+                out,
+                {'x': {'c': 2, 'd': 3, 'e': 4},
+                 'y': {'c': 2, 'd': 3, 'e': 4}})
+
+        # New params
+        with file_structure({
+            'config_source.yaml': {'x::load()': 'config_derives', 'y::derives(f_["x"])': {'a': 0, 'b': 1}},
+            'config_derives.yaml': {'c': 2, 'd': 3, 'e': 4}
+        }) as (temp_dir, path_mappings):
+            out = SolConf.load(path_mappings['config_source.yaml'])()
+            self.assertEqual(
+                out,
+                {'x': {'c': 2, 'd': 3, 'e': 4},
+                 'y': {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4}})
+
+        # Overrides params
+        with file_structure({
+            'config_source.yaml': {'x::load()': 'config_derives', 'y::derives(f_["x"])': {'a': 0, 'b': 1, 'c': -2}},
+            'config_derives.yaml': {'c': 2, 'd': 3, 'e': 4}
+        }) as (temp_dir, path_mappings):
+            out = SolConf.load(path_mappings['config_source.yaml'])()
+            self.assertEqual(
+                out,
+                {'x': {'c': 2, 'd': 3, 'e': 4},
+                 'y': {'a': 0, 'b': 1, 'c': -2, 'd': 3, 'e': 4}})
+
+        # Chained derivations
+        with file_structure({
+            'config_source.yaml': {'x::load()': 'config_derives_0', 'y::derives(f_["x"])': {'a': 0, 'b': 1}},
+            'config_derives_0.yaml': {'c': 2, 'z::load()': 'config_derives_1'},
+            'config_derives_1.yaml': {'d': 3, 'e': 4}
+        }) as (temp_dir, path_mappings):
+            out = SolConf.load(path_mappings['config_source.yaml'])()
+            self.assertEqual(
+                out,
+                {'x': {'c': 2, 'z': {'d': 3, 'e': 4}},
+                 'y': {'a': 0, 'b': 1, 'c': 2, 'z': {'d': 3, 'e': 4}}})
+
+        # Super unaffected (unfortunately)
+        with file_structure({
+            'config_source.yaml': {'x::load()': 'config_derives', 'y::derives(f_["x"])': {'c': -2}},
+            'config_derives.yaml': {'c': 2, 'd': '$:n_("..c")'},
+        }) as (temp_dir, path_mappings):
+            out = SolConf.load(path_mappings['config_source.yaml'])()
+            self.assertEqual(
+                out,
+                {'x': {'c': 2, 'd': 2},
+                 'y': {'c': -2, 'd': 2}})

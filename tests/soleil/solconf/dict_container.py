@@ -136,10 +136,10 @@ class TestDictContainer(TestCase):
         container.add(node2)
         container.add(node3)
 
-        self.assertEqual(len(container.children), 2)
+        self.assertEqual(len(container), 2)
         # Both hashes match, so retreiven node1 or node2
         # should result in the same node.
-        self.assertIs(container.children[node1], node2)
+        self.assertIs(container._children[node1], node2)
 
     def test_keynode_change_key(self):
         node1 = TestKeyNode.get_node()
@@ -161,10 +161,10 @@ class TestDictContainer(TestCase):
 
         # Test removal
         self.assertEqual(
-            {'my_key'}, set(container.children.keys()))
+            {'my_key'}, set(container.children))
         container.remove(node2)
         self.assertEqual(
-            set(), set(container.children.keys()))
+            set(), set(container.children))
 
     def test_qual_name(self):
 
@@ -177,14 +177,14 @@ class TestDictContainer(TestCase):
         # Refer to the key node.
         node = ac['node0']['*node1']
         assert type(node) is mdl.KeyNode
-        assert node is ac.node_tree.children['node0'].value.children['node1']
+        assert node is ac.node_tree['*node0'].value['*node1']
         assert node.qual_name == 'node0.*node1'
         assert ac.node_tree[node.qual_name] is node
 
         # Refer to the value node.
         node = ac['node0']['node1']
         assert type(node) is ParsedNode
-        assert node is ac.node_tree.children['node0'].value.children['node1'].value
+        assert node is ac.node_tree['*node0'].value['*node1'].value
         assert node.qual_name == 'node0.node1'
         assert ac.node_tree[node.qual_name] is node
 

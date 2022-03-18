@@ -2,6 +2,7 @@
 .. |raw key format| replace:: ``'name[:<types>[:<modifiers>]]'``
 """
 
+from itertools import chain
 from contextlib import contextmanager, nullcontext
 from typing import Union, Dict, Optional
 import re
@@ -319,12 +320,10 @@ class KeyNode(EvaledNode, Container):
 
           # Refer to the value node.
           node = sc['node0']['node1']
-          assert node==sc.node_tree['node0'].children['node1'].value
           assert node.qual_name == 'node0.node1'
 
           # Refer to the key node.
           node = sc['node0']['*node1']
-          assert node==sc.node_tree['node0'].children['node1']
           assert node.qual_name == 'node0.*node1'
 
         """
@@ -346,7 +345,7 @@ class DictContainer(Container):
 
     _REF_COMPONENT_PATTERN = re.compile(r'\*?[a-zA-Z_]\w*')
 
-    children: Dict[Node, Node] = None
+    _children: Dict[Node, Node] = None
     # Both key and value will be the same KeyNode, ensuring a single source for the
     # node key.
     #
@@ -363,8 +362,19 @@ class DictContainer(Container):
     # same key will result in unexpected behavior.
 
     def __init__(self, **kwargs):
-        self.children = {}
+        self._children = {}
+        self.super_container = None
         super().__init__(**kwargs)
+
+    @property
+    def children(self):
+        yield from chain(
+            self._children,
+            (_x for _x in self.super_container.children if _x not in self._children)
+            if self.super_container else ())
+
+    def __len__(self):
+        return len(set(list(self.children)))
 
     def add(self, node: KeyNode):
         """
@@ -380,7 +390,7 @@ class DictContainer(Container):
             self.remove(node, safe=True)
             # Add the new node.
             node.parent = self
-            self.children[node] = node
+            self._children[node] = node
 
     def remove(self, node: Union[KeyNode, str], safe=False) -> KeyNode:
         """
@@ -394,7 +404,7 @@ class DictContainer(Container):
         .. warning:: The removed node is only guaranteed to match the input node in key.
         """
         with self.lock, (nullcontext(None) if isinstance(node, str) else node.lock):
-            if popped_node := self.children.pop(node, *((None,) if safe else tuple())):
+            if popped_node := self._children.pop(node, *((None,) if safe else tuple())):
                 popped_node.parent = None
                 return popped_node
 
@@ -417,7 +427,7 @@ class DictContainer(Container):
         """
         Returns the resolved dictionary.
         """
-        return dict(child.resolve() for child in self.children.values() if not child.hidden)
+        return dict(child.resolve() for child in self.children if not child.hidden)
 
     def is_promoted(self):
         """
@@ -426,7 +436,7 @@ class DictContainer(Container):
         .. note:: If the dictionary has a single child, its |KeyNode| is modified.
         """
         from .modifiers import child, promote
-        if len(self.children) == 1:
+        if len(self) == 1:
             (key_node := child(self)).modify()
             return promote in key_node.value.modifiers
         else:
@@ -434,11 +444,23 @@ class DictContainer(Container):
 
     def _getitem(self, key: str, modify=True):
         """
+        Supports extending other containers. Unlike OOP-style inheritance, the super container will
+        not be aware of the this containers attributes.
+        """
+        try:
+            return self._getitem2(key, modify)
+        except KeyError as err:
+            if self.super_container is None:
+                raise err
+            return self.super_container._getitem(key, modify)
+
+    def _getitem2(self, key: str, modify=True):
+        """
         Returns the resolved value for the specified key.
 
         By default, the returned node is the :class:`ValueNode` child of the referred :class:`KeyNode`.
 
-        To instead the obtain the :class:`KeyNode`, prepended the input key string with a ``'*'`` character.
+        To instead obtain the :class:`KeyNode`, prepended the input key string with a ``'*'`` character.
 
         .. noted:: Will promote the dictionary's single child if the dictionary's :meth:`is_promoted` returns true.
         """
@@ -448,14 +470,14 @@ class DictContainer(Container):
             self.modify()
 
         if self.is_promoted():
-            key_node = next(iter(self.children))
+            key_node = next(iter(self._children))
             key_node.modify()
             return key_node.value.modify()
 
         if key[:1] == '*':
-            return self.children[key[1:]]
+            return self._children[key[1:]]
         else:
-            key_node = self.children[key]
+            key_node = self._children[key]
             if modify:
                 key_node.modify()
             return key_node.value
@@ -465,7 +487,7 @@ class DictContainer(Container):
         Prepends a ``'*'`` character to the input key node's key before building the qualified name. See :meth:`__getitem__`.
         """
 
-        for child_node in self.children:
+        for child_node in self._children:
             if node is child_node:
                 return self._derive_qual_name(f'*{node.key}')
 
