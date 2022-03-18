@@ -86,7 +86,7 @@ class SolConf:
         :param raw_data: The data to convert to a :class:`SolConf` object.
         :param context: Extra parameters to add to the parser context.
         :param parser: The parser to use (instantiated internally by default). If a parser is provided, ``context`` is ignored.
-        :param post_processor: A callable applied to the final resolved output. By default, this is :class:`xerializable.Serializer().from_serializable`.
+        :param post_processor: A callable applied to the final resolved output. By default, this is :meth:`xerializable.Serializer().from_serializable` -- the :class:`Serializer` is instantiated lazily to enable handler registration.
         """
 
         self.parser = parser or Parser(context)

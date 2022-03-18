@@ -615,3 +615,11 @@ def cast(*args):
         node.value_modifiers.append(caster)
     else:
         raise ValueError('Expected 1 or 2 input arguments but received `{len(args)}`.')
+
+
+@register('pproc')
+def pproc(node):
+    """
+    Applies the post-processor to the modified node as part of node resolution (as a value modifier).
+    """
+    node.value_modifiers.append(node.sol_conf_obj.post_processor)
