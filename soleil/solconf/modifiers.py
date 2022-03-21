@@ -348,7 +348,7 @@ class derives:
         """
         self.super_container = self.super_container.modify() or self.super_container
         if not isinstance(self.super_container, DictContainer):
-            raise Exception("'DictContainer' required, but got {type(self.super_container)}.")
+            raise Exception(f"'DictContainer' required, but got {type(self.super_container)}.")
         node.super_container = self.super_container
 
 

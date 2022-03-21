@@ -5,9 +5,6 @@ General to-do's
 ----------------
 .. todo::
 
-   * Add xerializable type support.
-   * Add CLI support
-
    * AST Parser
      * Improve extracting/replacing python interpolation from value strings (colon separator only valid in brackets or within strings).
 
@@ -18,6 +15,7 @@ General to-do's
      * Nested variables can be specified using filesystem directories or links within the same file. E.g., train.data@from(data,@global): imagenet should assign to the train.data structure the data.imagenet structure.
      * Supports an @parargs and @prodargs command.
      * Creates and uses a virtual environment with copies of all local modules so that development can continue while training is taking places. When parallelization is used, the copy is the same for all parallel runs in a single job group.
+      
 
    * Deploy to github
 
@@ -29,6 +27,7 @@ Major overhaul
  * While being modified, a node's `modified` attribute should be set to, e.g., 'IN_PROGRESS'. Attempting to modify a node with modif state 'IN_PROGRESS' should raise a cycle dependency error.
  * Load should load a single copy always. This copy should be stored in a separate tree, and all other loads of the same file should instead use that copy. The load target should end up deriving from the loaded copy.
  * Tree visualizations should display loads and derives in a way that preserves relationships to make it compact.
+ * Add an "alias" modifier that makes a node a reference to another node --  this should replace the approach that does {'node': '$:source()'} to alias nodes, as that approach loses references. The node's parent and the alias's parent should be different. But what about modifiers that alter the tree... ? Modifier "derives" works similarly to this, but when the purpose is to import from another file, this creates two e.g., "train_data" variables, one in the loaded node, and one in the derived node.
 
 
 Project-wide to-do's
