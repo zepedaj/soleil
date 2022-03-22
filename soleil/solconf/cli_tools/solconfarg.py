@@ -89,9 +89,6 @@ class SolConfArg:
         * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. The target node, if any, is discarded, and the new node added.
         * **Source clobber (**=)**: Sets or replaces the ``config_source`` argument of the ``SolConfArg`` object. See :ref:`below <source clobber>`.
 
-
-    .. todo:: This class and |extends| share a lot of common functionality. Is it possible to merge the two?
-
     """
 
     _OVERRIDE_PATTERN = re.compile(
@@ -106,7 +103,7 @@ class SolConfArg:
         .. doctest:: SolConfArg
 
           # Option 1: Path must be provided with argparse arguments
-          >>> sca1 = SolConfArg()          
+          >>> sca1 = SolConfArg()
           >>> sca1([f'{examples_root}/yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"])
           {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
 
@@ -220,15 +217,16 @@ class SolConfArg:
             #. Using :class:`SolConfArg` argument instances as the ``type`` keyword argument  in a ``ArgumentParser.add_argument`` call requires that the ``action=ReduceAction``  keyword-value pair be used as well. This keyword pair is used by default when ``type`` is a :class:`SolConfArg` instance. Have you explicitly set the ``action`` keyword argument to a different value?
 
         """
-        self.config_source = config_source
-        self.resolve = resolve
+        self._config_source = config_source
+        self._resolve = resolve
+        self.overrides = None
 
     @property
     def DFLT_ARGPARSE_KWARGS(self):
         """
         Sets the default ``argparser.add_argument`` keyword argument values to use when this instance is used as the ``type`` keyword argument.
         """
-        return {'nargs': '+' if self.config_source is None else '*',
+        return {'nargs': '+' if self._config_source is None else '*',
                 'action': ReduceAction}
 
     def __call__(self,  overrides: Optional[List[str]] = None):
@@ -246,23 +244,47 @@ class SolConfArg:
 
         """
 
-        overrides = list(overrides or [])
+        self.overrides = list(overrides or [])
 
-        if overrides and (root_clobber := re.match(r'^\*\*\=(?P<path>.*$)', overrides[0])):
+        if self._resolve:
+            return self.resolve()
+        else:
+            return self
+
+    def resolve(self):
+        sc = self.apply_overrides()
+        sc.modify_tree()
+        return sc()
+
+    def get_config_source(self):
+        """
+        Returns the config source path, which will depend on whether a config source was specified explicitly at initialization or not, and whether a source clobber override was specified.
+        """
+        overrides = list(self.overrides)
+
+        if overrides and (
+                root_clobber := re.match(r'^\*\*\=(?P<path>.*$)', overrides[0])):
             # Check for source clobber
             overrides.pop(0)
             config_source = root_clobber['path']
-        elif self.config_source is None:
+        elif self._config_source is None:
             # If config file not previously defined, get from overrides
             config_source = overrides.pop(0)
         else:
-            config_source = self.config_source
+            config_source = self._config_source
+
+        return config_source, overrides
+
+    def apply_overrides(self) -> 'SolConfArg':
+
+        config_source, overrides = self.get_config_source()
 
         # Load config file, do not apply modifiers yet.
         sc = SolConf.load(config_source, modify=False)
 
         # Alter the loaded node tree with the specified overrides.
-        for ref_str, assignment_type, raw_content_str in map(self._parse_override_str, overrides):
+        for ref_str, assignment_type, raw_content_str in map(
+                self._parse_override_str, overrides):
 
             #
             raw_content = yaml.safe_load(raw_content_str)
@@ -292,15 +314,7 @@ class SolConfArg:
                 node = sc.root[ref_str]
                 (node.parent if node.parent else node.sol_conf_obj).replace(node, new_node)
 
-        if self.resolve:
-            # Modify all remaining non-modified parts.
-            sc.modify_tree()
-
-            # Resolve the tree
-            return sc()
-        else:
-            sc.solconfarg_config_source = config_source
-            return sc
+        return sc
 
     @classmethod
     def _parse_override_str(cls, override: str):

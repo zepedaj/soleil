@@ -6,7 +6,7 @@ import climax as clx
 from soleil.solconf.cli_tools import SolConfArg
 
 
-def load_dot_solex(config_source, modules):
+def load_dot_solex(config_source):
     """
     Loads any extra arguments specified in a ``.solex`` file at the same level as the ``config_source`` file.
     """
@@ -14,9 +14,8 @@ def load_dot_solex(config_source, modules):
         with open(dot_solex, 'rt') as fo:
             yaml_str = fo.read()
         params = yaml.safe_load(yaml_str)
-        modules = list((modules or [])) + params['modules']
 
-    return modules
+    return params
 
 
 def solex(fxn=None):
@@ -79,6 +78,7 @@ def solex(fxn=None):
         --my_opt MY_OPT       My optional argument.
     """
 
+    # @clx.command() decorator delayed to support changing the __doc__ string -- see below.
     @clx.argument(
         'conf', type=SolConfArg(resolve=False),
         help='The path of the configuration file to launch and, optionally, '
@@ -88,7 +88,7 @@ def solex(fxn=None):
         dest='print_what', default=None,
         help="Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved  contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') before applying modifications.")
     @clx.argument(
-        '--modules', nargs='*',
+        '--modules', nargs='*', default=[],
         help='The modules to load before execution - can be used to register soleil parser context variables or xerializable handlers. Any module specified as part of a list `modules` in a `.solex` YAML file at the same level as the configuration file will also be loaded.')
     def solex_run(conf, print_what, modules, **kwargs):
         """
@@ -97,24 +97,32 @@ def solex(fxn=None):
         If a `.solex` file is found next to the specified configuration file, it is intepreted as a YAML file and any extra modules in root-level list `modules` are appended to the contents of the CLI-specified modules to load.
         """
 
-        # Load any extra modules specified in the .solex file.
-        modules = load_dot_solex(conf.solconfarg_config_source, modules) or []
+        # Get the config source path
+        config_source, _ = conf.get_config_source()
 
+        # Load any extra modules specified in the CLI or in the .solex file.
+        modules = modules + load_dot_solex(config_source).get('modules', [])
         for _mdl in modules:
             import_module(_mdl)
 
-        if print_what == 'resolved':
-            conf.modify_tree()
-            print(conf.root())
+        # Apply overrides, get SolConf object.
+        sc = conf.apply_overrides()
+
+        #
+        if print_what == 'tree-no-modifs':
+            sc.print_tree()
         elif print_what == 'tree':
-            conf.modify_tree()
-            conf.print_tree()
-        elif print_what == 'tree-no-modifs':
-            conf.print_tree()
+            sc.modify_tree()
+            sc.print_tree()
+        elif print_what == 'resolved':
+            sc.modify_tree()
+            # Calling the root resolver skips the post-processor.
+            print(sc.root())
         elif print_what in [None, 'final']:
+            sc.modify_tree()
             # Executes the post-processor, and hence any commands.
-            conf.modify_tree()
-            out = conf()
+            out = sc()
+            # If a callable was specified, apply it to the resolved+post-processed output.
             if fxn:
                 out = fxn(out, **kwargs)
             if print_what == 'final':
@@ -122,7 +130,7 @@ def solex(fxn=None):
         else:
             raise Exception('Unexpected case.')
 
-    # Changet the doc string.
+    # Change the doc string.
     if fxn and fxn.__doc__ is not None:
         solex_run.__doc__ = fxn.__doc__
 
