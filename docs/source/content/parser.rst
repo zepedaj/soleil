@@ -82,7 +82,6 @@ The SRPP evaluates all strings using an automatically generated variable context
         'modifiers': <function modifiers at 0x...>,
         'raw_value': <function raw_value at 0x...>,
         'child': <function child at 0x...>,
-        'extends': <class 'soleil.solconf.modifiers.extends'>,
         'fuse': <function fuse at 0x...>,
         'cast': <function cast at 0x...>
     }

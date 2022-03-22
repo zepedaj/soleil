@@ -211,11 +211,10 @@ Raw content used to initialize :class:`~solconf.SolConf` objects can contain cro
   * **Root node variable** |ROOT_NODE_VAR_NAME| -- the *root node*;
   * **Current node variable** |CURRENT_NODE_VAR_NAME| -- the node where the |dstring| is defined;
   * **File root node variable** |FILE_ROOT_NODE_VAR_NAME| -- the current file's root node, *i.e.*, the highest-level node of the configuration file where the current node is defined;
-  * **Extended node variable**  |EXTENDED_NODE_VAR_NAME| -- Available during application of the :func:`~soleil.solconf.modifiers.extends` modifier.
 
-Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME|, |FILE_ROOT_NODE_VAR_NAME| and |EXTENDED_NODE_VAR_NAME| could point to the same node. Any of the these variables can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
+Note that any or all of |ROOT_NODE_VAR_NAME|, |CURRENT_NODE_VAR_NAME|, and |FILE_ROOT_NODE_VAR_NAME| could point to the same node. Any of the these variables can be used to create cross-references using :ref:`chained indices <with indices>` or :ref:`reference strings <with reference strings>`:
 
-.. todo:: Add examples for |FILE_ROOT_NODE_VAR_NAME| and |EXTENDED_NODE_VAR_NAME|.
+.. todo:: Add examples for |FILE_ROOT_NODE_VAR_NAME|.
 
 .. doctest:: SolConf
 
@@ -585,9 +584,9 @@ A list of builtin modifiers automatically injected into the parser context can b
 
 ``__getitem__`` automatic modification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Node modifications is delayed as much as possible in order to enable :ref:`CLI overrides` to be applied that will affect, e.g., the way in which |load| modifiers operate. Generally, the tree is first built completely and then the entire tree is modified recursively. The recursive tree modification is required because there are various modifiers (|load|, |extends|, |fuse|, |promote|) that modify the node tree. 
+Node modifications is delayed as much as possible in order to enable :ref:`CLI overrides` to be applied that will affect, e.g., the way in which |load| modifiers operate. Generally, the tree is first built completely and then the entire tree is modified recursively. The recursive tree modification is required because there are various modifiers (|load|, |derives|, |fuse|, |promote|) that modify the node tree. 
 
-The  |extends| modifier, in particular, will further depend on other nodes. In order to make these dependencies transparent to the user, |Node| implements a special :meth:`~soleil.solconf.nodes.Node.__getitem__` method that modifies each node before attempting to get one of its children. Hence, any call to :meth:`~soleil.solconf.nodes.Node.__getitem__` (or :meth:`~soleil.solconf.nodes.Node.__call__`) will modify the tree partially. This can interfere with the way in which overrides operate on nodes with |load| modifiers.
+The |derives| modifier, in particular, will further depend on other nodes. In order to make these dependencies transparent to the user, |Node| implements a special :meth:`~soleil.solconf.nodes.Node.__getitem__` method that modifies each node before attempting to get one of its children. Hence, any call to :meth:`~soleil.solconf.nodes.Node.__getitem__` (or :meth:`~soleil.solconf.nodes.Node.__call__`) will modify the tree partially. This can interfere with the way in which overrides operate on nodes with |load| modifiers.
 
 .. todo:: Examples of problem? Solution for this?
 

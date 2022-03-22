@@ -1,3 +1,0 @@
-_::extends('config_source'),promote:
-  a::modifiers(x_): 0
-  d: 4

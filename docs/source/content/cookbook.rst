@@ -31,71 +31,11 @@ Quotations
    {'example': [1, 1, 1, 1, {'a': None, 'promote': 1}]}
 
 
-.. _Extends recipes:
+.. _Derives recipes:
 
-Extends
+Derives
 ---------
-
-Simple
-^^^^^^^
-
-.. literalinclude:: yaml/extends/simple/config_source.yaml
-   :language: yaml
-   :caption:
-
-.. literalinclude:: yaml/extends/simple/config_extends.yaml
-   :language: yaml
-   :caption:
-
-
-.. doctest:: Cookbook
-   :options: +NORMALIZE_WHITESPACE
-
-   >>> sc = SolConf.load('yaml/extends/simple/config_extends.yaml')
-
-   >>> sc.print_tree()
-    {
-        "DictContainer@''(modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
-            {"KeyNode@'*a'()": ["ParsedNode@'a'()"]},
-            {"KeyNode@'*b'()": ["ParsedNode@'b'(types=(<class 'float'>,))"]},
-            {"KeyNode@'*c'()": ["ParsedNode@'c'(types=(<class 'float'>,), modifiers=(<soleil.solconf.modifiers.choices object at 0x...>,))"]},
-            {"KeyNode@'*d'()": ["ParsedNode@'d'()"]},
-            {"KeyNode@'*e'()": ["ParsedNode@'e'()"]}
-        ]
-    }
-
-   >>> print(sc())
-   {'a': 1, 'b': 3.0, 'c': 5.0, 'd': 4.0, 'e': 6}
-
-With ``x_`` cross-ref
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. literalinclude:: yaml/extends/cross_ref/config_source.yaml
-   :language: yaml
-   :caption:
-
-.. literalinclude:: yaml/extends/cross_ref/config_extends.yaml
-   :language: yaml
-   :caption:
-
-
-.. doctest:: Cookbook
-   :options: +NORMALIZE_WHITESPACE
-
-   >>> sc = SolConf.load('yaml/extends/cross_ref/config_extends.yaml')
-   >>> sc.print_tree()
-    {
-        "DictContainer@''(modifiers=(<soleil.solconf.modifiers.extends object at 0x...>, <function promote at 0x...>))": [
-            {"KeyNode@'*a'()": ["ParsedNode@'a'(modifiers=(<function noop at 0x...>,))"]},
-            {"KeyNode@'*b'()": ["ParsedNode@'b'()"]},
-            {"KeyNode@'*c'()": ["ParsedNode@'c'()"]},
-            {"KeyNode@'*d'()": ["ParsedNode@'d'()"]}
-        ]
-    }
-
-   >>> print(sc())
-    {'a': 0, 'b': 2, 'c': 3, 'd': 4}
-
+.. todo:: Add missing.
 
 Promotes
 ----------
