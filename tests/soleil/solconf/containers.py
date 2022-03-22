@@ -40,12 +40,3 @@ class TestListContainer(TestCase):
         node.replace(node.children[1], ParsedNode(10, parser=sc.parser))
 
         self.assertEqual(sc(), [0, 10, 2, 3])
-
-    def test_copy(self):
-        root = SolConf([0, 1, 2, 3]).root
-        root2 = root.copy()
-        self.assertEqual(root(), root2())
-
-        root2.remove(2)
-        self.assertEqual(root2(), [0, 1, 3])
-        self.assertEqual(root(), [0, 1, 2, 3])

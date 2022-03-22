@@ -17,14 +17,6 @@ class Container(Node):
         Returns an iterable over the container's children
         """
 
-    def copy(self):
-        out = super().copy()
-        for child in self.children:
-            child_copy = child.copy()
-            child_copy.parent = None
-            out.add(child_copy)
-        return out
-
     def __len__(self):
         return len(self.children)
 

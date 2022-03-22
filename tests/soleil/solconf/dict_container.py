@@ -110,19 +110,6 @@ class TestKeyNode(TestCase):
                 r'\w+' + re.escape(">, 4)` to node `ParsedNode@'abc'`.")):
             SolConf({'abc::parent(4)': 1})()
 
-    def test_copy(self):
-        node = self.get_node()
-        orig_val = node()
-        node2 = node.copy()
-
-        self.assertEqual(node, node2)
-        self.assertIsNot(node.value, node2.value)
-
-        node2.value.raw_value = 0
-
-        self.assertEqual(node(), orig_val)
-        self.assertEqual(node2(), ('my_key', 0))
-
 
 class TestDictContainer(TestCase):
 

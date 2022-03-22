@@ -132,32 +132,20 @@ class KeyNode(EvaledNode, Container):
     """
 
     # Defined here to be copied automatically by the dataclasses.replace function
-    _do_post_init: InitVar[bool] = True  # Set to false to skip post-initialization
     _key_components: dict = None
     _key: str = None
     _raw_key_parsed = False
 
-    def __post_init__(self, _do_post_init):
-        if _do_post_init:
-            # This switch is used by the copy method to avoid
-            # parsing the raw_key and setting the value's parent
-            # when a copy is going on.
-            self._key_components = self._split_raw_key(self.raw_key)
-            self._key = self._key_components['key']
-            if self.value.parent:
-                raise exceptions.NodeHasParent(self.value, self)
-            self.value.parent = self
+    def __post_init__(self):
+        self._key_components = self._split_raw_key(self.raw_key)
+        self._key = self._key_components['key']
+        if self.value.parent:
+            raise exceptions.NodeHasParent(self.value, self)
+        self.value.parent = self
 
     @property
     def hidden(self):
         return super().hidden or FLAGS.HIDDEN in self.value.flags
-
-    def copy(self):
-        value_copy = self.value.copy()
-        out = replace(self, _do_post_init=False)
-        out.value = value_copy
-        out.value.parent = out
-        return out
 
     @property
     def children(self):

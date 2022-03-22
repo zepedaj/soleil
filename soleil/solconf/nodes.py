@@ -136,14 +136,6 @@ class Node(abc.ABC):
 
         return node
 
-    def copy(self, **kwargs):
-        """
-        Returns a copy of the sub-tree with this node as the root.
-        """
-        out = replace(self, **kwargs)
-        out.parent = None
-        return out
-
     @property
     def file_root(self):
         """
@@ -168,7 +160,7 @@ class Node(abc.ABC):
 
         if not self.modified and self.modifiers:
             raise Exception(
-                f'Attempted resolution of unmodified node `{self}` with modifiers - call `node.modify()` before resolving.')
+                f'Attempted resolution of unmodified node `{self}` with modifiers `{self.modifiers}`. Call `node.modify()` before resolving.')
 
         try:
             # Set up marker variable that is used to track node dependencies
@@ -303,7 +295,8 @@ class Node(abc.ABC):
 
         This is equivalent to calling ``node[ref].resolve()``.
         """
-        return self[ref].resolve()
+        node = (node := self[ref]).modify() or node
+        return node.resolve()
 
     @property
     def qual_name(self):

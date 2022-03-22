@@ -163,13 +163,3 @@ class TestParsedNode(TestCase):
         ) as (path, expected):
             ac = SolConf.load(path)
             self.assertEqual(ac(), expected)
-
-    def test_copy(self):
-        parser = Parser()
-        for raw_value in ['$:1+1']:
-
-            node1 = mdl.ParsedNode(raw_value, parser=parser)
-            node2 = node1.copy()
-
-            self.assertIsNot(node1, node2)
-            self.assertEqual(node1(), node2())

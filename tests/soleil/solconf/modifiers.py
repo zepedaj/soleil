@@ -193,15 +193,6 @@ class TestModifiers(TestCase):
             else:
                 raise Exception('Exception expected!')
 
-    def test_choices_docs(self):
-        with file_structure({
-                'config_source.yaml': {'a': 1, 'b:float:': 2.0, 'c:int:choices(1,3,5)': 3},
-                'config_extends.yaml': {"_::extends('config_source'),promote":
-                                        {'b': 3.0, 'c:float': 5.0}}
-        }) as (tmp_dir, paths):
-            sc = SolConf.load(paths['config_extends.yaml'])
-            self.assertTrue(isinstance(sc['c'].modifiers[0], mdl.choices))
-
     def test_load_with_choices(self):
 
         # Source choice.
@@ -236,84 +227,6 @@ class TestModifiers(TestCase):
         for modifiers_str in ['promote,hidden', 'hidden,promote']:
             sc = SolConf({'a0': {f'x:bool:{modifiers_str}': False}, 'a1': "$: r_['a0']()"})
             self.assertEqual(sc(), {'a1': False})
-
-    def test_extends(self):
-
-        # Simple
-        with file_structure({
-                'config_source.yaml': {'a': 1, 'b:int': 2, 'c:float,int:noop': 3, 'd::noop': 4, 'a1:int:noop': 10, 'e': {'f::noop': 11}},
-                # 'config_extends.yaml': {"_::extends('config_source'),promote": {'b': 3, 'e': 5, 'a1:None:None': 10}}}
-                'config_extends.yaml': {"_::extends('config_source'),promote": {'b': 3, 'a1:None:None': 10, 'e': {'f': 12}}}}
-        ) as (tmp_dir, paths):
-            sc = SolConf.load(paths['config_extends.yaml'])
-            self.assertEqual((sc['a'].types, sc['a'].modifiers), (None, tuple()))
-            self.assertEqual((sc['b'].types, sc['b'].modifiers), ((int,), tuple()))
-            self.assertEqual((sc['c'].types, sc['c'].modifiers), ((float, int), (mdl.noop,)))
-            self.assertEqual((sc['d'].types, sc['d'].modifiers), (None, (mdl.noop,)))
-            self.assertEqual((sc['a1'].types, sc['a1'].modifiers), (None, ()))
-            self.assertEqual(sc(), {'a': 1, 'b': 3, 'c': 3, 'd': 4, 'a1': 10, 'e': {'f': 12}})
-
-    def test_extends__xrefs(self):
-        # With x_ cross-ref
-        with file_structure({
-            'config_source.yaml': {'a::noop': 1, 'b': 2, 'c:int': 3, 'd': {'e:int:noop': 10}},
-            'config_extends.yaml': {
-                "_::extends('config_source'),promote": {"a::modifiers(x_)+(noop,)": 0, 'd': {'e::modifiers(x_)+(noop,)': 11}}}}
-        ) as (temp_dir, path_mappings):
-            sc = SolConf.load(path_mappings['config_extends.yaml'])
-            self.assertEqual(sc['a'].modifiers, (noop, noop))
-            self.assertEqual(sc['d']['e'].modifiers, (noop, noop))
-            self.assertEqual(sc['d']['e'].types, (int,))
-            self.assertEqual(
-                sc(),
-                {'a': 0, 'b': 2, 'c': 3, 'd': {'e': 11}})
-
-    def test_extends__node(self):
-        sc = SolConf(
-            {'a::noop': {'a0': "$:2-1"},
-             'b::extends(r_["d"])': {'e': 4},
-             'c:int': 3,
-             'd': {'e:int:noop': 10, 'f': "$: 10+1", 'g::extends(r_["a"])': {}}},
-            modify=False)
-
-        # Check that ParseNode raw values are converted to literal values.
-        modify_tree(sc['*b'])
-        #
-        sc.modify_tree()
-
-        self.assertEqual(
-            sc(),
-            {'a': {'a0': 1},
-             'b': {'e': 4, 'f': 11, 'g': {'a0': 1}},
-             'c': 3, 'd': {'e': 10, 'f': 11, 'g': {'a0': 1}}}
-        )
-
-    def test_extends__node_chained(self):
-        sc = SolConf(
-            {'a::noop': {'a0': "$:2-1", 'b0': '$:3-1', 'c0': '$:4-1'},
-             'b::extends(r_["a"])': {'a0': -1},
-             'c::extends(r_["b"])': {'b0': -2}},
-            modify=False)
-        #
-        modify_tree(sc['c'])
-        self.assertTrue(sc['a'].modified)
-        self.assertTrue(sc['b'].modified)
-        self.assertTrue(sc['c'].modified)
-
-        self.assertEqual(
-            sc(),
-            {'a': {'a0': 1, 'b0': 2, 'c0': 3},
-             'b': {'a0': -1, 'b0': 2, 'c0': 3},
-             'c': {'a0': -1, 'b0': -2, 'c0': 3}})
-
-    def test_extends__decorators(self):
-        sc = SolConf(
-            {'a:dict': {'a0': 1},
-             'b::extends(r_["a"])': {'a0:int:promote': '$:x_()'}})
-        self.assertEqual(
-            sc(),
-            {'a': {'a0': 1},
-             'b': 1})
 
     def test_fuse(self):
 

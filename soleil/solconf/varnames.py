@@ -14,16 +14,11 @@ FILE_ROOT_NODE_VAR_NAME = 'f_'
 Specifies the name of the highest-level node in the current file.
 """
 
-EXTENDED_NODE_VAR_NAME = 'x_'
-"""
-When an :meth:`~soleil.solconf.modifiers.extends` modifier is in effect, nodes being modified will have the source node injected into the eval context under this name.
-"""
 
 SPHINX_DEFS = f"""
 .. |CURRENT_NODE_VAR_NAME| replace:: ``{CURRENT_NODE_VAR_NAME}``
 .. |ROOT_NODE_VAR_NAME| replace:: ``{ROOT_NODE_VAR_NAME}``
 .. |FILE_ROOT_NODE_VAR_NAME| replace:: ``{FILE_ROOT_NODE_VAR_NAME}``
-.. |EXTENDED_NODE_VAR_NAME| replace:: ``{EXTENDED_NODE_VAR_NAME}``
 .. |Node| replace:: :attr:`~soleil.solconf.nodes.Node`
 .. |Node.value_modifiers| replace:: :attr:`Node.value_modifiers <soleil.solconf.nodes.Node.value_modifiers>`
 .. |KeyNode| replace:: :class:`~soleil.solconf.dict_container.KeyNode`
@@ -40,8 +35,8 @@ SPHINX_DEFS = f"""
 .. |ArgumentParser.add_argument| replace:: `ArgumentParser.add_argument <https://docs.python.org/library/argparse.html#argparse.ArgumentParser.add_argument>`__
 .. |argparse.ArgumentParser| replace:: `argparse <https://docs.python.org/library/argparse.html#argparse.ArgumentParser>`__
 .. |load| replace:: :meth:`~soleil.solconf.modifiers.load`
+.. |derives| replace:: :meth:`~soleil.solconf.modifiers.derives`
 .. |choices| replace:: :meth:`~soleil.solconf.modifiers.choices`
-.. |extends| replace:: :meth:`~soleil.solconf.modifiers.extends`
 .. |fuse| replace:: :meth:`~soleil.solconf.modifiers.fuse`
 .. |cast| replace:: :meth:`~soleil.solconf.modifiers.cast`
 .. |promote| replace:: :meth:`~soleil.solconf.modifiers.promote`
