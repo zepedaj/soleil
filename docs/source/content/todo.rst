@@ -19,6 +19,10 @@ General to-do's
 
    * Deploy to github
 
+Minor
+---------
+ * CLI overrides of inherited properties should affect the derived node, not the node being derived.
+
 
 Major overhaul
 ----------------
