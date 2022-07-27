@@ -107,10 +107,10 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
 
     If the resolved path is a relative path, two possibilities exist:
 
-        # . **Relative to ancestor file**: The node or one of its ancestors was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the directory of that ancestor file. The closest ancestor is used if more than one ancestors were loaded from a file.
-        # . **Relative to working directory**: No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
+        #. **Relative to ancestor file**: The node or one of its ancestors was loaded from a file (the ancestor file), in which case the relative path is interpreted to be relative to the directory of that ancestor file. The closest ancestor is used if more than one ancestors were loaded from a file.
+        #. **Relative to working directory**: No ancestor node was loaded from a file, in which case the relative path is interpreted to be relative to the current working directory.
 
-    Paths can be explicitly made to be relative to the current working directory by post-concatenating relative paths to the output of registered function :func:`functions.cwd`.
+    Paths can be explicitly made relative to the current working directory by post-concatenating relative paths to the output of registered function :func:`soleil.solconf.functions.cwd`.
 
     .. _Load modifier workflow:
 
@@ -118,11 +118,11 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
 
     The normal ``load`` workflow is usually triggered during an iterative tree modification heuristic (usually carried out by :meth:`SolConf.modify_tree <soleil.solconf.solconf.SolConf.modify_tree>` as part of |SolConf| initialization):
 
-        # . A node's ``load`` modifier call is started.
-        # . The target file path is obtained by resolving the node, using the :ref:`relative path interpretation <path conventions>` described above.
-        # . The data in the target file is loaded and used to build a sub-tree. The modifiers of all nodes in the loaded sub-tree are not applied immediately -- this will happen in latter iterations of the tree modification heuristic.
-        # . The sub-tree is used to replace the original node in the node tree.
-        # . All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
+        #. A node's ``load`` modifier call is started.
+        #. The target file path is obtained by resolving the node, using the :ref:`relative path interpretation <path conventions>` described above.
+        #. The data in the target file is loaded and used to build a sub-tree. The modifiers of all nodes in the loaded sub-tree are not applied immediately -- this will happen in latter iterations of the tree modification heuristic.
+        #. The sub-tree is used to replace the original node in the node tree.
+        #. All remaining modifiers from the original node after the ``load`` modifier are applied to the new sub-tree.
 
     .. rubric:: Choice-checking
 
@@ -173,13 +173,13 @@ def promote(value_node: Node):
 
     .. rubric:: Workflow:
 
-    # . *Before* ``promote`` *modifier call*: All modifiers up to and including ``promote`` are applied to ``value_node``.
-    # . *During* ``promote`` *modifier call*:
+    #. *Before* ``promote`` *modifier call*: All modifiers up to and including ``promote`` are applied to ``value_node``.
+    #. *During* ``promote`` *modifier call*:
 
-      # . Node ``value_node`` replaces the grand-parent dictionary container. Modifiers of node ``value_node`` are not applied immediately -- they will be applied in a latter iteration of the recursive tree node modification.
+      #. Node ``value_node`` replaces the grand-parent dictionary container. Modifiers of node ``value_node`` are not applied immediately -- they will be applied in a latter iteration of the recursive tree node modification.
 
-    # . *After* ``promote`` *modifier call*: Since the grand-parent dictionary container was replaced by ``value_node``, all modifiers from the original grand-parent after ``promote`` are applied to the promoted ``value_node`` node.
-    # . In a latter tree modification iteration, modifiers of ``value_node`` are applied to that node.
+    #. *After* ``promote`` *modifier call*: Since the grand-parent dictionary container was replaced by ``value_node``, all modifiers from the original grand-parent after ``promote`` are applied to the promoted ``value_node`` node.
+    #. In a latter tree modification iteration, modifiers of ``value_node`` are applied to that node.
 
     """
 
