@@ -6,7 +6,6 @@ from typing import List, Union
 
 
 class Container(Node):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -51,8 +50,7 @@ class Container(Node):
         """
         Helper method to build a qualified name from a child of this node given that node's string (non-qualified) name.
         """
-        return (
-            f'{_qual_name}.' if (_qual_name := self.qual_name) else '') + child_name
+        return (f"{_qual_name}." if (_qual_name := self.qual_name) else "") + child_name
 
 
 class ListContainer(Container):
@@ -105,7 +103,7 @@ class ListContainer(Container):
                 with index.lock:
                     self.remove(self.get_child_posn(index))
             else:
-                raise TypeError(f'Invalid type {type(index)} for arg `index`.')
+                raise TypeError(f"Invalid type {type(index)} for arg `index`.")
 
     def replace(self, old_node: Node, new_node: Node):
         """

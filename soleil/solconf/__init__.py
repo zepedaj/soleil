@@ -2,7 +2,7 @@ from . import modifiers, functions  # noqa: Register base modifiers and function
 
 from .solconf import SolConf
 
-__all__ = ['SolConf']
+__all__ = ["SolConf"]
 
 """
 

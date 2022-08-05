@@ -10,8 +10,8 @@ def load_dot_solex(config_source):
     """
     Loads any extra arguments specified in a ``.solex`` file at the same level as the ``config_source`` file.
     """
-    if (dot_solex := Path(config_source).parent / '.solex').is_file():
-        with open(dot_solex, 'rt') as fo:
+    if (dot_solex := Path(config_source).parent / ".solex").is_file():
+        with open(dot_solex, "rt") as fo:
             yaml_str = fo.read()
         params = yaml.safe_load(yaml_str)
 
@@ -54,42 +54,50 @@ def solex(fxn=None):
     .. testoutput:: solex
       :options: +NORMALIZE_WHITESPACE
 
-      usage: ... [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}] 
+      usage: ... [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}]
              [--my_opt MY_OPT] conf [conf ...]
 
       Optional doc string will override the default.
 
       positional arguments:
-        conf                  The path of the configuration file to launch and, optionally, any argument 
+        conf                  The path of the configuration file to launch and, optionally, any argument
                               overrides.
 
       optional arguments:
         -h, --help            show this help message and exit
         --modules [MODULES [MODULES ...]]
-                              The modules to load before execution - can be used to register soleil 
-                              parser context variables or xerializable handlers. Any module specified as 
-                              part of a list `modules` in a `.solex` YAML file at the same level as the 
+                              The modules to load before execution - can be used to register soleil
+                              parser context variables or xerializable handlers. Any module specified as
+                              part of a list `modules` in a `.solex` YAML file at the same level as the
                               configuration file will also be loaded.
         --print {final,resolved,tree,tree-no-modifs}
-                              Prints ('final') the final value, after the post-processor is applied, 
-                              ('resolved') the resolved contents before applying the post-processor or 
-                              ('tree') the node tree, optionally ('tree-no-modifs') before applying 
+                              Prints ('final') the final value, after the post-processor is applied,
+                              ('resolved') the resolved contents before applying the post-processor or
+                              ('tree') the node tree, optionally ('tree-no-modifs') before applying
                               modifications.
         --my_opt MY_OPT       My optional argument.
     """
 
     # @clx.command() decorator delayed to support changing the __doc__ string -- see below.
     @clx.argument(
-        'conf', type=SolConfArg(resolve=False),
-        help='The path of the configuration file to launch and, optionally, '
-        'any argument overrides.')
+        "conf",
+        type=SolConfArg(resolve=False),
+        help="The path of the configuration file to launch and, optionally, "
+        "any argument overrides.",
+    )
     @clx.argument(
-        '--print', choices=['final', 'resolved', 'tree', 'tree-no-modifs'],
-        dest='print_what', default=None,
-        help="Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved  contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') before applying modifications.")
+        "--print",
+        choices=["final", "resolved", "tree", "tree-no-modifs"],
+        dest="print_what",
+        default=None,
+        help="Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved  contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') before applying modifications.",
+    )
     @clx.argument(
-        '--modules', nargs='*', default=[],
-        help='The modules to load before execution - can be used to register soleil parser context variables or xerializable handlers. Any module specified as part of a list `modules` in a `.solex` YAML file at the same level as the configuration file will also be loaded.')
+        "--modules",
+        nargs="*",
+        default=[],
+        help="The modules to load before execution - can be used to register soleil parser context variables or xerializable handlers. Any module specified as part of a list `modules` in a `.solex` YAML file at the same level as the configuration file will also be loaded.",
+    )
     def solex_run(conf, print_what, modules, **kwargs):
         """
         Executes a configuration file and/or, optionally, prints its contents at various points of the parsing process.
@@ -101,7 +109,7 @@ def solex(fxn=None):
         config_source, _ = conf.get_config_source()
 
         # Load any extra modules specified in the CLI or in the .solex file.
-        modules = modules + load_dot_solex(config_source).get('modules', [])
+        modules = modules + load_dot_solex(config_source).get("modules", [])
         for _mdl in modules:
             import_module(_mdl)
 
@@ -109,26 +117,26 @@ def solex(fxn=None):
         sc = conf.apply_overrides()
 
         #
-        if print_what == 'tree-no-modifs':
+        if print_what == "tree-no-modifs":
             sc.print_tree()
-        elif print_what == 'tree':
+        elif print_what == "tree":
             sc.modify_tree()
             sc.print_tree()
-        elif print_what == 'resolved':
+        elif print_what == "resolved":
             sc.modify_tree()
             # Calling the root resolver skips the post-processor.
             print(sc.root())
-        elif print_what in [None, 'final']:
+        elif print_what in [None, "final"]:
             sc.modify_tree()
             # Executes the post-processor, and hence any commands.
             out = sc()
             # If a callable was specified, apply it to the resolved+post-processed output.
             if fxn:
                 out = fxn(out, **kwargs)
-            if print_what == 'final':
+            if print_what == "final":
                 print(out)
         else:
-            raise Exception('Unexpected case.')
+            raise Exception("Unexpected case.")
 
     # Change the doc string.
     if fxn and fxn.__doc__ is not None:

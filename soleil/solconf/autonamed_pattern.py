@@ -1,4 +1,3 @@
-
 import re
 import pglib.validation as pgval
 from contextlib import ExitStack
@@ -8,7 +7,7 @@ from typing import Optional, Tuple, Dict
 
 
 def _n(name, expr):
-    return f'(?P<{name}>{expr})'
+    return f"(?P<{name}>{expr})"
 
 
 @dataclass
@@ -36,7 +35,7 @@ class AutonamedPattern:
 
     .. warning::
 
-      Calling the :meth:`AutonamedPattern.__str__` method (even implicitly through ``print(obj)``) will modify the object by advancing the counter. This enables support for situations where the same nested pattern is used more than once in the same expression, e.g., ``'{pattern}{pattern}'``. 
+      Calling the :meth:`AutonamedPattern.__str__` method (even implicitly through ``print(obj)``) will modify the object by advancing the counter. This enables support for situations where the same nested pattern is used more than once in the same expression, e.g., ``'{pattern}{pattern}'``.
 
       Use :meth:`AutonamedPattern.view` instead if you want to view the rendered auto-named pattern string without modifying the object.
 
@@ -66,7 +65,7 @@ class AutonamedPattern:
     """
 
     pattern: str
-    nested_patterns: Dict[str, 'AutonamedPattern'] = field(default_factory=dict)
+    nested_patterns: Dict[str, "AutonamedPattern"] = field(default_factory=dict)
     names: Optional[Tuple[str]] = None
     _k: int = 0
     _lock: RLock = field(default_factory=RLock)
@@ -83,11 +82,11 @@ class AutonamedPattern:
         """
         Generates the name derived from ``name`` for the given ``identifier``. Derived classes wishing to modify the auto-named string format should overload this method.
         """
-        return f'{name}_{identifier}'
+        return f"{name}_{identifier}"
 
     @classmethod
     def get_derived_tags(cls, base_tag: str, match: re.Match):
-        tag_pattern = re.compile(cls.name_builder(base_tag, r'\d+'))
+        tag_pattern = re.compile(cls.name_builder(base_tag, r"\d+"))
         return [x for x in match.groupdict().keys() if re.fullmatch(tag_pattern, x)]
 
     @classmethod
@@ -103,15 +102,20 @@ class AutonamedPattern:
         Returns the id-suffixed version of ``base_tag``, and checks that a single such tag exists in ``match``.
         """
         return pgval.checked_get_single(
-            AutonamedPattern.get_derived_tags(base_tag, match))
+            AutonamedPattern.get_derived_tags(base_tag, match)
+        )
 
     def view(self):
         """
         Compiles the pattern to a string and without advancing the counters.
         """
         with ExitStack() as stack:
-            all_patterns = [self]+list(self.nested_patterns.values())
-            [stack.enter_context(x._lock) for x in all_patterns if not isinstance(x, str)]
+            all_patterns = [self] + list(self.nested_patterns.values())
+            [
+                stack.enter_context(x._lock)
+                for x in all_patterns
+                if not isinstance(x, str)
+            ]
             all_ks = [(x, x._k) for x in all_patterns]
             try:
                 return str(self)
@@ -128,22 +132,24 @@ class AutonamedPattern:
 
             # Replace names in pattern
             NAMES = (
-                '|'.join(re.escape(x) for x in self.names)
+                "|".join(re.escape(x) for x in self.names)
                 if self.names
-                else r'[a-zA-Z]\w*')
+                else r"[a-zA-Z]\w*"
+            )
 
             # Substitute groups
             out = self.pattern
             for GROUP_PREFIX, GROUP_SUFFIX in [
-                    ('(?P<', '>'),  # Replaces (?P<name> by (?P<name_k>
-                    ('(?P=', ')'),  # Replaces (?P=name) by (?P=name_k)
-                    ('(?(', ')'),  # Replaces (?P=name) by (?P=name_k)
+                ("(?P<", ">"),  # Replaces (?P<name> by (?P<name_k>
+                ("(?P=", ")"),  # Replaces (?P=name) by (?P=name_k)
+                ("(?(", ")"),  # Replaces (?P=name) by (?P=name_k)
             ]:
                 out = re.sub(
                     f"(?P<prefix>({pxs.EVEN_SLASHES}|^|[^{pxs.SLASH}]))"
                     f"{re.escape(GROUP_PREFIX)}(?P<name>{NAMES}){re.escape(GROUP_SUFFIX)}",
                     lambda x: f"{x['prefix']}{GROUP_PREFIX}{self.next_name(x['name'])}{GROUP_SUFFIX}",
-                    out)
+                    out,
+                )
 
             # Replace nested patterns
             out = out.format(**self.nested_patterns)
@@ -161,65 +167,68 @@ class pxs:
     """
 
     # abc0, _abc0 (not 0abc)
-    VARNAME = r'[a-zA-Z_]+\w*'
+    VARNAME = r"[a-zA-Z_]+\w*"
 
     # Matches VARNAME's and fully qualified versions
     # abc0.def1 (not abc.0abc, abc., abc.def1. )
-    NS_VARNAME = AutonamedPattern(
-        r'{VARNAME}(\.{VARNAME})*(?!\.)(?!\w)', vars())
+    NS_VARNAME = AutonamedPattern(r"{VARNAME}(\.{VARNAME})*(?!\.)(?!\w)", vars())
 
     # \\, \\\\, \\\\\\, not \, \\\
-    SLASH = r'\\'
-    EVEN_SLASHES = r'(?<!\\)(\\\\)*'
-    ODD_SLASHES = r'\\(\\\\)*'
+    SLASH = r"\\"
+    EVEN_SLASHES = r"(?<!\\)(\\\\)*"
+    ODD_SLASHES = r"\\(\\\\)*"
 
     # $abc, \\$abc, \\\\$abc.def
     ATTR = AutonamedPattern(
-        r"(?P<slash>{EVEN_SLASHES})\$(?P<name>{NS_VARNAME})", vars())
+        r"(?P<slash>{EVEN_SLASHES})\$(?P<name>{NS_VARNAME})", vars()
+    )
 
     # abc, a\$, \#b, \'a, a\"bc, a\, not 'abc', "abc", a'bc, a"bc, a\\, a,$
     UNQUOTED_LITERAL = (
-        '('
+        "("
         # No un-escaped spaces, $, #, =, ', ", (, ), \
-        '[^' + (_qchars := r'\s\$\#\=\'\"\,\(\)\\' + ']|') +
+        "[^" + (_qchars := r"\s\$\#\=\'\"\,\(\)\\" + "]|") +
         # A sequence of escape sequences
-        f'({ODD_SLASHES}[{_qchars}])+'
-        ')+'
+        f"({ODD_SLASHES}[{_qchars}])+"
+        ")+"
     )
 
     # 'abc', "a$", '#b', '\#', "abc", not 'abc, abc", a\\$ 'a'bc'
     # r'(?P<q>(?P<sq>\')|(?P<dq>\"))((?(sq)\"|\')|[^\\])*(?P=q)'
     QUOTED_LITERAL = AutonamedPattern(
-        r'(?P<q>(?P<sq>\')|(?P<dq>\"))('
+        r"(?P<q>(?P<sq>\')|(?P<dq>\"))("
         # Non-quote
-        + (non_quote := r'(?(sq)\"|\')' '|') +
+        + (non_quote := r"(?(sq)\"|\')" "|") +
         # Non-slash
-        r'[^\\]' '|'
+        r"[^\\]" "|"
         # Odd-slashes-escaped non-slash char (including quote)
-        r'{ODD_SLASHES}[^\\]' '|'
+        r"{ODD_SLASHES}[^\\]" "|"
         # Even number of slashes followed by non-quote
-        '{EVEN_SLASHES}' + non_quote +
-        ')*?(?P=q)', vars())
+        "{EVEN_SLASHES}" + non_quote + ")*?(?P=q)",
+        vars(),
+    )
     # $fxnname(arg), $fxnname(arg0, arg1), $fxnname(arg0, ... kwarg0=val0, ...)
     #
 
     # A string literal
     # "abc, def, '123' "
-    LITERAL = AutonamedPattern(
-        '({UNQUOTED_LITERAL}|{QUOTED_LITERAL})', vars())
+    LITERAL = AutonamedPattern("({UNQUOTED_LITERAL}|{QUOTED_LITERAL})", vars())
 
     # Arguments in argument lists are interpreted as YAML strings.
     LITERAL_ARG = LITERAL
-    ARG_LIST = AutonamedPattern(
-        r'({LITERAL_ARG}(\s*,\s*{LITERAL_ARG})*)', vars())
+    ARG_LIST = AutonamedPattern(r"({LITERAL_ARG}(\s*,\s*{LITERAL_ARG})*)", vars())
 
     LITERAL_KWARG = AutonamedPattern(
-        r'(?P<kw_name>{VARNAME})\s*=\s*(?P<kw_val>{LITERAL})', vars())
+        r"(?P<kw_name>{VARNAME})\s*=\s*(?P<kw_val>{LITERAL})", vars()
+    )
     KWARG_LIST = AutonamedPattern(
-        ARG_LIST.pattern.format(LITERAL_ARG='{LITERAL_KWARG}'), vars())
+        ARG_LIST.pattern.format(LITERAL_ARG="{LITERAL_KWARG}"), vars()
+    )
 
     # Matches a function call where all arguments have been resolved (i.e., a non-nested function call).
     FXN_CALL = AutonamedPattern(
-        r'\$(?P<fxn>{NS_VARNAME})\('
-        r'\s*(?P<arg_list>{ARG_LIST})?\s*((?(arg_list),\s*)(?P<kwarg_list>{KWARG_LIST}))?\s*'
-        r'\)', vars())
+        r"\$(?P<fxn>{NS_VARNAME})\("
+        r"\s*(?P<arg_list>{ARG_LIST})?\s*((?(arg_list),\s*)(?P<kwarg_list>{KWARG_LIST}))?\s*"
+        r"\)",
+        vars(),
+    )

@@ -18,7 +18,7 @@ from .modification_heuristics import modify_tree
 from pglib.py import strict_zip
 
 
-@register('noop')
+@register("noop")
 def noop(*args):
     """
     No-operation modifier that returns ``None``.
@@ -27,7 +27,7 @@ def noop(*args):
 
 
 # def parent(node_or_levels: Node = None, levels=None):
-@register('parent')
+@register("parent")
 def parent(*args):
     """
     Returns, for the given node, the ancestor at a specified number of levels up (defauls to :math:`1` level up).
@@ -43,7 +43,7 @@ def parent(*args):
 
     # Check if this is a modification call or a modifier definition call.
 
-    invalid_args = ValueError('Invalid input arguments.')
+    invalid_args = ValueError("Invalid input arguments.")
     if len(args) == 1:
         if isinstance(args[0], int):
             # parent(N)
@@ -61,12 +61,12 @@ def parent(*args):
 
     for _ in range(levels):
         if node is None:
-            raise Exception('Attempted to get the parent of `None`.')
+            raise Exception("Attempted to get the parent of `None`.")
         node = node.parent
     return node
 
 
-@register('hidden')
+@register("hidden")
 def hidden(node):
     """
     Marks the node as a hidden node that will not be included in resolved content. Accordingly, the |SolConf.post_processor| is not applied to this node (and sub-tree), as the post-processor operates following tree resolution.
@@ -92,7 +92,7 @@ def _abs_path(node, path, subdir=None, ext=DEFAULT_EXTENSION):
     return path
 
 
-@register('load')
+@register("load")
 def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None):
     """
     Loads the sub-tree from the source file with path obtained by resolving the node's value. The loaded sub-tree will replace the original node.
@@ -137,7 +137,7 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
     elif isinstance(node, (str, Path)):
         return partial(load, subdir=node, ext=ext, vars=vars)
     elif not isinstance(node, Node):
-        raise ValueError('Invalid input for argument node.')
+        raise ValueError("Invalid input for argument node.")
 
     # Get absolute path
     node.modify()
@@ -145,7 +145,7 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
     path = _abs_path(node, path, subdir=subdir, ext=ext)
 
     # Load the data
-    with open(path, 'rt') as fo:
+    with open(path, "rt") as fo:
         text = fo.read()
     raw_data = yaml.safe_load(text)
 
@@ -164,7 +164,7 @@ def load(node: Node = _Unassigned, subdir=None, ext=DEFAULT_EXTENSION, vars=None
     return new_node
 
 
-@register('promote')
+@register("promote")
 def promote(value_node: Node):
     """
     Replaces the grand-parent dictionary container by the promoted value node.
@@ -184,27 +184,33 @@ def promote(value_node: Node):
     """
 
     # Check that this is a key node within a dictionary container.
-    if not ((key_node := value_node.parent)
-            and (dict_node := key_node.parent)
-            and isinstance(key_node, KeyNode)
-            and isinstance(dict_node, DictContainer)):
+    if not (
+        (key_node := value_node.parent)
+        and (dict_node := key_node.parent)
+        and isinstance(key_node, KeyNode)
+        and isinstance(dict_node, DictContainer)
+    ):
         raise Exception(
-            f'Expected {value_node} to be the value of a bound `KeyNode` but it was not.')
+            f"Expected {value_node} to be the value of a bound `KeyNode` but it was not."
+        )
 
     # Replacement will happen in the key nodes's grandparent. The key nodes's dict container will
     # be replaced (by the key node's child value node) in the dict container's parent container.
     if (dict_node_container := dict_node.parent) is None and (
-            dict_node_container := value_node.sol_conf_obj) is None:
+        dict_node_container := value_node.sol_conf_obj
+    ) is None:
         raise Exception(
-            'Cannot promote a `KeyNode` from a `DictContainer` that has no parent and is not the root of a `SolConf` object.')
+            "Cannot promote a `KeyNode` from a `DictContainer` that has no parent and is not the root of a `SolConf` object."
+        )
 
     with value_node.lock, key_node.lock, dict_node.lock, dict_node_container.lock:
 
         # Check that the container has only one child.
         if (num_children := len(dict_node)) != 1:
             raise Exception(
-                f'Node `{value_node}` promotion requires that the DictContainer `{dict_node}`'
-                f'have a single child, but `{num_children}` were found.')
+                f"Node `{value_node}` promotion requires that the DictContainer `{dict_node}`"
+                f"have a single child, but `{num_children}` were found."
+            )
 
         # Replace key node parent by key node child.
         dict_node_container.replace(dict_node, value_node)
@@ -213,7 +219,7 @@ def promote(value_node: Node):
         return value_node
 
 
-@register('choices')
+@register("choices")
 class choices:
     """
     Checks that a node's resolved value is one of the allowed choices. A ``ValueError`` exception is raised otherwise.
@@ -237,11 +243,12 @@ class choices:
     def _checked_resolve(self, resolved_value):
         if resolved_value not in self.valid_values:
             raise ValueError(
-                f'The resolved value of `{self.node}` is `{resolved_value}`, but it must be one of `{self.valid_values}`.')
+                f"The resolved value of `{self.node}` is `{resolved_value}`, but it must be one of `{self.valid_values}`."
+            )
         return resolved_value
 
 
-@register('types')
+@register("types")
 def types(node: Node):
     """
     Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.types` attribute.
@@ -253,7 +260,7 @@ def types(node: Node):
         return node.types
 
 
-@register('modifiers')
+@register("modifiers")
 def modifiers(node: Node):
     """
     Returns the node's :attr:`~soleil.solconf.modifiers.Nodes.modifiers` attribute.
@@ -265,13 +272,13 @@ def modifiers(node: Node):
         return node.modifiers
 
 
-@register('raw_value')
+@register("raw_value")
 def raw_value(node: ParsedNode):
     # TODO: (?) Return the raw content interpreted by SolConf.build_node_tree for non-ParsedNode nodes?
     return node.raw_value
 
 
-@register('child')
+@register("child")
 def child(node: Container):
     """
     Returns the single child, if a single child exists, raising an exception otherwise.
@@ -280,11 +287,12 @@ def child(node: Container):
         children = list(node.children)
         if len(children) != 1:
             raise Exception(
-                f'Expected a single child node for container node `{node}` but found `{len(children)}`.')
+                f"Expected a single child node for container node `{node}` but found `{len(children)}`."
+            )
         return children[0]
 
 
-@register('derives')
+@register("derives")
 class derives:
     """
     Inherits the contents of ``super_container`` and extends it dynamically with the contents of the modified node.
@@ -298,7 +306,7 @@ class derives:
 
       >>> from soleil import SolConf
       >>> SolConf(
-      ...  {'x': {'a': 0, 'b': 1, 'c': 2}, 
+      ...  {'x': {'a': 0, 'b': 1, 'c': 2},
       ...   'y::derives(r_["x"])': {'c': -2, 'd':3}
       ...  })()
       {'x': {'a': 0, 'b': 1, 'c': 2},
@@ -311,12 +319,12 @@ class derives:
 
       >>> from soleil import SolConf
       >>> SolConf(
-      ...   {'x': {'a': 0, 'b': 1, 'c': 2}, 
-      ...    'y::derives(r_["x"])': {'c': -2, 'd': 3}, 
+      ...   {'x': {'a': 0, 'b': 1, 'c': 2},
+      ...    'y::derives(r_["x"])': {'c': -2, 'd': 3},
       ...    'z::derives(r_["y"])': {'e': 4}
       ...   })()
-      {'x': {'a': 0, 'b': 1, 'c': 2}, 
-       'y': {'c': -2, 'd': 3, 'a': 0, 'b': 1}, 
+      {'x': {'a': 0, 'b': 1, 'c': 2},
+       'y': {'c': -2, 'd': 3, 'a': 0, 'b': 1},
        'z': {'e': 4, 'c': -2, 'd': 3, 'a': 0, 'b': 1}}
 
     The nodes of ``super_container``, however, will not have access to contents overloaded in the modified node:
@@ -347,11 +355,13 @@ class derives:
         """
         self.super_container = self.super_container.modify() or self.super_container
         if not isinstance(self.super_container, DictContainer):
-            raise Exception(f"'DictContainer' required, but got {type(self.super_container)}.")
+            raise Exception(
+                f"'DictContainer' required, but got {type(self.super_container)}."
+            )
         node.super_container = self.super_container
 
 
-@register('fuse')
+@register("fuse")
 def fuse(dict_node: DictContainer):
     """
     Provides an alternate syntax for node type and modifier specification.
@@ -365,7 +375,7 @@ def fuse(dict_node: DictContainer):
     .. doctest::
       :options: +NORMALIZE_WHITESPACE, +ELLIPSIS
 
-      >>> from soleil import SolConf      
+      >>> from soleil import SolConf
 
       # Fuse-based syntax
       >>> sc_fused = SolConf(
@@ -393,41 +403,45 @@ def fuse(dict_node: DictContainer):
         # Check input
         if not isinstance(dict_node, DictContainer):
             raise TypeError(
-                f'Expected fused meta values dictionary `{dict_node}` to be of type `{DictContainer}`.')
+                f"Expected fused meta values dictionary `{dict_node}` to be of type `{DictContainer}`."
+            )
 
         # Check input
-        if 'value' not in (keys := {x.key for x in dict_node.children}):
+        if "value" not in (keys := {x.key for x in dict_node.children}):
             raise ValueError(
-                "Expected fused meta values dictionary to have key 'value'.")
-        if invalid_keys := (keys - (valid_keys := {'value', 'types', 'modifiers'})):
+                "Expected fused meta values dictionary to have key 'value'."
+            )
+        if invalid_keys := (keys - (valid_keys := {"value", "types", "modifiers"})):
             raise ValueError(
-                f'Invalid keys `{invalid_keys}` for fused meta values dictionary should come from {valid_keys}.')
+                f"Invalid keys `{invalid_keys}` for fused meta values dictionary should come from {valid_keys}."
+            )
 
         # Fuse
 
         # Set types and modifiers
-        for attr in ['types', 'modifiers']:
+        for attr in ["types", "modifiers"]:
             if attr in keys:
-                modify_tree(lambda: dict_node[f'*{attr}'])
+                modify_tree(lambda: dict_node[f"*{attr}"])
                 attr_value = merge_decorator_values(
-                    dict_node(f'{attr}'), dict_node[f'*{attr}'].safe_eval)
-                setattr(dict_node['value'], attr, attr_value)
+                    dict_node(f"{attr}"), dict_node[f"*{attr}"].safe_eval
+                )
+                setattr(dict_node["value"], attr, attr_value)
 
         # Reset dict_node types and modifiers
-        dict_node['value'].modified = False
+        dict_node["value"].modified = False
 
         # Promote the value node
-        for attr in ['types', 'modifiers']:
+        for attr in ["types", "modifiers"]:
             if attr in keys:
-                dict_node.remove(dict_node[f'*{attr}'])
-        value = dict_node['value']
+                dict_node.remove(dict_node[f"*{attr}"])
+        value = dict_node["value"]
 
         promote(value)
 
         return value
 
 
-@register('cast')
+@register("cast")
 def cast(*args):
     """
     Applies a callable to the node's resolved value. The output of the callable is returned as the node's resolved value. The modifier accomplishes this by appending a partial version of this method to the node's |Node.value_modifiers| attribute.
@@ -445,10 +459,10 @@ def cast(*args):
         caster, node = args
         node.value_modifiers.append(caster)
     else:
-        raise ValueError('Expected 1 or 2 input arguments but received `{len(args)}`.')
+        raise ValueError("Expected 1 or 2 input arguments but received `{len(args)}`.")
 
 
-@register('pproc')
+@register("pproc")
 def pproc(node):
     """
     Applies the post-processor to the modified node as part of node resolution (as a value modifier).

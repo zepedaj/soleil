@@ -5,7 +5,9 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 import yaml
 
-DOCS_CONTENT_ROOT = Path(__file__).parent.parent.parent.parent / 'docs' / 'source' / 'content'
+DOCS_CONTENT_ROOT = (
+    Path(__file__).parent.parent.parent.parent / "docs" / "source" / "content"
+)
 
 
 @contextmanager
@@ -24,9 +26,9 @@ def file_structure(contents: Dict[str, Any]):
         for raw_path, contents in contents.items():
             path = (temp_dir / raw_path).resolve()
             if temp_dir not in path.parents:
-                raise Exception(f'Invalid path `{raw_path}`.')
+                raise Exception(f"Invalid path `{raw_path}`.")
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, 'w') as fo:
+            with open(path, "w") as fo:
                 yaml.dump(contents, fo)
             path_mappings[raw_path] = path
 

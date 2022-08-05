@@ -22,7 +22,7 @@ from typing import Union
 import numpy as np
 
 
-@register('cwd')
+@register("cwd")
 def cwd():
     """
     Returns the current working directory as a pathlib ``Path`` object.
@@ -42,7 +42,7 @@ def cwd():
     return Path.cwd().absolute()
 
 
-@register('values')
+@register("values")
 def values(x: dict):
     """
     Returns the values of the input dictionary
@@ -50,7 +50,7 @@ def values(x: dict):
     return x.values()
 
 
-@register('keys')
+@register("keys")
 def keys(x: dict):
     """
     Returns the keys of the input dictionary
@@ -63,4 +63,4 @@ dt64 = np.datetime64
 """
 (Sphinx Autodoc overwrites this doc string with an 'alias of ...' string -- the doc string is required however to have the 'alias of ...').
 """
-register('dt64', np.datetime64)
+register("dt64", np.datetime64)

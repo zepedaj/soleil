@@ -21,34 +21,44 @@ class UnsupportedPythonGrammarComponent(TypeError):
 
 class EvalError(Exception):
     def __init__(self, expr: str):
-        super().__init__(f'Error while attempting to evaluate expression `{expr}`.')
+        super().__init__(f"Error while attempting to evaluate expression `{expr}`.")
 
 
-PYTHON_PRECISION = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-                    ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-                    ast.USub: op.neg,
-                    ast.Lt: op.lt, ast.LtE: op.le,
-                    ast.Eq: op.eq, ast.NotEq: op.ne,
-                    ast.Gt: op.gt, ast.GtE: op.ge}
+PYTHON_PRECISION = {
+    ast.Add: op.add,
+    ast.Sub: op.sub,
+    ast.Mult: op.mul,
+    ast.Div: op.truediv,
+    ast.Pow: op.pow,
+    ast.BitXor: op.xor,
+    ast.USub: op.neg,
+    ast.Lt: op.lt,
+    ast.LtE: op.le,
+    ast.Eq: op.eq,
+    ast.NotEq: op.ne,
+    ast.Gt: op.gt,
+    ast.GtE: op.ge,
+}
 """
 .. warning:: Python operators have infinite precision and can result in hangs when large computations are requested.
 """
 # TODO: One solution to this problem is to use the finite-precision numpy operators when all arguments are numbers.
 
-BUILTIN_SCALAR_TYPES = (
-    'float', 'int', 'bool', 'bytes', 'str', 'slice')
+BUILTIN_SCALAR_TYPES = ("float", "int", "bool", "bytes", "str", "slice")
 """
 All these types from the ``builtins`` module are supported both as part of expressions and as node modifiers.
 """
-BUILTIN_ITERABLE_TYPES = (
-    'list', 'tuple', 'dict', 'set', 'range')  # Require __iter__
+BUILTIN_ITERABLE_TYPES = ("list", "tuple", "dict", "set", "range")  # Require __iter__
 """
 All these types from the ``builtins`` module are supported both as part of expressions and as node modifiers.
 """
 
 DEFAULT_CONTEXT = {
-    **{'NoneType': type(None)},
-    **{key: getattr(builtins, key) for key in BUILTIN_SCALAR_TYPES + BUILTIN_ITERABLE_TYPES}
+    **{"NoneType": type(None)},
+    **{
+        key: getattr(builtins, key)
+        for key in BUILTIN_SCALAR_TYPES + BUILTIN_ITERABLE_TYPES
+    },
 }
 """
 The default context -- :class:`Parser` objects create a copy of this context upon instantiation to use as their own variable context. This context can be extended using :func:`register`. All :class:`Parser` objects instantiated after registering a named variable will have access to it.
@@ -59,8 +69,13 @@ class _Unassigned:
     pass
 
 
-def register(name: str, value: Any = _Unassigned, *, overwrite: bool = False,
-             context: Dict[str, Any] = None):
+def register(
+    name: str,
+    value: Any = _Unassigned,
+    *,
+    overwrite: bool = False,
+    context: Dict[str, Any] = None,
+):
     """
     Registers a variable in the specified context (:attr:`DEFAULT_CONTEXT` by default). Can be used as a function to register any variable type, or as a function decorator for convenience when registering functions and methods:
 
@@ -78,9 +93,11 @@ def register(name: str, value: Any = _Unassigned, *, overwrite: bool = False,
         return lambda value: _register(name, value, overwrite, context, do_return=True)
 
 
-def _register(name: str, value: Any, overwrite: bool, context: Dict[str, Any], do_return: bool):
+def _register(
+    name: str, value: Any, overwrite: bool, context: Dict[str, Any], do_return: bool
+):
     if not overwrite and name in context:
-        raise Exception(f'A variable with name `{name}` already exists in the context.')
+        raise Exception(f"A variable with name `{name}` already exists in the context.")
     context[name] = value
     if do_return:
         return value
@@ -115,7 +132,7 @@ class Parser:
         try:
             return (context or self._context)[name]
         except KeyError as err:
-            raise UndefinedName(f'Name `{name}` undefined in parser context.') from err
+            raise UndefinedName(f"Name `{name}` undefined in parser context.") from err
 
     def safe_eval(self, expr, extra_context=None):
         """
@@ -126,10 +143,13 @@ class Parser:
 
         try:
             if len(expr) > MAX_EXPR_LEN:
-                raise Exception('The input expression has length {len(expr)} > {MAX_EXPR_LEN}.')
-            extended_context = {**self._context, **
-                                extra_context} if extra_context else self._context
-            return self._eval(ast.parse(expr, mode='eval').body, extended_context)
+                raise Exception(
+                    "The input expression has length {len(expr)} > {MAX_EXPR_LEN}."
+                )
+            extended_context = (
+                {**self._context, **extra_context} if extra_context else self._context
+            )
+            return self._eval(ast.parse(expr, mode="eval").body, extended_context)
         except Exception as err:
             raise EvalError(expr) from err
 
@@ -137,7 +157,10 @@ class Parser:
 
         # Bind _eval to context, if any.
         if context:
-            def eval_ctx(node): return self._eval(node, context=context)
+
+            def eval_ctx(node):
+                return self._eval(node, context=context)
+
         else:
             eval_ctx = self._eval
 
@@ -146,8 +169,8 @@ class Parser:
             return node.n
         elif isinstance(node, ast.BinOp):  # <left> <operator> <right>
             return self._operators[type(node.op)](
-                eval_ctx(node.left),
-                eval_ctx(node.right))
+                eval_ctx(node.left), eval_ctx(node.right)
+            )
         elif isinstance(node, ast.UnaryOp):  # <operator> <operand> e.g., -1
             return self._operators[type(node.op)](eval_ctx(node.operand))
         elif isinstance(node, ast.Call):
@@ -156,24 +179,29 @@ class Parser:
             # Build args:
             args = []
             for x in node.args:
-                getattr(args, 'extend' if isinstance(x, ast.Starred) else 'append')(eval_ctx(x))
+                getattr(args, "extend" if isinstance(x, ast.Starred) else "append")(
+                    eval_ctx(x)
+                )
 
             # Build kwargs
             kwargs = {}
             for x in node.keywords:
-                kwargs.update({x.arg: eval_ctx(x.value)}
-                              if x.arg is not None else
-                              eval_ctx(x.value))
+                kwargs.update(
+                    {x.arg: eval_ctx(x.value)}
+                    if x.arg is not None
+                    else eval_ctx(x.value)
+                )
 
             return func(
                 # Args
                 *args,
                 # Optional starargs (TODO: when is this used?)
-                *[eval_ctx(x) for x in getattr(node, 'starargs', [])],
+                *[eval_ctx(x) for x in getattr(node, "starargs", [])],
                 # Kwargs
                 **kwargs,
                 # Optional kwargs (TODO: when is this used?)
-                **{x.arg: eval_ctx(x.value) for x in getattr(node, 'kwargs', [])})
+                **{x.arg: eval_ctx(x.value) for x in getattr(node, "kwargs", [])},
+            )
         elif isinstance(node, ast.Subscript):
             obj = eval_ctx(node.value)
             ref = eval_ctx(node.slice)
@@ -188,13 +216,15 @@ class Parser:
             return slice(
                 None if node.lower is None else eval_ctx(node.lower),
                 None if node.upper is None else eval_ctx(node.upper),
-                None if node.step is None else eval_ctx(node.step))
+                None if node.step is None else eval_ctx(node.step),
+            )
         elif isinstance(node, ast.Index):
             return eval_ctx(node.value)
         elif isinstance(node, ast.Dict):
             return dict(
                 (eval_ctx(_key), eval_ctx(_val))
-                for _key, _val in zip(node.keys, node.values))
+                for _key, _val in zip(node.keys, node.values)
+            )
         elif isinstance(node, ast.List):
             return [eval_ctx(_elt) for _elt in node.elts]
         elif isinstance(node, ast.IfExp):

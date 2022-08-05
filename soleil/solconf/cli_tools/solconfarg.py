@@ -14,7 +14,7 @@ class SolConfArg:
     """
     Enables |SolConf| arguments in |argparse| CLIs.
 
-    Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation). 
+    Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation).
 
     Assuming no :ref:`overrides <CLI overrides>` are specified, doing so will set the parsed value of that argument to the resolved |SolConf| object loaded from the ``config_source`` initialization argument:
 
@@ -46,7 +46,7 @@ class SolConfArg:
 
       |SolConfArg| integration with the Python builtin module |argparse| requires that patches be applied to the :class:`ArgumentParser` class of that module. The patches should not affect normal operation of that module.
 
-      Patches are only applied once :mod:`soleil.solconf.cli_tools` (or a member) is imported and hence all :class:`ArgumentParser` instances that will take |SolConfArg| argument types must be instantiated after importing :mod:`soleil.solconf.cli_tools`. 
+      Patches are only applied once :mod:`soleil.solconf.cli_tools` (or a member) is imported and hence all :class:`ArgumentParser` instances that will take |SolConfArg| argument types must be instantiated after importing :mod:`soleil.solconf.cli_tools`.
 
       See the source code in :mod:`soleil.solconf.cli_tools._argparse_patches` for the actual patches.
 
@@ -54,20 +54,20 @@ class SolConfArg:
 
     .. rubric:: Number of consumed CLI arguments
 
-    If  ``config_source`` is not provided at |SolConfArg| initialization, the first CLI argument will be used in its place. Accordingly CLI arguments of type |SolConfArg| will by default consume 
+    If  ``config_source`` is not provided at |SolConfArg| initialization, the first CLI argument will be used in its place. Accordingly CLI arguments of type |SolConfArg| will by default consume
 
-      * one-or-more CLI arguments when ``config_source`` is not provided, or 
-      * zero-or-more CLI arguments when ``config_source`` is provided. 
+      * one-or-more CLI arguments when ``config_source`` is not provided, or
+      * zero-or-more CLI arguments when ``config_source`` is provided.
 
     Any extra CLI arguments besides ``config_source`` are treated as :ref:`CLI overrides`.
 
-    This behavior is implement by internally setting the default keyword arguments  
+    This behavior is implement by internally setting the default keyword arguments
 
      * ``nargs='+'`` or ``nargs='*'``, respectively,
 
-    in the :meth:`argparse.ArgumentParser.add_argument` call. Users can change this behavior, e.g., by using 
+    in the :meth:`argparse.ArgumentParser.add_argument` call. Users can change this behavior, e.g., by using
 
-      * ``nargs=1`` or ``nargs=0``, respectively, 
+      * ``nargs=1`` or ``nargs=0``, respectively,
 
     in effect disabling :ref:`CLI overrides`.
 
@@ -92,7 +92,8 @@ class SolConfArg:
     """
 
     _OVERRIDE_PATTERN = re.compile(
-        f'(?P<ref_str>{Node._FULL_REF_STR_PATTERN_RAW})(?P<assignment_type>\\=|\\*\\=)(?P<raw_content>.*)')
+        f"(?P<ref_str>{Node._FULL_REF_STR_PATTERN_RAW})(?P<assignment_type>\\=|\\*\\=)(?P<raw_content>.*)"
+    )
 
     def __init__(self, config_source: str = None, resolve=True):
         """
@@ -109,7 +110,7 @@ class SolConfArg:
 
           # Option 2: Path provided with argument definition
           >>> sca2 = SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml')
-          >>> sca2(["typing_a=c++", "typing_b=c++"]) 
+          >>> sca2(["typing_a=c++", "typing_b=c++"])
           {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
 
         Looking at the source file for :ref:`load_with_choices/config.yaml`, the |load| and |choices| modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
@@ -124,14 +125,14 @@ class SolConfArg:
           ...   print(traceback.format_exc())
           Traceback (most recent call last):
               ...
-          ValueError: The resolved value of `ParsedNode@'typing_a'` is `soft`, 
+          ValueError: The resolved value of `ParsedNode@'typing_a'` is `soft`,
             but it must be one of `('python', 'c++')`.
               ...
-          soleil.solconf.exceptions.ResolutionError: Error while resolving node 
+          soleil.solconf.exceptions.ResolutionError: Error while resolving node
             `ParsedNode@'typing_a'`.
               ...
-          soleil.solconf.exceptions.ModificationError: Error while applying modifier 
-            `functools.partial(<function load at 0x...>, subdir='typing', 
+          soleil.solconf.exceptions.ModificationError: Error while applying modifier
+            `functools.partial(<function load at 0x...>, subdir='typing',
             ext='.yaml', vars=None)` to node `ParsedNode@'typing_a'`.
 
         This problem can be avoided using a root clobber override:
@@ -188,14 +189,14 @@ class SolConfArg:
           >>> parser = argparse.ArgumentParser()
 
           # Setting type=sca1 implicitly sets nargs='+' and action=ReduceAction by default.
-          >>> parser.add_argument('arg1', type=sca1) 
+          >>> parser.add_argument('arg1', type=sca1)
           ReduceAction(option_strings=[], dest='arg1', nargs='+', ... type=<...SolConfArg...>, ...)
 
           # Path required since SolConfArg initialized with no arguments!
           >>> parser.parse_args([])
           Traceback (most recent call last):
               ...
-          SystemExit: 2        
+          SystemExit: 2
 
           # With no overrides
           >>> parser.parse_args([f'{examples_root}/yaml/load_with_choices/config.yaml'])
@@ -226,10 +227,12 @@ class SolConfArg:
         """
         Sets the default ``argparser.add_argument`` keyword argument values to use when this instance is used as the ``type`` keyword argument.
         """
-        return {'nargs': '+' if self._config_source is None else '*',
-                'action': ReduceAction}
+        return {
+            "nargs": "+" if self._config_source is None else "*",
+            "action": ReduceAction,
+        }
 
-    def __call__(self,  overrides: Optional[List[str]] = None):
+    def __call__(self, overrides: Optional[List[str]] = None):
         """
         If the object was initialized without specifying a ``config_source``, then the first entry of ``overrides`` must contain it.
 
@@ -263,10 +266,11 @@ class SolConfArg:
         overrides = list(self.overrides)
 
         if overrides and (
-                root_clobber := re.match(r'^\*\*\=(?P<path>.*$)', overrides[0])):
+            root_clobber := re.match(r"^\*\*\=(?P<path>.*$)", overrides[0])
+        ):
             # Check for source clobber
             overrides.pop(0)
-            config_source = root_clobber['path']
+            config_source = root_clobber["path"]
         elif self._config_source is None:
             # If config file not previously defined, get from overrides
             config_source = overrides.pop(0)
@@ -275,7 +279,7 @@ class SolConfArg:
 
         return config_source, overrides
 
-    def apply_overrides(self) -> 'SolConfArg':
+    def apply_overrides(self) -> "SolConfArg":
 
         config_source, overrides = self.get_config_source()
 
@@ -284,7 +288,8 @@ class SolConfArg:
 
         # Alter the loaded node tree with the specified overrides.
         for ref_str, assignment_type, raw_content_str in map(
-                self._parse_override_str, overrides):
+            self._parse_override_str, overrides
+        ):
 
             #
             raw_content = yaml.safe_load(raw_content_str)
@@ -295,16 +300,16 @@ class SolConfArg:
             node = sc.root[ref_str]
 
             # Apply assignment
-            if assignment_type == '=':
+            if assignment_type == "=":
                 # Value assignment
 
                 # Rather than checking if type is ParsedNode, check for the attribute.
-                if hasattr(node, 'raw_value'):
+                if hasattr(node, "raw_value"):
                     node.raw_value = raw_content
                 else:
-                    raise TypeError(f'Cannot assign raw value of node {node}.')
+                    raise TypeError(f"Cannot assign raw value of node {node}.")
 
-            elif assignment_type == '*=':
+            elif assignment_type == "*=":
                 # Clobber assignment
 
                 # Build the new node sub-tree, force eval of raw content.
@@ -312,7 +317,9 @@ class SolConfArg:
 
                 # Replace the new node as the value in the original KeyNode.
                 node = sc.root[ref_str]
-                (node.parent if node.parent else node.sol_conf_obj).replace(node, new_node)
+                (node.parent if node.parent else node.sol_conf_obj).replace(
+                    node, new_node
+                )
 
         return sc
 
@@ -324,4 +331,4 @@ class SolConfArg:
         if not (parts := re.fullmatch(cls._OVERRIDE_PATTERN, override)):
             raise InvalidOverridePattern(override)
         else:
-            return parts['ref_str'], parts['assignment_type'], parts['raw_content']
+            return parts["ref_str"], parts["assignment_type"], parts["raw_content"]

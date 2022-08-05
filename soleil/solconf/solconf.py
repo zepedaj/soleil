@@ -29,7 +29,8 @@ class _XZRL_POST_PROCESSOR:
     def __call__(self, obj):
         if self._from_serializable is None:
             self._from_serializable = partial(
-                xerializer.Serializer().from_serializable, permissive=True)
+                xerializer.Serializer().from_serializable, permissive=True
+            )
         return self._from_serializable(obj)
 
 
@@ -79,9 +80,13 @@ class SolConf:
         return self.node_tree
 
     def __init__(
-            self, raw_data, context: dict = {},
-            parser=None, modify=True,
-            post_processor: Optional[Callable[[Node], None]] = _XZRL_POST_PROCESSOR()):
+        self,
+        raw_data,
+        context: dict = {},
+        parser=None,
+        modify=True,
+        post_processor: Optional[Callable[[Node], None]] = _XZRL_POST_PROCESSOR(),
+    ):
         """
         :param raw_data: The data to convert to a :class:`SolConf` object.
         :param context: Extra parameters to add to the parser context.
@@ -92,15 +97,16 @@ class SolConf:
         self.parser = parser or Parser(context)
         root = self.build_node_tree(raw_data, parser=self.parser)
         self.lock = RLock()
-        self.post_processor = (post_processor if post_processor is not None
-                               else lambda x: x)
+        self.post_processor = (
+            post_processor if post_processor is not None else lambda x: x
+        )
         self.node_tree = None
         self.replace(None, root)
         if modify:
             self.modify_tree()
 
     @classmethod
-    def load(self, path, **kwargs) -> 'SolConf':
+    def load(self, path, **kwargs) -> "SolConf":
         """
         Returns a :class:`SolConf` object built using raw data retrieved from the specified file.
 
@@ -108,9 +114,9 @@ class SolConf:
         :param kwargs: Extra arguments to pass to the :class:`SolConf` initializer.
         """
         path = Path(path)
-        with open(path, 'rt') as fo:
+        with open(path, "rt") as fo:
             text = fo.read()
-        modify = kwargs.pop('modify', True)
+        modify = kwargs.pop("modify", True)
         ac = SolConf(raw_data := yaml.safe_load(text), modify=False, **kwargs)
         ac.node_tree._source_file = path
         if modify:
@@ -139,7 +145,8 @@ class SolConf:
             out = DictContainer()
             for key, val in raw_data.items():
                 key_node = KeyNode(
-                    raw_key=key, value=cls.build_node_tree(val, parser), parser=parser)
+                    raw_key=key, value=cls.build_node_tree(val, parser), parser=parser
+                )
                 out.add(key_node)  # Sets parent.
 
         elif isinstance(raw_data, list):
@@ -150,8 +157,7 @@ class SolConf:
 
         else:
             # Create a parsed node.
-            out = ParsedNode(
-                raw_data, parser=parser)
+            out = ParsedNode(raw_data, parser=parser)
 
         #
         return out
@@ -173,7 +179,8 @@ class SolConf:
             # Check valid old node.
             if old_node and old_node is not self.root:
                 raise Exception(
-                    f'Attempted to replace the root of a SolConf object, but the provided target node `{old_node}` is not the root `{self.root}`.')
+                    f"Attempted to replace the root of a SolConf object, but the provided target node `{old_node}` is not the root `{self.root}`."
+                )
 
             # Remove self from old node.
             if old_node:

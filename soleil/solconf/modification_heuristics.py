@@ -17,7 +17,9 @@ The maximum number of iterations to attempt as part of modification heuristics.
 """
 
 
-def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters=DEFAULT_MAX_ITERS):
+def modify_tree(
+    node: Union[Node, Callable[[], Node]], iterative=True, max_iters=DEFAULT_MAX_ITERS
+):
     """
     Traverses the tree top-down and calls the :meth:`~soleil.solconf.nodes.Node.modify` method of each node, by default iterating over these traversals until all nodes are modified.
 
@@ -31,7 +33,10 @@ def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters
 
     # Convert node to a callable if not the case.
     if isinstance(node, Node):
-        def node_callable(x=node): return x
+
+        def node_callable(x=node):
+            return x
+
     else:
         node_callable = node
 
@@ -54,6 +59,7 @@ def modify_tree(node: Union[Node, Callable[[], Node]], iterative=True, max_iters
 
     if iterative and num_modified != 0:
         raise Exception(
-            f'Could note finalize node tree modifications after `{max_iters}` iterations.')
+            f"Could note finalize node tree modifications after `{max_iters}` iterations."
+        )
 
     return num_modified

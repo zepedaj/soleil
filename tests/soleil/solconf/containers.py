@@ -6,7 +6,6 @@ from soleil.solconf.nodes import ParsedNode
 
 
 class TestListContainer(TestCase):
-
     @classmethod
     def get_node(cls, value='$:"abc"'):
         parser = Parser()
@@ -15,8 +14,8 @@ class TestListContainer(TestCase):
     def test_all(self):
 
         for (values, expected) in [
-                (('$:"abc"', '$:1+3'), ['abc', 4]),
-                (tuple(), []),
+            (('$:"abc"', "$:1+3"), ["abc", 4]),
+            (tuple(), []),
         ]:
 
             #
@@ -24,9 +23,7 @@ class TestListContainer(TestCase):
             [container.add(self.get_node(x)) for x in values]
 
             #
-            self.assertEqual(
-                container.resolve(),
-                expected)
+            self.assertEqual(container.resolve(), expected)
 
     def test_get_child_posn(self):
         node = SolConf([0, 1, 2, 3]).root

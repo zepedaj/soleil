@@ -1,15 +1,14 @@
-
-ROOT_NODE_VAR_NAME = 'r_'
+ROOT_NODE_VAR_NAME = "r_"
 """
 Specifies the name of the root node in the parser context.
 """
 
-CURRENT_NODE_VAR_NAME = 'n_'
+CURRENT_NODE_VAR_NAME = "n_"
 """
 Specifies the name of the current node variable in the parser context.
 """
 
-FILE_ROOT_NODE_VAR_NAME = 'f_'
+FILE_ROOT_NODE_VAR_NAME = "f_"
 """
 Specifies the name of the highest-level node in the current file.
 """
@@ -43,7 +42,7 @@ SPHINX_DEFS = f"""
 .. |SRPP| replace:: :ref:`SRPP <SRPP>`
 """
 
-DEFAULT_EXTENSION = '.yaml'
+DEFAULT_EXTENSION = ".yaml"
 """
 The default file extension.
 """

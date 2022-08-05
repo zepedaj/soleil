@@ -20,7 +20,7 @@ def _get_values(self, action, arg_strings):
     # Monkey-patched version of ArgumentParser._get_values that implements
     # ReduceAction's mandate.
     if isinstance(action, ReduceAction):
-        type_fxn = self._registry_get('type', action.type, action.type)
+        type_fxn = self._registry_get("type", action.type, action.type)
         return type_fxn(arg_strings)
     else:
         return ORIG_GET_VALUES(self, action, arg_strings)
@@ -29,7 +29,7 @@ def _get_values(self, action, arg_strings):
 def add_argument(self, *args, **kwargs):
     # Monkey-patched version of ArgumentParser._get_values that
     # supports types with default add_argument keyword args.
-    if (type_kw := kwargs.get('type')) and hasattr(type_kw, 'DFLT_ARGPARSE_KWARGS'):
+    if (type_kw := kwargs.get("type")) and hasattr(type_kw, "DFLT_ARGPARSE_KWARGS"):
         kwargs = {**type_kw.DFLT_ARGPARSE_KWARGS, **kwargs}
     return ORIG_ADD_ARGUMENT(self, *args, **kwargs)
 

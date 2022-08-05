@@ -19,8 +19,7 @@ def merge_decorator_values(decorator, eval_fxn):
     if isinstance(decorator, str):
         # 'int' or 'int,float' or 'None' or '()'
         out = eval_fxn(decorator)
-        return (None if out is None else
-                (out if isinstance(out, tuple) else (out,)))
+        return None if out is None else (out if isinstance(out, tuple) else (out,))
 
     elif isinstance(decorator, list):
         # ['int', 'float']
@@ -30,7 +29,7 @@ def merge_decorator_values(decorator, eval_fxn):
             out.extend(merge_decorator_values(_x, eval_fxn))
         return tuple(out)
     else:
-        raise ValueError(f'Invalid decorator value `{decorator}`.')
+        raise ValueError(f"Invalid decorator value `{decorator}`.")
 
 
 class _RawKeyPatterns:
@@ -42,12 +41,13 @@ class _RawKeyPatterns:
 
     # Matches a single type/signature
     SINGLE_TYPE_PATTERN = AutonamedPattern(
-        '('
+        "("
         # Matches a type
-        '{VARNAME}' '|'
+        "{VARNAME}" "|"
         # Matches quoted signatures (with optional colon separator)
-        r'(?P<q>\'|\"){NS_VARNAME}((?P<colon>:)({VARNAME}))?(?P=q)'
-        ')', vars(pxs))
+        r"(?P<q>\'|\"){NS_VARNAME}((?P<colon>:)({VARNAME}))?(?P=q)" ")",
+        vars(pxs),
+    )
     """
     Expected type or xerializer signature string representation format. Signatures need to be strings.
     """
@@ -55,21 +55,22 @@ class _RawKeyPatterns:
     # Matches a single type/signature or a tuple of mixed types/signatures.
     # Tuples may be optionally parentheses-enclosed.
     TYPE_PATTERN = AutonamedPattern(
-        r'(?P<paren>\(\s*)?'
-        r'{SINGLE_TYPE_PATTERN}(\s*,\s*{SINGLE_TYPE_PATTERN})*'
-        r'(?(paren)\s*\))',
-        vars())
+        r"(?P<paren>\(\s*)?"
+        r"{SINGLE_TYPE_PATTERN}(\s*,\s*{SINGLE_TYPE_PATTERN})*"
+        r"(?(paren)\s*\))",
+        vars(),
+    )
     """
     Matches a single type/signature or a sequence of types/signatures.
     """
 
     RAW_KEY_PATTERN = re.compile(
-        f'(?P<key>{pxs.VARNAME})'
-        r'('
-        f'\\s*:\\s*(?P<types>({TYPE_PATTERN}))?'
+        f"(?P<key>{pxs.VARNAME})"
+        r"("
+        f"\\s*:\\s*(?P<types>({TYPE_PATTERN}))?"
         # Modifiers could be better checked. Should be a callable or tuple.
-        r'(\s*:\s*(?P<modifiers>([^\s].+[^\s]))?)?'
-        r')?\s*',
+        r"(\s*:\s*(?P<modifiers>([^\s].+[^\s]))?)?"
+        r")?\s*",
     )
     """
     Valid described-key pattern.
@@ -77,7 +78,7 @@ class _RawKeyPatterns:
 
 
 def _keynode_unimplemented(name):
-    raise NotImplementedError(f'`KeyNode`s do not implement `{name}`.')
+    raise NotImplementedError(f"`KeyNode`s do not implement `{name}`.")
 
 
 @dataclass
@@ -119,12 +120,12 @@ class KeyNode(EvaledNode, Container):
 
     """
 
-    raw_key: str = field(default_factory=kw_only('raw_key'))
+    raw_key: str = field(default_factory=kw_only("raw_key"))
     """
     A string in the form |raw key format| (see :ref:`raw string`).
     """
 
-    value: Node = field(default_factory=kw_only('value'))
+    value: Node = field(default_factory=kw_only("value"))
     """
     The single node contained by this KeyNode container.
 
@@ -138,7 +139,7 @@ class KeyNode(EvaledNode, Container):
 
     def __post_init__(self):
         self._key_components = self._split_raw_key(self.raw_key)
-        self._key = self._key_components['key']
+        self._key = self._key_components["key"]
         if self.value.parent:
             raise exceptions.NodeHasParent(self.value, self)
         self.value.parent = self
@@ -158,10 +159,11 @@ class KeyNode(EvaledNode, Container):
             return tuple([self.value])
 
     # Unimplemented methods from the Container interface.
-    def add(self, *args): _keynode_unimplemented(f'add (args: {args})')
+    def add(self, *args):
+        _keynode_unimplemented(f"add (args: {args})")
 
-    def _getitem(self, key, modify): _keynode_unimplemented(
-        f'_getitem (key: {key}, modify: {modify})')
+    def _getitem(self, key, modify):
+        _keynode_unimplemented(f"_getitem (key: {key}, modify: {modify})")
 
     def modify(self):
         """
@@ -197,7 +199,8 @@ class KeyNode(EvaledNode, Container):
                 yield
 
     @property
-    def key(self): return self._key
+    def key(self):
+        return self._key
 
     @key.setter
     def key(self, new_key):
@@ -206,7 +209,9 @@ class KeyNode(EvaledNode, Container):
         """
         with self.lock:
             if self.parent is not None:
-                raise Exception(f'Remove `{self}` from parent container before re-naming.')
+                raise Exception(
+                    f"Remove `{self}` from parent container before re-naming."
+                )
             else:
                 self._key = new_key
 
@@ -230,9 +235,9 @@ class KeyNode(EvaledNode, Container):
         """
         if not (match := re.fullmatch(_RawKeyPatterns.RAW_KEY_PATTERN, raw_key)):
             # TODO: Add the file, if available, to the error message.
-            raise Exception(f'Invalid described key syntax `{raw_key}`.')
+            raise Exception(f"Invalid described key syntax `{raw_key}`.")
         else:
-            return {key: match[key] for key in ['key', 'types', 'modifiers']}
+            return {key: match[key] for key in ["key", "types", "modifiers"]}
 
     def _parse_raw_key(self):
         """
@@ -247,21 +252,32 @@ class KeyNode(EvaledNode, Container):
 
             try:
                 #
-                component = 'types'
+                component = "types"
                 raw_value = self._key_components[component]
-                self.value.types = None if raw_value is None else merge_decorator_values(
-                    raw_value, self.safe_eval)
+                self.value.types = (
+                    None
+                    if raw_value is None
+                    else merge_decorator_values(raw_value, self.safe_eval)
+                )
                 #
-                component = 'modifiers'
+                component = "modifiers"
                 raw_value = self._key_components[component]
-                self.value.modifiers = tuple() if raw_value is None else (
-                    # `or tuple()` below used to support disabling extended modifiers with None
-                    merge_decorator_values(raw_value, self.safe_eval) or tuple())
+                self.value.modifiers = (
+                    tuple()
+                    if raw_value is None
+                    else (
+                        # `or tuple()` below used to support disabling extended modifiers with None
+                        merge_decorator_values(raw_value, self.safe_eval)
+                        or tuple()
+                    )
+                )
                 self.value.modified = False
             except exceptions.RawKeyComponentError:
                 raise
             except Exception as err:
-                raise exceptions.RawKeyComponentError(self, component, raw_value) from err
+                raise exceptions.RawKeyComponentError(
+                    self, component, raw_value
+                ) from err
 
     def _unsafe_resolve(self):
         """
@@ -320,7 +336,9 @@ class KeyNode(EvaledNode, Container):
             # DictContainer objects can refer to the key or value node directly.
             # See :meth:`DictContainer.__getitem__`.
             if not self.parent:
-                raise Exception('Attempted to retrieve the qualified name of an unbounded KeyNode.')
+                raise Exception(
+                    "Attempted to retrieve the qualified name of an unbounded KeyNode."
+                )
             return self.parent._derive_qual_name(self.key)
         else:
             raise exceptions.NotAChildOfError(child_node, self)
@@ -331,7 +349,7 @@ class DictContainer(Container):
     Contains a dictionary node. Adding and removing entries to this container should be done entirely using :meth:`add` and :meth:`remove` to ensure correct handling of parent/child relationships.
     """
 
-    _REF_COMPONENT_PATTERN = re.compile(r'\*?[a-zA-Z_]\w*')
+    _REF_COMPONENT_PATTERN = re.compile(r"\*?[a-zA-Z_]\w*")
 
     _children: Dict[Node, Node] = None
     # Both key and value will be the same KeyNode, ensuring a single source for the
@@ -359,7 +377,9 @@ class DictContainer(Container):
         yield from chain(
             self._children,
             (_x for _x in self.super_container.children if _x not in self._children)
-            if self.super_container else ())
+            if self.super_container
+            else (),
+        )
 
     def __len__(self):
         return len(set(list(self.children)))
@@ -424,6 +444,7 @@ class DictContainer(Container):
         .. note:: If the dictionary has a single child, its |KeyNode| is modified.
         """
         from .modifiers import child, promote
+
         if len(self) == 1:
             (key_node := child(self)).modify()
             return promote in key_node.value.modifiers
@@ -453,7 +474,7 @@ class DictContainer(Container):
         .. noted:: Will promote the dictionary's single child if the dictionary's :meth:`is_promoted` returns true.
         """
         if not isinstance(key, str):
-            raise Exception(f'Expected a string key but got `{key}`.')
+            raise Exception(f"Expected a string key but got `{key}`.")
         if modify:
             self.modify()
 
@@ -462,7 +483,7 @@ class DictContainer(Container):
             key_node.modify()
             return key_node.value.modify()
 
-        if key[:1] == '*':
+        if key[:1] == "*":
             return self._children[key[1:]]
         else:
             key_node = self._children[key]
@@ -477,6 +498,6 @@ class DictContainer(Container):
 
         for child_node in self._children:
             if node is child_node:
-                return self._derive_qual_name(f'*{node.key}')
+                return self._derive_qual_name(f"*{node.key}")
 
         raise exceptions.NotAChildOfError(child_node, self)

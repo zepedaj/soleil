@@ -9,6 +9,7 @@ class ResolvingNode:
     """
     This class is a special marker class used as part of the node resolution cycle detection mechanism.  For this mechanism to work correctly, this class should only be used inside method :meth:`~soleil.solconf.nodes.Node.resolve`. Classes overloading that method should take care to call the super method or instantiate this object in a similar manner.
     """
+
     node: Optional  # : Optional['Node']
 
     def __init__(self, node):
@@ -30,7 +31,7 @@ class ResolvingNode:
                 raise ResolutionCycleError(cycle[::-1])
 
     @staticmethod
-    def get_resolving_dependent() -> 'ResolvingNode':
+    def get_resolving_dependent() -> "ResolvingNode":
         """
         Returns the resolving node whose :meth:`resolve` method called the current node's (``self.node``'s) :meth:`resolve` method.
 
@@ -38,7 +39,9 @@ class ResolvingNode:
         """
         call_stack = stack()
         for call in call_stack:
-            if resolving_dependent := call.frame.f_locals.get('__resolving_node__', None):
+            if resolving_dependent := call.frame.f_locals.get(
+                "__resolving_node__", None
+            ):
                 return resolving_dependent
 
         return None
