@@ -15,7 +15,11 @@ General to-do's
      * Nested variables can be specified using filesystem directories or links within the same file. E.g., train.data@from(data,@global): imagenet should assign to the train.data structure the data.imagenet structure.
      * Supports an @parargs and @prodargs command.
      * Creates and uses a virtual environment with copies of all local modules so that development can continue while training is taking places. When parallelization is used, the copy is the same for all parallel runs in a single job group.
-      
+
+
+   * Raise an error whenever a ??? value is not provided.
+
+   * For ``load`` modifier: If the directory is not specified, use the name of the containing node by default. E.g., ``data::load(): default`` should be equivalent to ``data::load('data'): default``. If possible, ``data::load: default`` should also be equivalent. Increases the code dryness.
 
    * Deploy to github
 
