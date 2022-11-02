@@ -28,6 +28,8 @@ def solex(fxn=None):
 
     The function can be used as a decorator to define python scripts that execute a function on the object loaded from the configuration file:
 
+    .. todo:: Support adding extra CLI arguments using syntax similar to climax's.
+
     .. testcode:: solex
 
       from soleil.solconf.cli_tools import solex
