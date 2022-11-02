@@ -23,6 +23,9 @@ General to-do's
 
    * Deploy to github
 
+   * Add a ``+=`` assignment operator that enables adding a new node from the command line.
+
+
 Minor
 ---------
  * CLI overrides of inherited properties should affect the derived node, not the node being derived.
