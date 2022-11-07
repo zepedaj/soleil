@@ -10,6 +10,7 @@ def load_dot_solex(config_source):
     """
     Loads any extra arguments specified in a ``.solex`` file at the same level as the ``config_source`` file.
     """
+    params = {}
     if (dot_solex := Path(config_source).parent / ".solex").is_file():
         with open(dot_solex, "rt") as fo:
             yaml_str = fo.read()
