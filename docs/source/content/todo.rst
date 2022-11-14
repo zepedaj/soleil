@@ -25,6 +25,13 @@ General to-do's
 
    * Add a ``+=`` assignment operator that enables adding a new node from the command line.
 
+   * Move `CLI overrides` and related documentation from `soleil.solconf.cli_tools.solconfarg` to `Soleil-enabled CLIs` document section.
+
+   * Add a way to CLI-override a parameter with a (raw or resolved) value from another parameter. E.g., makes it possible to use the training set as a validation set. The current solution requires using the `derives` modifier and only works from configuration files, as modifiers cannot be specified from the command line.
+
+   * Let `derives` modifier take a string 'str' (right no it only takes a node) as an argument, and let that correspond to node `f_['str']`.
+
+   * When using CLI overrides, not clear at which point in the processing chain the override is applied. Before modification? Before Resolution? Before proprocessing? As the final value?
 
 Minor
 ---------
