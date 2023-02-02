@@ -8,6 +8,7 @@ from soleil.solconf.exceptions import InvalidOverridePattern
 from soleil.solconf.nodes import Node
 from soleil.solconf.solconf import SolConf
 from ._argparse_patches import ReduceAction
+from argparse import ArgumentParser
 
 
 class SolConfArg:
@@ -332,3 +333,11 @@ class SolConfArg:
             raise InvalidOverridePattern(override)
         else:
             return parts["ref_str"], parts["assignment_type"], parts["raw_content"]
+
+    @classmethod
+    def load(cls, config_file: str, overrides: Optional[List[str]] = None):
+        """Utility function that can be used to load a configuration file with CLI overrides."""
+
+        parser = ArgumentParser()
+        parser.add_argument("obj", type=SolConfArg(config_file))
+        return parser.parse_args(overrides or []).obj
