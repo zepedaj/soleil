@@ -56,11 +56,3 @@ def keys(x: dict):
     Returns the keys of the input dictionary
     """
     return x.values()
-
-
-# TODO: Not reflected in documentation!
-dt64 = np.datetime64
-"""
-(Sphinx Autodoc overwrites this doc string with an 'alias of ...' string -- the doc string is required however to have the 'alias of ...').
-"""
-register("dt64", np.datetime64)

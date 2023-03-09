@@ -71,7 +71,6 @@ The SRPP evaluates all strings using an automatically generated variable context
         'cwd': <function cwd at 0x...>,
         'values': <function values at 0x...>,
         'keys': <function keys at 0x...>,
-        'dt64': <class 'numpy.datetime64'>,
         'noop': <function noop at 0x...>,
         'parent': <function parent at 0x...>,
         'hidden': <function hidden at 0x...>,
@@ -82,8 +81,14 @@ The SRPP evaluates all strings using an automatically generated variable context
         'modifiers': <function modifiers at 0x...>,
         'raw_value': <function raw_value at 0x...>,
         'child': <function child at 0x...>,
+        'derives': <class 'soleil.solconf.modifiers.derives'>,
         'fuse': <function fuse at 0x...>,
-        'cast': <function cast at 0x...>
+        'cast': <function cast at 0x...>,
+        'pproc': <function pproc at 0x...>,
+        'dt64': <class 'numpy.datetime64'>,
+        'inf': inf,
+        'log': <ufunc 'log'>,
+        'exp': <ufunc 'exp'>
     }
 
 New names can be added to the default context using :func:`parser.register`, which works as a function or a decorator:

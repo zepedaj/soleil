@@ -1,4 +1,4 @@
-from . import modifiers, functions  # noqa: Register base modifiers and functions
+from . import modifiers, functions, numpy  # noqa: Register base modifiers and functions
 
 from .solconf import SolConf
 
