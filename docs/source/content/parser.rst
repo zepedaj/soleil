@@ -89,6 +89,9 @@ The SRPP evaluates all strings using an automatically generated variable context
         'inf': inf,
         'log': <ufunc 'log'>,
         'exp': <ufunc 'exp'>
+        'now': <function now at 0x...>,
+        'today': <function today at 0x...>,
+        'time': <function time at 0x...>
     }
 
 New names can be added to the default context using :func:`parser.register`, which works as a function or a decorator:
