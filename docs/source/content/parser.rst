@@ -86,9 +86,10 @@ The SRPP evaluates all strings using an automatically generated variable context
         'cast': <function cast at 0x...>,
         'pproc': <function pproc at 0x...>,
         'dt64': <class 'numpy.datetime64'>,
+        'td64': <class 'numpy.timedelta64'>,
         'inf': inf,
         'log': <ufunc 'log'>,
-        'exp': <ufunc 'exp'>
+        'exp': <ufunc 'exp'>,
         'now': <function now at 0x...>,
         'today': <function today at 0x...>,
         'time': <function time at 0x...>
