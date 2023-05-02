@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Callable
 from rich import print
 import yaml
@@ -25,7 +24,7 @@ class _NotProvided:
     pass
 
 
-def solex(group=clx, _fxn: Callable = _NotProvided):
+def solex(group=clx, _fxn: Callable = _NotProvided) -> Callable:
     """
     Decorator that builds a CLI command similar to the :ref:`solex script <solex script>` and applies the wrapped callable, if any, to the object deserialized from the configuration file.
 
