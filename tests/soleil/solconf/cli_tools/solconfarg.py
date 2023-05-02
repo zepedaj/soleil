@@ -1,5 +1,5 @@
 from soleil.solconf.cli_tools import solconfarg as mdl
-from soleil.solconf.cli_tools import ReduceAction
+from soleil.solconf.cli_tools._argparse_patches import ReduceAction
 import argparse
 from ..modifiers import build_config_files
 from .._helpers import file_structure, DOCS_CONTENT_ROOT
@@ -25,20 +25,17 @@ class TestSolConfArg(TestCase):
         )
 
     def test_all(self):
-
         # Change value
         with build_config_files(file1_expected_updates={"file1_0": 123}) as (
             config_file,
             expected,
         ):
-
             sca = mdl.SolConfArg(config_file)
             actual = sca(["root_5.file1_0=123"])
             self.assertEqual(actual, expected)
 
         # Set load target (to same)
         with build_config_files() as (config_file, expected):
-
             # Replace by same.
             sca = mdl.SolConfArg(config_file)
             actual = sca(["root_5=subdir1/file1"])
@@ -72,7 +69,6 @@ class TestSolConfArg(TestCase):
                 "colors/reddish.yaml": {"primary": "red", "derived": "pink"},
             }
         ) as (temp_dir, paths):
-
             # Clobber-replace with load
             sca = mdl.SolConfArg(paths["config.yaml"])
             self.assertEqual(

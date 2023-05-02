@@ -1,5 +1,7 @@
 from soleil.solconf import SolConf
 from soleil.solconf.parser import register
-from soleil.solconf.cli_tools import SolConfArg, ReduceAction
+from soleil.solconf.cli_tools._argparse_patches import ReduceAction
+from soleil.solconf.cli_tools.solconfarg import SolConfArg
+from soleil.solconf.cli_tools.solex import solex
 
-__all__ = ["SolConf", "register", "SolConfArg", "ReduceAction"]
+__all__ = ["SolConf", "register", "ReduceAction", "SolConfArg", "solex"]

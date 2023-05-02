@@ -31,7 +31,7 @@ class SolConfArg:
     .. doctest:: SolConfArg
 
       >>> from argparse import ArgumentParser
-      >>> from soleil.solconf.cli_tools import SolConfArg
+      >>> from soleil import SolConfArg
 
       >>> parser = ArgumentParser()
       >>> parser.add_argument('sc', type=SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml'))
@@ -281,7 +281,6 @@ class SolConfArg:
         return config_source, overrides
 
     def apply_overrides(self) -> "SolConfArg":
-
         config_source, overrides = self.get_config_source()
 
         # Load config file, do not apply modifiers yet.
@@ -291,7 +290,6 @@ class SolConfArg:
         for ref_str, assignment_type, raw_content_str in map(
             self._parse_override_str, overrides
         ):
-
             #
             raw_content = yaml.safe_load(raw_content_str)
 

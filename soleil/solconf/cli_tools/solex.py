@@ -1,9 +1,11 @@
+from functools import partial
+from typing import Callable
 from rich import print
 import yaml
 from pathlib import Path
 from importlib import import_module
 import climax as clx
-from soleil.solconf.cli_tools import SolConfArg
+from soleil.solconf.cli_tools.solconfarg import SolConfArg
 
 
 def load_dot_solex(config_source):
@@ -19,11 +21,15 @@ def load_dot_solex(config_source):
     return params
 
 
-def solex(fxn=None):
-    """
-    Decorator that builds a CLI command similar to the :ref:`solex script <solex script>` and applies the callable ``fxn``, if any, to the object deserialized from the configuration file.
+class _NotProvided:
+    pass
 
-    The returned command exposes a ``parser`` attribute of type |argparse.ArgumentParser| that can be used to add extra CLI arguments that are passed to the ``fxn`` callable. Depending on the specifications of the ``conf`` argument of type |SolConfArg|, these extra arguments might need to be optional |argparse| arguments (see :ref:`Number of consumed CLI arguments` in the |SolConfArg| documentation).
+
+def solex(group=clx, _fxn: Callable = _NotProvided):
+    """
+    Decorator that builds a CLI command similar to the :ref:`solex script <solex script>` and applies the wrapped callable, if any, to the object deserialized from the configuration file.
+
+    The returned command exposes a ``parser`` attribute of type |argparse.ArgumentParser| that can be used to add extra CLI arguments that are passed to the wrapped callable. Depending on the specifications of the ``conf`` argument of type |SolConfArg|, these extra arguments might need to be optional |argparse| arguments (see :ref:`Number of consumed CLI arguments` in the |SolConfArg| documentation).
 
     .. rubric:: Example usage
 
@@ -33,8 +39,8 @@ def solex(fxn=None):
 
     .. testcode:: solex
 
-      from soleil.solconf.cli_tools import solex
-      @solex
+      from soleil import solex
+      @solex()
       def foo(obj, my_opt):
           \"\"\" Optional doc string will override the default. \"\"\"
           ...
@@ -44,8 +50,6 @@ def solex(fxn=None):
 
       if __name__=='__main__':
          foo()
-
-
 
     .. testcode:: solex
       :hide:
@@ -79,7 +83,58 @@ def solex(fxn=None):
                               ('tree') the node tree, optionally ('tree-no-modifs') before applying
                               modifications.
         --my_opt MY_OPT       My optional argument.
+
+
+    .. rubric:: Usage within a command group
+
+    The ``@solex`` decorator can also be used to define climax sub-commands.
+
+    .. testcode:: solex
+
+      from soleil import solex
+      import climax as clx
+
+      @clx.group()
+      def cmd_group(): pass
+
+      @cmd_group.command()
+      def bar(): pass
+
+      @solex(cmd_group)
+      def foo(obj, my_opt):
+          \"\"\" Optional doc string will override the default. \"\"\"
+          ...
+
+      # Add any extra arguments
+      foo.parser.add_argument('--my_opt', default=0, type=int, help='My optional argument.')
+
+      if __name__=='__main__':
+         cmd_group()
+
+    .. testcode:: solex
+      :hide:
+
+      cmd_group.parser.print_help()
+
+    Running the above script with the ``-h`` option displays the following help message:
+
+    .. testoutput:: solex
+      :options: +NORMALIZE_WHITESPACE
+
+        usage: ... [-h] {bar,foo} ...
+
+        positional arguments:
+          {bar,foo}
+            bar
+            foo       Optional doc string will override the default.
+
+        optional arguments:
+          -h, --help  show this help message and exit
+
     """
+
+    if _fxn is _NotProvided:
+        return lambda _fxn1: solex(group=group, _fxn=_fxn1)
 
     # @clx.command() decorator delayed to support changing the __doc__ string -- see below.
     @clx.argument(
@@ -134,19 +189,19 @@ def solex(fxn=None):
             # Executes the post-processor, and hence any commands.
             out = sc()
             # If a callable was specified, apply it to the resolved+post-processed output.
-            if fxn:
-                out = fxn(out, **kwargs)
+            out = _fxn(out, **kwargs)
             if print_what == "final":
                 print(out)
         else:
             raise Exception("Unexpected case.")
 
     # Change the doc string.
-    if fxn and fxn.__doc__ is not None:
-        solex_run.__doc__ = fxn.__doc__
+    if _fxn.__doc__ is not None:
+        solex_run.__doc__ = _fxn.__doc__
 
     # Delay the @clx.command() decorator to support changing
     # the doc string.
-    solex_run = clx.command()(solex_run)
+    solex_run.__name__ = _fxn.__name__
+    solex_run = group.command()(solex_run)
 
     return solex_run
