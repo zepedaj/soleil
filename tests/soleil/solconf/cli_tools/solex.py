@@ -1,4 +1,5 @@
 from pathlib import Path
+from subprocess import check_call
 from tempfile import TemporaryDirectory
 from soleil.solconf.cli_tools import solex as mdl
 

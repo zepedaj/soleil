@@ -34,18 +34,16 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
 
     The function can be used as a decorator to define python scripts that execute a function on the object loaded from the configuration file:
 
-    .. todo:: Support adding extra CLI arguments using syntax similar to climax's.
 
     .. testcode:: solex
 
-      from soleil import solex
-      @solex()
+      import soleil as sl
+
+      @sl.solex()
+      @sl.argument('--my-opt', default=0, type=int, help='My optional argument.')
       def foo(obj, my_opt):
           \"\"\" Optional doc string will override the default. \"\"\"
           ...
-
-      # Add any extra arguments
-      foo.parser.add_argument('--my_opt', default=0, type=int, help='My optional argument.')
 
       if __name__=='__main__':
          foo()
@@ -61,7 +59,7 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
       :options: +NORMALIZE_WHITESPACE
 
       usage: ... [-h] [--modules [MODULES [MODULES ...]]] [--print {final,resolved,tree,tree-no-modifs}]
-             [--my_opt MY_OPT] conf [conf ...]
+             [--my-opt MY_OPT] conf [conf ...]
 
       Optional doc string will override the default.
 
@@ -81,7 +79,14 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
                               ('resolved') the resolved contents before applying the post-processor or
                               ('tree') the node tree, optionally ('tree-no-modifs') before applying
                               modifications.
-        --my_opt MY_OPT       My optional argument.
+        --my-opt MY_OPT       My optional argument.
+
+
+    Note that the option also supports adding an extra arguments ``--my-opt`` that is also passed to the test function ``foo`` as argument ``my_opt``.
+
+    .. note::
+
+        Soleil CLIs are based on `climax <https://climax.readthedocs.io/en/latest/quickstart.html>`_ and can be combined with any climax construct. Both ``soleil.argument`` and ``soleil.group`` are aliases to ``climax.argument`` and ``climax.group``.
 
 
     .. rubric:: Usage within a command group
@@ -90,30 +95,27 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
 
     .. testcode:: solex
 
-      from soleil import solex
-      import climax as clx
+      import soleil as sl
 
-      @clx.group()
-      def cmd_group(): pass
+      @sl.group()
+      def my_command_group(): pass
 
-      @cmd_group.command()
+      @my_command_group.command()
       def bar(): pass
 
-      @solex(cmd_group)
+      @sl.solex(my_command_group)
+      @sl.argument('--my_opt', default=0, type=int, help='My optional argument.')
       def foo(obj, my_opt):
           \"\"\" Optional doc string will override the default. \"\"\"
           ...
 
-      # Add any extra arguments
-      foo.parser.add_argument('--my_opt', default=0, type=int, help='My optional argument.')
-
       if __name__=='__main__':
-         cmd_group()
+         my_command_group()
 
     .. testcode:: solex
       :hide:
 
-      cmd_group.parser.print_help()
+      my_command_group.parser.print_help()
 
     Running the above script with the ``-h`` option displays the following help message:
 
@@ -197,6 +199,10 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
     # Change the doc string.
     if _fxn.__doc__ is not None:
         solex_run.__doc__ = _fxn.__doc__
+
+    # Apply any extra arguments
+    for args, kwargs in getattr(_fxn, "_arguments", []):
+        solex_run = clx.argument(*args, **kwargs)(solex_run)
 
     # Delay the @clx.command() decorator to support changing
     # the doc string.
