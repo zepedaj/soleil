@@ -1,34 +1,24 @@
 from typing import Callable
 from rich import print
-import yaml
-from pathlib import Path
-from importlib import import_module
 import climax as clx
 from soleil.solconf.cli_tools.solconfarg import SolConfArg
-
-
-def load_dot_solex(config_source):
-    """
-    Loads any extra arguments specified in a ``.solex`` file at the same level as the ``config_source`` file.
-    """
-    params = {}
-    if (dot_solex := Path(config_source).parent / ".solex").is_file():
-        with open(dot_solex, "rt") as fo:
-            yaml_str = fo.read()
-        params = yaml.safe_load(yaml_str)
-
-    return params
+from .helpers import import_extra_modules
 
 
 class _NotProvided:
     pass
 
 
-def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
+def solex(
+    group: Callable = clx, *, _fxn: Callable = _NotProvided, do_post_proc: bool = True
+) -> Callable:
     """
     Decorator that builds a CLI command similar to the :ref:`solex script <solex script>` and applies the wrapped callable, if any, to the object deserialized from the configuration file.
 
     The returned command exposes a ``parser`` attribute of type |argparse.ArgumentParser| that can be used to add extra CLI arguments that are passed to the wrapped callable. Depending on the specifications of the ``conf`` argument of type |SolConfArg|, these extra arguments might need to be optional |argparse| arguments (see :ref:`Number of consumed CLI arguments` in the |SolConfArg| documentation).
+
+    :param group: Pass in a climax group to make the solex call a sub-command.
+    :param do_post_proc: Whether to apply the post-processor before passing in the deserializaed configuration object to the wrapped callable.
 
     .. rubric:: Example usage
 
@@ -135,7 +125,7 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
     """
 
     if _fxn is _NotProvided:
-        return lambda _fxn1: solex(group=group, _fxn=_fxn1)
+        return lambda _fxn1: solex(group=group, _fxn=_fxn1, do_post_proc=do_post_proc)
 
     # @clx.command() decorator delayed to support changing the __doc__ string -- see below.
     @clx.argument(
@@ -146,18 +136,17 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
     )
     @clx.argument(
         "--print",
-        choices=["final", "resolved", "tree", "tree-no-modifs"],
-        dest="print_what",
-        default=None,
-        help="Prints ('final') the final value, after the post-processor is applied, ('resolved') the resolved  contents before applying the post-processor or ('tree') the node tree, optionally ('tree-no-modifs') before applying modifications.",
+        action="store_true",
+        dest="do_print",
+        help="Prints the resolved contenst of the config file before applying the post-processor or executing.",
     )
     @clx.argument(
         "--modules",
         nargs="*",
-        default=[],
+        default=None,
         help="The modules to load before execution - can be used to register soleil parser context variables or xerializable handlers. Any module specified as part of a list `modules` in a `.solex` YAML file at the same level as the configuration file will also be loaded.",
     )
-    def solex_run(conf, print_what, modules, **kwargs):
+    def solex_run(conf, do_print, modules, **kwargs):
         """
         Executes a configuration file and/or, optionally, prints its contents at various points of the parsing process.
 
@@ -168,33 +157,23 @@ def solex(group: Callable = clx, _fxn: Callable = _NotProvided) -> Callable:
         config_source, _ = conf.get_config_source()
 
         # Load any extra modules specified in the CLI or in the .solex file.
-        modules = modules + load_dot_solex(config_source).get("modules", [])
-        for _mdl in modules:
-            import_module(_mdl)
+        import_extra_modules(modules, config_source)
 
         # Apply overrides, get SolConf object.
         sc = conf.apply_overrides()
 
         #
-        if print_what == "tree-no-modifs":
-            sc.print_tree()
-        elif print_what == "tree":
-            sc.modify_tree()
-            sc.print_tree()
-        elif print_what == "resolved":
-            sc.modify_tree()
-            # Calling the root resolver skips the post-processor.
-            print(sc.root())
-        elif print_what in [None, "final"]:
-            sc.modify_tree()
+        sc.modify_tree()
+        if do_post_proc:
             # Executes the post-processor, and hence any commands.
             out = sc()
-            # If a callable was specified, apply it to the resolved+post-processed output.
-            out = _fxn(out, **kwargs)
-            if print_what == "final":
-                print(out)
         else:
-            raise Exception("Unexpected case.")
+            out = sc.root()
+
+        if do_print:
+            print(out)
+        else:
+            _fxn(out, **kwargs)
 
     # Change the doc string.
     if _fxn.__doc__ is not None:

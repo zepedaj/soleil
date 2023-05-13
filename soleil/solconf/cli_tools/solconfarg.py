@@ -1,6 +1,7 @@
 """
 """
 
+from pathlib import Path
 from typing import List, Optional
 import yaml
 import re
@@ -9,6 +10,7 @@ from soleil.solconf.nodes import Node
 from soleil.solconf.solconf import SolConf
 from ._argparse_patches import ReduceAction
 from argparse import ArgumentParser
+from .helpers import import_extra_modules
 
 
 class SolConfArg:
@@ -333,8 +335,12 @@ class SolConfArg:
             return parts["ref_str"], parts["assignment_type"], parts["raw_content"]
 
     @classmethod
-    def load(cls, config_file: str, overrides: Optional[List[str]] = None):
+    def load(
+        cls, config_file: str, overrides: Optional[List[str]] = None, modules=None
+    ):
         """Utility function that can be used to load a configuration file with CLI overrides."""
+
+        import_extra_modules(modules, Path(config_file))
 
         parser = ArgumentParser()
         parser.add_argument("obj", type=SolConfArg(config_file))
