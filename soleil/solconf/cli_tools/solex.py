@@ -160,7 +160,7 @@ def solex(
         import_extra_modules(modules, config_source)
 
         # Apply overrides, get SolConf object.
-        sc = conf.apply_overrides()
+        sc = conf.build_sol_conf()
 
         #
         sc.modify_tree()

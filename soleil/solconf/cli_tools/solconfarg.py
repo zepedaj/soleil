@@ -2,7 +2,7 @@
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 import yaml
 import re
 from soleil.solconf.exceptions import InvalidOverridePattern
@@ -258,7 +258,7 @@ class SolConfArg:
             return self
 
     def resolve(self):
-        sc = self.apply_overrides()
+        sc = self.build_sol_conf()
         sc.modify_tree()
         return sc()
 
@@ -282,7 +282,7 @@ class SolConfArg:
 
         return config_source, overrides
 
-    def apply_overrides(self) -> "SolConfArg":
+    def build_sol_conf(self) -> SolConf:
         config_source, overrides = self.get_config_source()
 
         # Load config file, do not apply modifiers yet.
@@ -336,12 +336,16 @@ class SolConfArg:
 
     @classmethod
     def load(
-        cls, config_file: str, overrides: Optional[List[str]] = None, modules=None
+        cls,
+        config_file: Union[Path, str],
+        overrides: Optional[List[str]] = None,
+        modules=None,
+        **solconf_kwargs,
     ):
         """Utility function that can be used to load a configuration file with CLI overrides."""
 
         import_extra_modules(modules, Path(config_file))
 
         parser = ArgumentParser()
-        parser.add_argument("obj", type=SolConfArg(config_file))
+        parser.add_argument("obj", type=SolConfArg(config_file, **solconf_kwargs))
         return parser.parse_args(overrides or []).obj
