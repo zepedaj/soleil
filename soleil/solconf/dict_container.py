@@ -6,7 +6,7 @@ from itertools import chain
 from contextlib import contextmanager, nullcontext
 from typing import Union, Dict, Optional
 import re
-from .autonamed_pattern import pxs, AutonamedPattern
+from pglib.autonamed_pattern import pxs, AutonamedPattern
 from dataclasses import dataclass, field, InitVar, replace
 from .utils import kw_only
 from .containers import Container
@@ -15,7 +15,6 @@ from . import exceptions
 
 
 def merge_decorator_values(decorator, eval_fxn):
-
     if isinstance(decorator, str):
         # 'int' or 'int,float' or 'None' or '()'
         out = eval_fxn(decorator)
@@ -411,7 +410,7 @@ class DictContainer(Container):
 
         .. warning:: The removed node is only guaranteed to match the input node in key.
         """
-        with self.lock, (nullcontext(None) if isinstance(node, str) else node.lock):
+        with self.lock, nullcontext(None) if isinstance(node, str) else node.lock:
             if popped_node := self._children.pop(node, *((None,) if safe else tuple())):
                 popped_node.parent = None
                 return popped_node

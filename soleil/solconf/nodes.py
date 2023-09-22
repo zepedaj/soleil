@@ -1,6 +1,6 @@
 """
 """
-from .autonamed_pattern import AutonamedPattern
+from pglib.autonamed_pattern import AutonamedPattern
 from threading import RLock
 from .exceptions import (
     InvalidRefStr,
@@ -295,7 +295,6 @@ class Node(abc.ABC):
             ref_components = self._split_ref(ref)
             node = self
             for component in ref_components:
-
                 if re.fullmatch(r"\.+", component):
                     # Matches a sequence of dots (e.g., "....")
                     for _ in range(len(component) - 1):
