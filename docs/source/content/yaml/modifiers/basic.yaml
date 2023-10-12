@@ -1,4 +1,0 @@
-a: 1
-b:int: 2
-c:str: 'abc'
-d::promote: {'key0': 3}
