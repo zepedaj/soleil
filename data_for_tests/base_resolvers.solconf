@@ -1,0 +1,13 @@
+from soleil import *
+
+A: hidden
+
+
+class A:
+    type: as_type = lambda **x: max(x.values())
+    val1 = 1
+    val2 = 2
+    val3 = 3
+
+
+my_dict = {"a": 0, "b": A}

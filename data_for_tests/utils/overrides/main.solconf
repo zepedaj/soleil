@@ -1,0 +1,5 @@
+from soleil.utils import infer_solconf_module
+
+symbol: noid = "Omega"
+color = submodule(".color", "red")
+filename = f"{symbol}/{id_str() or 'default'}.yaml"

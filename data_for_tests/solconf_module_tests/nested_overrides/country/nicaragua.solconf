@@ -1,0 +1,2 @@
+country = "Nicaragua"
+city = submodule(".city", "managua")

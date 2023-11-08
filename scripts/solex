@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+from soleil.cli_tools.solex import solex
+from soleil.resolvers.module_resolver import ModuleResolver, SolConfModule
+from soleil import resolve
+
+
+@solex(resolve=False)
+def run(conf: SolConfModule):
+    resolver = ModuleResolver(conf)
+    run = resolver.run or (lambda _: None)
+    run(resolver.resolve())
+
+
+if __name__ == "__main__":
+    run()
