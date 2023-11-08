@@ -9,7 +9,7 @@ Solconf modules are regular python modules augmented with extra functionality an
 
    module = load_config('/path/to/package/root/module.solconf')
 
-.. note:: You can also create a package without explicitly loading a module by passing the package root only: ``load_config('/path/to/package/root')
+.. note:: You can also create a package without explicitly loading a module by passing the package root only: ``load_config('/path/to/package/root')``
 
 By default, calling :func:`load_config` will first create a package with default name ``solconf`` and then create a module within that package using the file's stem name:
 
@@ -24,6 +24,7 @@ This new module is registered in python's ``sys`` registry and can be subsequent
 Any sub-directory within the package root can be loaded from within a solconf module using the :func:`load` directive:
 
 .. code-block::
+
    # /path/to/package/root/module.solconf
 
    submodule = load('.module.submodule')

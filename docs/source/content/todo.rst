@@ -1,13 +1,19 @@
+Wish List
+-------------
+
 .. todo::
 
    * Multiply specified overrides (e.g., ``solex train.solconf a=1 b=2 a=3``) need to raise an error
    * Add a 'with hidden:' preprocessor-level directive. At first, add this to the root level only. Variables declared in this block are added to the '__soleil_default_hidden__' list.
    * Support visualization of all the options available, either at the command line or as an html-formatted value. Ideally, the representation should make obvious the links between data (e.g.,
      when a class is a derived or an assignment is to a loaded module or module variable).
-   # Add a 'with noid:' preprocessor-level directive.
+   * Add a 'with noid:' preprocessor-level directive.
    * Add a `source` pre-proc directive that copy-pastes the code form another module with with new overrides / reqs. Loads from the sourced module should be relative to the original module's positions.
-   * Find a way to make it possible to derive from modules. Possibilities: #) A function that can be used to make a module behave as a class,
-     #) a pre-processor directive that automatically forces all module directives to be inside a class #) A special modifier (e.g., 'promote_conf', possibly default for var or class names '_')
+   * Find a way to make it possible to derive from modules. Possibilities:
+        #) A function that can be used to make a module behave as a class,
+        #) a pre-processor directive that automatically forces all module directives to be inside a class
+        #) A special modifier (e.g., 'promote_conf', possibly default for var or class names '_')
+
         that automatically makes that variable or class the default loaded variable or class.
    * Make the "brief" version of the id string take into account any possible name clashes when reducing parameter names. E.g. overrides to `param_1.class_A.x = 1` and `param_2.class_B.y = 2` should reduce to `'x=1'` and `'y=2'`. But overrides to `param_1.class_A.x = 1` and `param_2.class_B.x = 2` should reduce e.g., to `'param_1.x=1'` and `'param_2.x=2'`. Likewise, make it possible to specify
      overrides using short parameter names.
