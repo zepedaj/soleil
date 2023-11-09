@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, List
+from typing import Any, Dict, Iterable, Optional, List, Union
 import ast
 from uuid import uuid4
 from soleil.loader.override import Handled, Override
@@ -26,6 +26,8 @@ def load_config(
     resolve=True,
 ):
     """
+    Creates a new instance of the solconf module at the specfied path.
+
     :param conf_path: A file with solconf extension. The package will implicitly be assigned to the directory of this file.
     :param package_name: [``'solconf'``] The package name.
     :param resolve: [``True``] Whether the resolve the module.
@@ -56,7 +58,13 @@ def random_name():
 
 
 class ConfigLoader:
+    """
+    Loads solconf packages and applies CLI overrides.
+    """
+
     overrides: List[Override]
+    modules: Dict[str, Union[SolConfModule, Path]]
+    """ Contains previously-loaded modules or package paths """
 
     def __init__(
         self,
@@ -65,44 +73,36 @@ class ConfigLoader:
         overrides: Optional[List[str]] = None,
     ):
         """See the documentation for :func:`load_config`."""
+        self.modules = {}
         self.package_name = (
             package_name if isinstance(package_name, str) else package_name()
         )
         self.package_root = Path(package_root)
         if not self.package_root.is_dir():
             raise ValueError(f"No solconf package at {self.package_root}.")
-        self.ext = DEFAULT_EXTENSION
         self.overrides = [Override.build(_x) for _x in overrides or []]
 
-    def get_sub_module_path(self, abs_module_name):
-        # Get package / sub-module names
-        if (_package_name := abs_module_name.split(".")[0]) != self.package_name:
-            raise ValueError(
-                f"Attempted to load package {_package_name} from loader for `{self.package_name}`"
-            )
-        sub_module_names = abs_module_name.split(".", -1)[1:]
-        sub_package_path = self.package_root
-
-        # Get sub-package
-        for sub_module_name in sub_module_names[:-1]:
-            #
-            sub_package_path = sub_package_path / sub_module_name
-            if not sub_package_path.is_dir():
-                raise FileNotFoundError(
-                    f"No solconf package directory `{sub_package_path.absolute()}`."
-                )
-
-        # Get sub-module path
-        full_sub_module_name = ".".join([self.package_name] + sub_module_names)
-        sub_module_path = (sub_package_path / sub_module_names[-1]).with_suffix(
-            self.ext
+    def get_sub_module_path(self, abs_module_name, check_exists=True):
+        components = abs_module_name.split(".", -1)
+        sub_packages = components[:-1]
+        module_name = components[-1]
+        module_path = self.package_root.joinpath(
+            *sub_packages[1:], module_name + DEFAULT_EXTENSION
         )
-        if not sub_module_path.is_file():
+
+        # Ensure the package corresponds to this loader's package
+        if sub_packages[0] != self.package_name:
             raise ValueError(
-                f"No solconf module  `{full_sub_module_name}` (module path `{sub_module_path.absolute()})`."
+                f"Attempted to load package {sub_packages[0]} from loader for `{self.package_name}`"
             )
 
-        return full_sub_module_name, sub_module_path
+        # Check that the module path exists
+        if check_exists and not module_path.is_file():
+            raise ValueError(
+                f"No solconf module  `{abs_module_name}` (module path `{module_path.absolute()})`."
+            )
+
+        return module_path
 
     def load(
         self,
@@ -117,14 +117,10 @@ class ConfigLoader:
         :param reqs: The values for the required module members.
         """
 
-        full_sub_module_name, sub_module_path = self.get_sub_module_path(
-            abs_module_name
-        )
+        sub_module_path = self.get_sub_module_path(abs_module_name)
 
         # Create the module
-        module = self._build_solconf_module(
-            sub_module_path, full_sub_module_name, reqs=reqs
-        )
+        module = self._build_solconf_module(sub_module_path, abs_module_name, reqs=reqs)
 
         # Exec the module code
         self._exec_solconf_module(module, _overrides_binding_id=_overrides_binding_id)

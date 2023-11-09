@@ -1,6 +1,28 @@
 General
 ============
 
+
+Soleil is a configuration system that allows you to specify arbitrary python objects in terms of reconfigurable meta parameters. For example, a set of presentation colors can be specified in terms
+of the following meta-parameters organized into a python class:
+
+.. testcode::
+
+   class presentation_colors:
+       type:as_type = 'dict'
+       foreground = 'blue'
+       background = 'yellow'
+       font = 'black'
+
+Meta parameters are resolved into objects used in target programs:
+
+.. testcode::
+
+   assert resolve(presentation_colors) == {'foreground':'blue', 'background':'yellow', 'font':'black'}
+
+Loading a soleil configuration
+
+Solconf files can be seen as specification of meta parameters that will then be resolved into an actual paramtere
+
 Solconf modules
 -----------------
 Solconf modules are regular python modules augmented with extra functionality and stored in solconf package directory hierarchies containing files having ``'.solconf'`` extensions. To load a solconf package, use :func:`soleil.load_config` to load any of the modules in the package root:

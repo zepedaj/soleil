@@ -71,3 +71,4 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 autosummary_generate = True
+todo_include_todos = True
