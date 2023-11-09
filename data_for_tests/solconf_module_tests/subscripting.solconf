@@ -1,1 +1,1 @@
-content = ["a", "b", "c", "d"]
+content: promoted = ["a", "b", "c", "d"]

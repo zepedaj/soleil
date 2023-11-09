@@ -18,6 +18,10 @@ as_type = Modifiers(
     hidden=False,
     cast=lambda x: (entity_from_name(x) if isinstance(x, str) else x),
 )
+"""
+Annotates a variable containing a class or callable (or the fully qualified name of one)
+that will be used to instantiate the meta object.
+"""
 as_args = Modifiers(as_args=True, hidden=False)
 
 

@@ -1,1 +1,1 @@
-color = load(".color.grayscale")
+color: promoted = load(".color.grayscale")

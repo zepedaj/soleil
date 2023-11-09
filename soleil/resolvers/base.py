@@ -14,6 +14,10 @@ class ResolutionError(Exception):
         )
 
 
+class _UNRESOLVED:
+    pass
+
+
 class Resolver(abc.ABC):
     resolvable: Any
     members: Dict[str, Any]
@@ -31,7 +35,8 @@ class Resolver(abc.ABC):
         ...
 
     def resolve(self):
-        if "__soleil_resolved__" not in vars(self.resolvable):
+        if vars(self.resolvable).get("__soleil_resolved__", _UNRESOLVED) is _UNRESOLVED:
+            # Using vars(...) here prevents inheritance of __soleil_resolved__
             self.resolvable.__soleil_resolved__ = self.compute_resolved()
         return self.resolvable.__soleil_resolved__
 

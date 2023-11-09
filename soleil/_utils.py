@@ -64,3 +64,39 @@ def get_all_annotations(cls) -> Dict[str, Any]:
 
 def as_valid_filename(in_str) -> str:
     return in_str.replace("/", "|").replace("\\", "|").replace(":", "|")
+
+
+def abs_mod_name(abs_module_name: str, rel_name: str):
+    """
+    Takes a module name and a relative module name (.e.g, '..sub_mod2.sub_mod3')
+    and returns the absolute module name. If rel_name is already absolute, any
+    dot sequences are resolved and that is returned instead.
+    """
+
+    # Add a dot to abs_module_name to drop the last module
+    abs_module_name += "."
+
+    if not abs_module_name or abs_module_name[0] == ".":
+        raise ValueError(f"abs_module_name={abs_module_name}")
+
+    if rel_name[0] == ".":
+        concated = abs_module_name + rel_name
+    else:
+        concated = rel_name
+
+    components = []
+    for component in concated.split("."):
+        if component:
+            components.append(component)
+        else:
+            try:
+                components.pop()
+                if not components:
+                    # IndexError also raised by pop if components is empty to begin with
+                    raise IndexError
+            except IndexError:
+                raise ValueError(
+                    f"Module reference `{concated}` refers beyond the root package"
+                )
+
+    return ".".join(components)

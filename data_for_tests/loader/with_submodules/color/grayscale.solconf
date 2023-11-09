@@ -1,1 +1,1 @@
-color = load(".blacks.solid")
+color: promoted = load(".blacks.solid")

@@ -14,12 +14,12 @@ class TestConfigLoader:
         module = self.load("loader/with_custom_type")
         assert resolve(module) == 1
 
-    def test_with_implicit_promotion(self):
-        module = self.load("loader/with_implicit_promotion")
+    def test_with_promotion(self):
+        module = self.load("loader/with_promotion")
         assert resolve(module) == 1
 
-    def test_with_implicit_unpromotion(self):
-        module = self.load("loader/with_implicit_unpromotion")
+    def test_with_no_promotion(self):
+        module = self.load("loader/with_no_promotion")
         assert resolve(module) == {"a": 1, "b": 2}
 
     def test_with_explicit_unpromotion(self):

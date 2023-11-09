@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, Optional, List, Union
 import ast
 from uuid import uuid4
 from soleil.loader.override import Handled, Override
-from soleil._utils import PathSpec
+from soleil._utils import PathSpec, Unassigned
 import importlib.util
 import importlib.machinery
 import importlib._bootstrap
@@ -88,10 +88,11 @@ class ConfigLoader:
 
         return module_path
 
-    def load(self, abs_module_name, resolve=True):
+    def load(self, abs_module_name, resolve=True, promoted=True):
         """
         :param module_name: The absolute module name (e.g., ``package_name.sub_module_1.sub_module_2``)
         :param resolve: Return the model's resolved value if ``True``, otherwise the module itself.
+        :param promoted: Whehter to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
         :param reqs: The values for the required module members.
         """
 
@@ -103,11 +104,21 @@ class ConfigLoader:
         # Exec the module code
         self._exec_solconf_module(module)
 
-        # Resolve the module
-        if resolve:
-            return call_resolve(module)
+        # Get the promoted member
+        if (
+            not resolve
+            and promoted
+            and (mod_rslvr := ModuleResolver(module)).promoted is not Unassigned
+        ):
+            out = mod_rslvr.promoted
         else:
-            return module
+            out = module
+
+        # Resolve the output
+        if resolve:
+            return call_resolve(out)
+        else:
+            return out
 
     def _build_solconf_module(self, module_path: PathSpec, abs_module_name: str):
         """
@@ -136,7 +147,8 @@ class ConfigLoader:
         else:
             # Instantiate the solconf module
             module_path = Path(module_path)
-            module = SolConfModule(abs_module_name, module_path)
+            module = SolConfModule(abs_module_name)
+            module.init_as_module(abs_module_name, module_path)
             self.modules[abs_module_name] = module
 
         return module
@@ -151,7 +163,13 @@ class ConfigLoader:
         tree = spp.visit(tree)
 
         # Execute the module
-        exec(compile(tree, filename=str(module.__file__), mode="exec"), module.__dict__)
+        out = {}
+        exec(
+            compile(tree, filename=str(module.__file__), mode="exec"),
+            dict(vars(module)),
+            out,
+        )
+        [setattr(module, key, val) for key, val in out.items()]
 
         # Append the imported ignores
         module.__soleil_default_hidden_members__.update(spp.imported_names)

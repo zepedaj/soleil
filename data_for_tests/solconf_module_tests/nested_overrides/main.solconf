@@ -1,1 +1,1 @@
-country = submodule(".country", "nicaragua")
+country: promoted = submodule(".country", "nicaragua")

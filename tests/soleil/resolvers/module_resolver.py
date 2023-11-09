@@ -38,7 +38,7 @@ class TestSolConfModule:
             f"{name}.solconf_module_tests.reqs", resolve=True, reqs={"a": 1, "b": 2}
         ) == {"a": 1, "b": 2, "c": 3}
 
-    def test_getitem(self):
+    def test_promoted_getitem(self):
         module = load_test_data("solconf_module_tests/subscripting", resolve=False)
         assert module[0] == "a"
         assert module[3] == "d"
@@ -50,3 +50,22 @@ class TestSolConfModule:
             "red:{'promoted': False}": {"color": "redish"},
             "chosen_color": {"color": "blueish"},
         }
+
+    def test_derive(self):
+        module = load_test_data(
+            "solconf_module_tests/main", package_name=uuid4().hex, resolve=False
+        )
+
+        assert isinstance(module, type)
+
+        class derived_module(module):
+            red = "orange"
+
+        assert module in derived_module.mro()
+
+        out1 = resolve(module)
+        out2 = resolve(derived_module)
+
+        assert out1 is not out2
+        assert out1 == {"chosen_color": "blueish", "red": "redish"}
+        assert out2 == {"chosen_color": "blueish", "red": "orange"}

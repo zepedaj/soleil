@@ -1,1 +1,1 @@
-out = "solid_black"
+out: promoted = "solid_black"
