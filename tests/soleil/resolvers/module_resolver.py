@@ -1,5 +1,5 @@
 from uuid import uuid4
-from soleil.loader.loader import ConfigLoader, random_name
+from soleil.loader import GLOBAL_LOADER
 from tests import TEST_DATA_ROOT, load_test_data
 from soleil import resolve
 from soleil.resolvers.base import displayable

@@ -18,18 +18,21 @@ as_run = Modifiers(as_run=True)
 """ Modifier that indicates the default callable that solex will run on the resolved module """
 
 
-class SolConfModule(ModuleType):
+class SolConfModule:
     """Soleil configuration modules will be of this type."""
 
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
-    __soleil_loader__: "ConfigLoader"
-    """ The loader used to load this module """
+    __file__: Path
+    """ The module file path """
 
-    def __init__(self, *args, loader, reqs=None, **kwargs):
-        # Set the loader
-        self.__soleil_loader__ = loader
+    __name__: str
+    """ The module name """
+
+    def __init__(self, name: str, filepath: Path, reqs=None):
+        self.__name__ = name
+        self.__file__ = filepath
 
         # Inject all members of soleil.injected module
         for attr in (injected := import_module("soleil.injected")).__all__:
@@ -44,9 +47,6 @@ class SolConfModule(ModuleType):
         # Add required var values
         for name, val in (reqs or {}).items():
             setattr(self, name, val)
-
-        # Super init
-        super().__init__(*args, **kwargs)
 
     def load(self, module_name, reqs=None, **kwargs):
         """
@@ -70,9 +70,9 @@ class SolConfModule(ModuleType):
         load_target = f'{root}.{parts["submods"]}'
 
         #
-        return self.__soleil_loader__.load(
-            load_target, reqs=reqs, resolve=False, **kwargs
-        )
+        from soleil.loader import GLOBAL_LOADER
+
+        return GLOBAL_LOADER.load(load_target, reqs=reqs, resolve=False, **kwargs)
 
     def submodule(self, sub_package_name, sub_module_name, /, **kwargs):
         return self.load(f"{sub_package_name}.{sub_module_name}", **kwargs)
