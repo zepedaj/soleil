@@ -1,18 +1,12 @@
 from importlib import import_module
 from pathlib import Path
 import re
-from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Callable, List, Optional, Set
-from numpy.testing._private.utils import partial
-
-from pglib.validation import checked_get_single
+from types import MappingProxyType
+from typing import Callable, Optional, Set
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
-from .base import resolve as call_resolve, _UNRESOLVED
+from .base import resolve as call_resolve
 from .._utils import Unassigned, abs_mod_name
-
-if TYPE_CHECKING:
-    from soleil.loader.loader import ConfigLoader
 
 
 as_run = Modifiers(as_run=True)
@@ -38,7 +32,7 @@ class SolConfModule(type):
     def __new__(cls, name, bases=None, members=None):
         return super().__new__(cls, name, bases or tuple(), members or {})
 
-    def init_as_module(self, name: str, filepath: Path, reqs=None):
+    def init_as_module(self, name: str, filepath: Path):
         self.__name__ = name
         self.__file__ = filepath
 
@@ -51,10 +45,6 @@ class SolConfModule(type):
         for method in ["load", "submodule"]:
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
-
-        # Add required var values
-        for name, val in (reqs or {}).items():
-            setattr(self, name, val)
 
     def load(self, module_name, promoted=True, resolve=False):
         """

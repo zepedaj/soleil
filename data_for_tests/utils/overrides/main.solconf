@@ -1,4 +1,5 @@
 from soleil.utils import infer_solconf_module
+from soleil.resolvers.ref import call
 
 symbol: noid = "Omega"
 color = submodule(".color", "red")

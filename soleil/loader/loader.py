@@ -93,7 +93,6 @@ class ConfigLoader:
         :param module_name: The absolute module name (e.g., ``package_name.sub_module_1.sub_module_2``)
         :param resolve: Return the model's resolved value if ``True``, otherwise the module itself.
         :param promoted: Whehter to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
-        :param reqs: The values for the required module members.
         """
 
         sub_module_path = self.get_sub_module_path(abs_module_name)

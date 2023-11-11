@@ -7,11 +7,9 @@ of the following meta-parameters organized into a python class:
 
 .. testcode::
 
-   class presentation_colors:
-       type:as_type = 'dict'
-       foreground = 'blue'
-       background = 'yellow'
-       font = 'black'
+   class model:
+        type:as_type = 'torch.nn.Linear'
+
 
 Meta parameters are resolved into objects used in target programs:
 

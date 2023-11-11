@@ -20,7 +20,6 @@ class Modifiers(UserDict):
 
     * name: str
     * hidden: bool
-    * required: bool
     * cast: Callable
     * promote: bool
     """
@@ -47,8 +46,6 @@ hidden = Modifiers(hidden=True)
 """ The member should not be passed as an argument to type """
 visible = Modifiers(hidden=False)
 """ The member should be passed as a type arg """
-required = Modifiers(required=True)
-""" The member must to be supplied when loading the module """
 name = lambda value: Modifiers(name=value)
 """ Change the name of the member when passed as a type arg """
 cast = lambda value: Modifiers(cast=value)

@@ -2,6 +2,7 @@ from collections import UserDict
 import inspect
 from itertools import chain
 from types import MappingProxyType
+from soleil.resolvers.req import req
 from soleil.resolvers.modifiers import Modifiers, from_annotation, merge_modifiers
 from soleil._utils import Unassigned, get_all_annotations
 from .base import Resolver, displayable, resolve
@@ -32,9 +33,7 @@ class DisplayableFromClassResolver(UserDict):
 class ClassResolver(Resolver):
     args = tuple()
     type = None
-    valid_modifier_keys = frozenset(
-        {"name", "hidden", "cast", "required", "as_type", "as_args"}
-    )
+    valid_modifier_keys = frozenset({"name", "hidden", "cast", "as_type", "as_args"})
     special_members = MappingProxyType({"args": "as_args", "type": "as_type"})
     """Tuples of attribute names and modifier type for special members."""
 
@@ -77,8 +76,8 @@ class ClassResolver(Resolver):
     def _get_required_member_names(self):
         return {
             key
-            for key, value in self._get_resolved_modifiers().items()
-            if value.get("required", False)
+            for key, value in self.members.items()
+            if isinstance(value, req) and req.missing
         }
 
     def _get_default_hidden_value(self, name: str):
@@ -164,20 +163,14 @@ class ClassResolver(Resolver):
         """Non-special, visible members"""
         return {key: self.extended_members[key] for key in self.modifiers}
 
-    def check_required(self):
-        if missing_var_names := list(
-            filter(
-                lambda x: self.modifiers[x].get("required", False)
-                and x not in self.members,
-                self.modifiers,
-            )
-        ):
+    def compute_resolved(self):
+        # Check no requireds are missing
+        if missing_var_names := list(self._get_required_member_names()):
             raise ValueError(
-                f"Missing value for required members `{', '.join(missing_var_names)}` for resolvable {self.resolvable}"
+                f"Missing values for required members `{', '.join(missing_var_names)}` for resolvable {self.resolvable}"
             )
 
-    def compute_resolved(self):
-        self.check_required()
+        # Resolve
         resolved_args = resolve(self.args or tuple())
         resolved_members = {
             resolve(name): resolve(value)
