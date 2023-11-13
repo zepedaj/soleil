@@ -1,16 +1,12 @@
 from pathlib import Path
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
+from soleil.loader.loader import GLOBAL_LOADER
 from ._utils import infer_solconf_module, as_valid_filename
 
 # Utilities that can be called from inside solconf modules.
 
 from tempfile import mkdtemp as temp_dir
-
-
-def overrides():
-    """Returns the strings passed in as CLI overrides"""
-    return [x.source for x in infer_solconf_module(True).__soleil_loader__.overrides]
 
 
 def derive(*parents, **new_vars):
@@ -25,12 +21,9 @@ def id_str(glue=",", safe=True, full=False):
     :param safe: Whether the escape characters that are invalid in filenames
     :param full: If ``False`` (the default), only the right-most target attribute is used. (e.g., with the default ``full=False``,  ``'height=2'``  instead of  ``'rectangle.dimensions.height=2``).
     """
-    _loader = (_mdl := infer_solconf_module(True)).__soleil_loader__
-    overrides = sorted(
-        (x.source if full else f"{x.target.split('.', -1)[-1]}={x.value}")
-        for x in _loader.overrides
-        if x.as_id
-    )
+    overrides = GLOBAL_LOADER.package_overrides[
+        infer_solconf_module(True)[0].split(".")[0]
+    ]
     out = glue.join(overrides)
     if safe:
         out = as_valid_filename(out)

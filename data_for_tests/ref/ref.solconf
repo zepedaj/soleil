@@ -1,0 +1,19 @@
+r = 1
+x = ref("r")
+
+
+class A:
+    type: as_type = lambda **kwargs: kwargs
+    a = 2
+    y = ref("a")
+
+    r = ref("r")  # Refs global r
+    x = ref("x")
+
+    class B:
+        type: as_type = lambda **kwargs: kwargs
+        b = 3
+        z = ref("b")
+
+        r = ref("r")  # Refs global r
+        x = ref("x")

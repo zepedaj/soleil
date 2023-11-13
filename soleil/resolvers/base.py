@@ -26,8 +26,9 @@ class Resolver(abc.ABC):
     def __init__(self, resolvable):
         self.resolvable = resolvable
 
-    def __init_subclass__(cls):
-        __registered_resolvers__.add(cls)
+    def __init_subclass__(cls, register=True):
+        if register:
+            __registered_resolvers__.add(cls)
 
     @classmethod
     @abc.abstractmethod
@@ -52,6 +53,21 @@ class Resolver(abc.ABC):
             return f"{entity_name(type(self.resolvable))}<{str(self.resolvable)}>"
         else:
             return str(self.resolvable)
+
+
+class TypeResolver(Resolver, register=False):
+    """A resolver for any instance of a specific type"""
+
+    handled_type: Type
+    """ The type that this resolver handles """
+
+    def __init_subclass__(cls, handled_type: Type):
+        cls.handled_type = handled_type
+        super().__init_subclass__()
+
+    @classmethod
+    def can_handle(cls, resolvable):
+        return isinstance(resolvable, cls.handled_type)
 
 
 class NonCachedResolver(Resolver):

@@ -7,6 +7,7 @@ from soleil.resolvers.module_resolver import promoted, unpromoted, as_run
 from soleil.resolvers.modifiers import hidden, visible, name, cast, noid
 from soleil.resolvers.base import resolve
 from soleil.resolvers.req import req
+from soleil.resolvers.ref import ref
 from soleil.utils import id_str, sub_dir, derive, temp_dir
 
 

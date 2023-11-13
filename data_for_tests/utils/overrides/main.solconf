@@ -3,4 +3,4 @@ from soleil.resolvers.ref import call
 
 symbol: noid = "Omega"
 color = submodule(".color", "red")
-filename = f"{symbol}/{id_str() or 'default'}.yaml"
+filename = call(lambda: f"{symbol}/{id_str() or 'default'}.yaml")

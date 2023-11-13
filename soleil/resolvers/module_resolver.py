@@ -1,8 +1,7 @@
 from importlib import import_module
 from pathlib import Path
-import re
 from types import MappingProxyType
-from typing import Callable, Optional, Set
+from typing import Callable, Dict, Optional, Set
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
 from .base import resolve as call_resolve
@@ -19,23 +18,42 @@ class SolConfModule(type):
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
-    __file__: Path
+    __soleil_module__: str
+    """ The qualified name of the module, including package name """
+
+    __soleil_path__: Path
     """ The module file path """
 
-    __name__: str
-    """ The module name """
+    __soleil_globals__: Dict
+    """ Used by the loader and to keep track of class variables during module creation for support of :class:`ref` """
 
     @property
     def __package_name__(self):
-        return __name__.split(".")[0]
+        """The name of the soleil package"""
+        return self.__soleil_module__.split(".")[0]
 
-    def __new__(cls, name, bases=None, members=None):
-        return super().__new__(cls, name, bases or tuple(), members or {})
+    def __init__(*args, **kwargs):
+        # Required to support extra __new__ arguments
+        pass
 
-    def init_as_module(self, name: str, filepath: Path):
-        self.__name__ = name
-        self.__file__ = filepath
+    def __new__(
+        cls,
+        name,
+        bases=None,
+        members=None,
+        soleil_module: Optional[str] = None,
+        soleil_path: Optional[Path] = None,
+    ):
+        members = members or {}
+        members.update(
+            {"__soleil_module__": soleil_module, "__soleil_path__": soleil_path}
+        )
+        out = super().__new__(cls, name, bases or tuple(), members)
+        if soleil_module or soleil_path:
+            out._init_as_module()
+        return out
 
+    def _init_as_module(self):
         # Inject all members of soleil.injected module
         for attr in (injected := import_module("soleil.injected")).__all__:
             setattr(self, attr, getattr(injected, attr))
@@ -46,7 +64,7 @@ class SolConfModule(type):
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
 
-    def load(self, module_name, promoted=True, resolve=False):
+    def load(self, module_name, promoted=True, resolve=False, **kwargs):
         """
         Loads a module by relative name. Names with leading dots are interepreted relative to this module. Names with no leading dots are
         interpreted relative to the parent package.
@@ -61,12 +79,14 @@ class SolConfModule(type):
         # Get an absolute module name
         if module_name[0] != ".":
             module_name = self.__package_name__ + module_name
-        module_name = abs_mod_name(self.__name__, module_name)
+        module_name = abs_mod_name(self.__soleil_module__, module_name)
 
         # Load the module using the global loader
         from soleil.loader import GLOBAL_LOADER
 
-        module = GLOBAL_LOADER.load(module_name, resolve=resolve, promoted=promoted)
+        module = GLOBAL_LOADER.load(
+            module_name, resolve=resolve, promoted=promoted, **kwargs
+        )
 
         return module
 
@@ -74,7 +94,7 @@ class SolConfModule(type):
         return self.load(f"{sub_package_name}.{sub_module_name}", **kwargs)
 
     def __str__(self):
-        return f"<solconf module '{self.__name__}' from '{str(Path(self.__file__).absolute()) if self.__file__ else '<unknown>'}'>"
+        return f"<solconf module '{self.__soleil_module__}' from '{str(self.__soleil_path__.absolute()) if self.__soleil_path__ else '<unknown>'}'>"
 
     def __repr__(self):
         return str(self)

@@ -33,7 +33,8 @@ class reqResolver(Resolver):
 class reqSetter(Setter):
     """Setter for ``req`` instances"""
 
-    def can_handle(self, value):
+    @classmethod
+    def can_handle(cls, value):
         return isinstance(value, req)
 
     def set(self, current, new):

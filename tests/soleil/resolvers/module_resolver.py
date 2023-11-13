@@ -7,6 +7,7 @@ from soleil.resolvers.base import displayable
 
 class TestSolConfModule:
     def test_load(self):
+        mdl = load_test_data("solconf_module_tests/main", resolve=False)
         assert (
             load_test_data("solconf_module_tests/main", resolve=True)["red"] == "redish"
         )

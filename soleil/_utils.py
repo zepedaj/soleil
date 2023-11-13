@@ -32,25 +32,25 @@ def _get_module_by_name(f_back):
 
 def infer_solconf_module(do_raise=False):
     """Infer the parent solconf module where the (possibly nested) call was made."""
-    module = None
 
+    soleil_module_name = None
     f_back = (
         None
         if (current_frame := inspect.currentframe()) is None
         else current_frame.f_back
     )
-    while f_back is not None and (
-        ((module := _get_module_by_name(f_back)) is None)
-        or not is_solconf_module(module)
+
+    while (
+        f_back is not None
+        and (soleil_module_name := f_back.f_globals.get("__soleil_module__", None))
+        is None
     ):
         f_back = f_back.f_back
-    if f_back is None:
-        module = None
 
-    if do_raise and module is None:
+    if do_raise and soleil_module_name is None:
         raise Exception("Unable to deduce the parent solconf module.")
 
-    return module
+    return soleil_module_name, f_back
 
 
 def get_all_annotations(cls) -> Dict[str, Any]:

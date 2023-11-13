@@ -16,7 +16,7 @@ def test_solex():
 
     with TemporaryDirectory() as temp_dir:
         with open(conf_path := (Path(temp_dir) / "conf.solconf"), "wt") as fo:
-            fo.write("contents = {'a':3, 'b':4}")
+            fo.write("contents:promoted = {'a':3, 'b':4}")
 
         assert OUTPUT is None
         fxn.func(**vars(fxn.parser.parse_args([str(conf_path)])))
@@ -50,7 +50,7 @@ def test_group():
 
     with TemporaryDirectory() as temp_dir:
         with open(conf_path := (Path(temp_dir) / "conf.solconf"), "wt") as fo:
-            fo.write("contents={'a':3, 'b':4}")
+            fo.write("contents:promoted={'a':3, 'b':4}")
 
         # Call foo
         OUTPUT = None
