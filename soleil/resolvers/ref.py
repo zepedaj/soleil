@@ -66,9 +66,8 @@ class ref:
         self.var_name = var_name
 
         # Check that var_name is defined at this point
-        if (
-            var_name not in self.locals_snapshot
-            and not var_name in self.soleil_module.__soleil_globals__
+        if var_name not in self.locals_snapshot and not var_name in vars(
+            self.soleil_module
         ):
             raise NameError(f"name '{var_name}' is not defined")
 

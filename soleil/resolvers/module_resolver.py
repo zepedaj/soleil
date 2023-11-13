@@ -1,6 +1,6 @@
 from importlib import import_module
 from pathlib import Path
-from types import MappingProxyType
+from types import MappingProxyType, ModuleType
 from typing import Callable, Dict, Optional, Set
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
@@ -12,7 +12,7 @@ as_run = Modifiers(as_run=True)
 """ Annotates a callable (or the fully qualified name of one) that solex will run on the resolved module """
 
 
-class SolConfModule(type):
+class SolConfModule(ModuleType):
     """Soleil configuration modules will be of this type."""
 
     __soleil_default_hidden_members__: Set[str]
@@ -24,36 +24,16 @@ class SolConfModule(type):
     __soleil_path__: Path
     """ The module file path """
 
-    __soleil_globals__: Dict
-    """ Used by the loader and to keep track of class variables during module creation for support of :class:`ref` """
-
     @property
     def __package_name__(self):
         """The name of the soleil package"""
         return self.__soleil_module__.split(".")[0]
 
-    def __init__(*args, **kwargs):
-        # Required to support extra __new__ arguments
-        pass
+    def __init__(self, soleil_module: Optional[str], soleil_path: Optional[Path]):
+        #
+        self.__soleil_module__ = soleil_module
+        self.__soleil_path__ = soleil_path
 
-    def __new__(
-        cls,
-        name,
-        bases=None,
-        members=None,
-        soleil_module: Optional[str] = None,
-        soleil_path: Optional[Path] = None,
-    ):
-        members = members or {}
-        members.update(
-            {"__soleil_module__": soleil_module, "__soleil_path__": soleil_path}
-        )
-        out = super().__new__(cls, name, bases or tuple(), members)
-        if soleil_module or soleil_path:
-            out._init_as_module()
-        return out
-
-    def _init_as_module(self):
         # Inject all members of soleil.injected module
         for attr in (injected := import_module("soleil.injected")).__all__:
             setattr(self, attr, getattr(injected, attr))
@@ -143,3 +123,9 @@ class ModuleResolver(ClassResolver):
     @classmethod
     def can_handle(cls, value):
         return isinstance(value, SolConfModule)
+
+    def _get_raw_members(self):
+        return dict(vars(self.resolvable))
+
+    def _get_raw_annotations(self):
+        return dict(vars(self.resolvable).get("__annotations__", {}))

@@ -176,11 +176,7 @@ class ConfigLoader:
     def _build_solconf_module(self, abs_module_name: str, module_path: Path):
         # Instantiate the solconf module
 
-        module = SolConfModule(
-            f"<SolConfModule `{abs_module_name}`>",
-            soleil_module=abs_module_name,
-            soleil_path=module_path,
-        )
+        module = SolConfModule(abs_module_name, module_path)
         self.modules[abs_module_name] = module
 
         # Execute the code in the module
@@ -193,21 +189,11 @@ class ConfigLoader:
         tree = spp.visit(tree)
 
         # Execute the module
-        #
-        # Cannot pass vars(module) directly to exec, as it is immutable.
-        # Will keep track of class vars as they are created with __soleil_globals__ instead.
-        # This is used by `ref` to check if referenced variables exist already.
-        module.__soleil_globals__ = {}
         exec(
             compile(tree, filename=str(module.__soleil_path__), mode="exec"),
-            dict(vars(module)),
-            module.__soleil_globals__,
+            _globals := vars(module),
+            _globals,
         )
-        # Add __soleil_globals__ as class attributes
-        [
-            setattr(module, key, value)
-            for key, value in module.__soleil_globals__.items()
-        ]
 
         # Append the imported ignores
         module.__soleil_default_hidden_members__.update(spp.imported_names)
@@ -216,14 +202,3 @@ class ConfigLoader:
 
 
 GLOBAL_LOADER = ConfigLoader()
-
-
-class _ClassGlobals(dict):
-    def __init__(self, cls):
-        self.cls = cls
-
-    def __setitem__(self, name, val):
-        setattr(self.cls, name, val)
-
-    def __getitem__(self, name):
-        return getattr(self.cls, name)
