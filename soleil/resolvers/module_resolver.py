@@ -1,7 +1,9 @@
 from importlib import import_module
+from pglib.validation import NoItem, checked_get_single
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Optional, Set
+from soleil.resolvers._overrides.overrides import deduce_soleil_qualname
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
 from .base import resolve as call_resolve
@@ -18,21 +20,32 @@ class SolConfModule(ModuleType):
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
-    __soleil_module__: str
+    __soleil_module__: str  # TODO: Rename to __name__
     """ The qualified name of the module, including package name """
 
-    __soleil_path__: Path
+    __soleil_path__: Path  # TODO: Rename to __file__
     """ The module file path """
 
+    __soleil_qualname__: Optional[
+        str
+    ]  # TODO: unused, optionally rename to __qualname__
+    """ The variable/attribute name sequence to access this module from to the root module, will be ``None`` for the root module"""
+
     @property
-    def __package_name__(self):
+    def __package_name__(self):  # TODO: Convert to __package__ and make static
         """The name of the soleil package"""
         return self.__soleil_module__.split(".")[0]
 
-    def __init__(self, soleil_module: Optional[str], soleil_path: Optional[Path]):
+    def __init__(
+        self,
+        soleil_module: Optional[str],
+        soleil_path: Optional[Path],
+        soleil_qualname: Optional[str] = None,
+    ):
         #
         self.__soleil_module__ = soleil_module
         self.__soleil_path__ = soleil_path
+        self.__soleil_qualname__ = soleil_qualname
 
         # Inject all members of soleil.injected module
         for attr in (injected := import_module("soleil.injected")).__all__:
@@ -44,7 +57,14 @@ class SolConfModule(ModuleType):
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
 
-    def load(self, module_name, promoted=True, resolve=False, **kwargs):
+    def load(
+        self,
+        module_name,
+        promoted=True,
+        resolve=False,
+        _target: Optional[str] = None,
+        **kwargs,
+    ):
         """
         Loads a module by relative name. Names with leading dots are interepreted relative to this module. Names with no leading dots are
         interpreted relative to the parent package.
@@ -54,21 +74,56 @@ class SolConfModule(ModuleType):
         :param module_name: The relative or absolute (without package name) module name.
         :param promoted: Whether the return the promoted member, if it exists, otherwise (or if ``promoted=False``) the full module.
         """
-        #
+        # NOTE: Parameter ``_target`` will be set by the pre-processor in simple load assignments, e.g.
+        #   a = load('.sub.module')          # load('.sub.module', _target='a')
+        #   b = submodule('.sub', 'module')  # submodule('.sub', 'module', _target='b')
+
+        # Build the soleil qualname of the module
+        _qualname = deduce_soleil_qualname(_target)
 
         # Get an absolute module name
         if module_name[0] != ".":
-            module_name = self.__package_name__ + module_name
+            module_name = ".".join([self.__package_name__, module_name])
         module_name = abs_mod_name(self.__soleil_module__, module_name)
 
         # Load the module using the global loader
         from soleil.loader import GLOBAL_LOADER
 
         module = GLOBAL_LOADER.load(
-            module_name, resolve=resolve, promoted=promoted, **kwargs
+            module_name,
+            resolve=resolve,
+            promoted=promoted,
+            _qualname=_qualname,
+            **kwargs,
         )
 
         return module
+
+    def get_promoted_name(self) -> Optional[str]:
+        """
+        Checks the module's ``__annotations__`` to see which variable is promoted
+        """
+        # TODO: This is required to support override name propagation. For names
+        # to propagate correctly through promoted members, the promoted member needs to
+        # be defined at the top of the module file.
+        if not (anns := getattr(self, "__annotations__", None)):
+            return None
+        else:
+            if (
+                pair := checked_get_single(
+                    filter(
+                        lambda x: (
+                            x is promoted or isinstance(x, tuple) and promoted in x
+                        ),
+                        anns.items(),
+                    ),
+                    msg=lambda self=self: f"Multiple promoted members found in solconf module {self}.",
+                    raise_empty=False,
+                )
+            ) is NoItem:
+                return None
+            else:
+                return pair[0]
 
     def submodule(self, sub_package_name, sub_module_name, /, **kwargs):
         return self.load(f"{sub_package_name}.{sub_module_name}", **kwargs)

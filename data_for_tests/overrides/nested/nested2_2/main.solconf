@@ -1,0 +1,5 @@
+class B:
+    type: as_type = lambda **kwargs: kwargs
+    c = 3
+    d = c + 1
+    m = load(".nested3")

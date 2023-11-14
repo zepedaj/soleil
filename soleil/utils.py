@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
 from soleil.loader.loader import GLOBAL_LOADER
-from ._utils import infer_solconf_module, as_valid_filename
+from ._utils import infer_solconf_package, as_valid_filename
 
 # Utilities that can be called from inside solconf modules.
 

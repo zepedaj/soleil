@@ -70,3 +70,24 @@ class TestSolConfModule:
         assert out1 is not out2
         assert out1 == {"chosen_color": "blueish", "red": "redish"}
         assert out2 == {"chosen_color": "blueish", "red": "orange"}
+
+    def test_overrides(self):
+        assert load_test_data("overrides/main", resolve=True) == {
+            "a": 1,
+            "b": 2,
+            "c": 3,
+        }
+
+        assert load_test_data("overrides/main", resolve=True, overrides=[{"a": 2}]) == {
+            "a": 2,
+            "b": 2,
+            "c": 4,
+        }
+
+        assert load_test_data("overrides/main", resolve=True, overrides=["a=2"]) == {
+            "a": 2,
+            "b": 2,
+            "c": 4,
+        }
+
+        assert load_test_data("overrides/nested/main", resolve=True) == 3

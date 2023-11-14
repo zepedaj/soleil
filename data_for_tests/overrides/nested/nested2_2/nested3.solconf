@@ -1,0 +1,5 @@
+class C:
+    type: as_type = lambda **kwargs: kwargs
+    e = 5
+    f = e + 1
+    g = f + 1

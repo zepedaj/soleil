@@ -1,0 +1,7 @@
+A: promoted
+
+
+class A:
+    type: as_type = lambda **kwargs: kwargs
+    c = 3
+    d = c + 1

@@ -26,8 +26,41 @@ class GetImportedNames(ast.NodeVisitor):
     visit_ImportFrom = _visit_imports
 
 
-class SoleilPreProcessor(GetImportedNames, ast.NodeTransformer):
+class AddTargetToLoads(ast.NodeTransformer):
+    def _add_target_to_load(self, node: ast.Assign):
+        # Injects the `_target` keyword argument to load() calls.
+        # TODO: Need to ensure that the user has not re-defined load.
+        if (
+            isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == "load"
+        ):
+            # Append `_target` keyword
+            node.value.keywords.append(
+                ast.keyword("_target", ast.Constant(node.targets[0].id))
+            )
+        return node
+
+    def _apply_override(self, node: ast.Assign):
+        node.value = ast.Call(
+            ast.Name("override", ctx=ast.Load()),
+            [ast.Constant(node.targets[0].id), node.value],
+            [],
+        )
+        return node
+
+    def visit_Assign(self, node):
+        if len(node.targets) > 1 or not isinstance(node.targets[0], ast.Name):
+            # Currently, only single-target assignments are supported for simplicity
+            raise NotImplementedError(
+                "Multi-target assignments not currently supported."
+            )
+        node = self._add_target_to_load(node)
+        node = self._apply_override(node)
+
+        return self.generic_visit(node)
+
+
+class SoleilPreProcessor(GetImportedNames, AddTargetToLoads, ast.NodeTransformer):
     def visit(self, tree: ast.Module):
-        tree = super().visit(tree)
-        ast.fix_missing_locations(tree)
-        return tree
+        return ast.fix_missing_locations(super().visit(tree))

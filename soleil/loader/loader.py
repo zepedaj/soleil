@@ -4,7 +4,7 @@ import ast
 from uuid import uuid4
 from soleil._utils import PathSpec, Unassigned
 
-from soleil.resolvers._overrides.overrides import OverrideSpec, apply_overrides
+from soleil.resolvers._overrides.overrides import OverrideSpec, eval_overrides
 from . import pre_processor
 
 from soleil.resolvers.module_resolver import ModuleResolver, SolConfModule
@@ -39,9 +39,7 @@ def load_config(
     package_name = GLOBAL_LOADER.init_package(conf_path.parent, package_name, overrides)
     module_name = f"{package_name}.{conf_path.stem}"
 
-    return GLOBAL_LOADER.load(
-        module_name, resolve=resolve, promoted=promoted, overrides=overrides
-    )
+    return GLOBAL_LOADER.load(module_name, resolve=resolve, promoted=promoted)
 
 
 class ConfigLoader:
@@ -75,7 +73,7 @@ class ConfigLoader:
                 f"Attempted to reinitialize existings solconf package `{name}`"
             )
         self.package_roots[name] = Path(path).resolve(strict=True)
-        self.package_overrides[name] = None if overrides is None else list(overrides)
+        self.package_overrides[name] = eval_overrides(overrides or [], {}, {})
         return name
 
     def get_sub_module_path(self, abs_module_name, check_exists=True) -> Path:
@@ -104,12 +102,13 @@ class ConfigLoader:
         abs_module_name,
         resolve=True,
         promoted=True,
-        overrides: Optional[List[OverrideSpec]] = None,
+        _qualname=None,
     ):
         """
         :param module_name: The absolute module name (e.g., ``package_name.sub_module_1.sub_module_2``)
         :param resolve: Return the model's resolved value if ``True``, otherwise the module itself.
-        :param promoted: Whehter to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
+        :param promoted: Whether to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
+        :param _qualname: When loading a module from within another module, this will point to the variable/attribute name sequence relative to the root module. Used to apply overrides.
         """
 
         sub_module_path = self.get_sub_module_path(abs_module_name)
@@ -119,16 +118,16 @@ class ConfigLoader:
             module := self._get_solconf_module(abs_module_name, sub_module_path)
         ) is None:
             # Build and register the module code
-            module = self._build_solconf_module(abs_module_name, sub_module_path)
-            self.modules[abs_module_name] = module
-        elif overrides:
-            raise Exception(
-                "Cannot re-load a solconf module with overrides. Use ``load_config`` to instead create a new solconf package."
+            module = self._build_solconf_module(
+                abs_module_name, sub_module_path, _qualname
             )
-
-        # Apply overrides
-        if overrides:
-            apply_overrides(module, *overrides)
+        elif self.package_overrides[module.__package_name__]:
+            # Reasons - Not clear what to do if
+            #  1) overrides were or are specified and
+            #  2) the module's __soleil_qualname__ used to find override targets would not be uniquely defined.
+            raise NotImplementedError(
+                "Reloading solconf packages not currently supported."
+            )
 
         # Get the promoted member
         if (
@@ -173,10 +172,12 @@ class ConfigLoader:
 
         return module
 
-    def _build_solconf_module(self, abs_module_name: str, module_path: Path):
+    def _build_solconf_module(
+        self, abs_module_name: str, module_path: Path, qualname: Optional[str]
+    ):
         # Instantiate the solconf module
 
-        module = SolConfModule(abs_module_name, module_path)
+        module = SolConfModule(abs_module_name, module_path, qualname)
         self.modules[abs_module_name] = module
 
         # Execute the code in the module

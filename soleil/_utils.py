@@ -2,10 +2,8 @@ from importlib import import_module
 import inspect
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Union, Dict
+from typing import Any, Optional, Union, Dict
 from collections import ChainMap
-
-from soleil.resolvers.modifiers import Modifiers, from_annotation
 
 PathSpec = Union[str, Path]
 
@@ -20,18 +18,10 @@ def is_solconf_module(module: ModuleType):
     return isinstance(module, SolConfModule)
 
 
-def _get_module_by_name(f_back):
-    if (
-        "__soleil_loader__" not in f_back.f_globals
-        or "__name__" not in f_back.f_globals
-    ):
-        return None
-    else:
-        return import_module(f_back.f_globals["__name__"])
-
-
-def infer_solconf_module(do_raise=False):
-    """Infer the parent solconf module where the (possibly nested) call was made."""
+def infer_solconf_module(do_raise=False) -> Optional[str]:
+    """
+    Infer the parent solconf module where the (possibly nested) call was made.
+    """
 
     soleil_module_name = None
     f_back = (
@@ -50,7 +40,14 @@ def infer_solconf_module(do_raise=False):
     if do_raise and soleil_module_name is None:
         raise Exception("Unable to deduce the parent solconf module.")
 
-    return soleil_module_name, f_back
+    return soleil_module_name
+
+
+def infer_solconf_package(do_raise=False):
+    if (mdl := infer_solconf_module(do_raise)) is None:
+        return None
+    else:
+        return mdl.split(".")[0]
 
 
 def get_all_annotations(cls) -> Dict[str, Any]:
