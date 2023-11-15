@@ -77,14 +77,22 @@ class TestSolConfModule:
 
         assert load_test_data("overrides/main", resolve=True, overrides=[{"a": 2}]) == {
             "a": 2,
-            "b": 2,
+            "b": 3,
             "c": 4,
         }
 
         assert load_test_data("overrides/main", resolve=True, overrides=["a=2"]) == {
             "a": 2,
-            "b": 2,
+            "b": 3,
             "c": 4,
         }
 
-        assert load_test_data("overrides/nested/main", resolve=True) == 3
+    def test_overrides_nested_promote(self):
+        assert load_test_data("overrides/nested_promote/main", resolve=True) == {
+            "a": 0.5,
+            "b": 1.5,
+        }
+
+        assert load_test_data(
+            "overrides/nested_promote/main", resolve=True, overrides=["a=3"]
+        ) == {"a": 3, "b": 4}

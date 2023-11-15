@@ -1,0 +1,1 @@
+a: promoted = load(".nested2") / 2
