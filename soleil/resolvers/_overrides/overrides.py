@@ -1,10 +1,11 @@
 import inspect
-from typing import Any, Dict, List, Union
+from types import FrameType
+from typing import Any, Dict, List, Optional, Union
 from pglib.validation import NoItem, checked_get_single
-from soleil._utils import Unassigned, infer_solconf_package
+from soleil._utils import infer_solconf_package, Unassigned, get_caller_frame
+from .overridable import Overridable
 
-from .parser import Override, OverrideType, Ref, parse_overrides, parse_ref
-from soleil.resolvers.setter import get_setter
+from .parser import Override, OverrideType, parse_overrides, parse_ref
 
 CompoundRefStr = str
 """
@@ -88,12 +89,14 @@ def eval_overrides(
     ]
 
 
-def deduce_soleil_qualname(target_name, f_back=None):
+def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] = 0):
     """
     Returns a string specifying a variables name as seen from the root configuration.
 
     Example:
+
     .. code-block::
+
         # main.solconf
         assert __soleil_qualname__ is None # Is True
         a = load('module2') # Will propagate 'a' as the module's __soleil_qualname__
@@ -101,18 +104,21 @@ def deduce_soleil_qualname(target_name, f_back=None):
         # module2.solconf
         assert __soleil_qualname__ == 'a' # Is True
         b = 1
-        fxn(deduce_soleil_qualname('b') == 'a.b') # Is True, must be called within a function `fxn` such as override() or load()
+        deduce_soleil_qualname('b', -1) == 'a.b' # Is True, -1 bc usuallly called within a function `fxn` such as override() or load()
 
     """
     from soleil.loader.loader import GLOBAL_LOADER  # TODO: Slow - load at global level
 
-    f_back = f_back or inspect.currentframe().f_back.f_back
+    # Get the frame two levels up by default
+    if not isinstance(frame, FrameType):
+        frame = get_caller_frame((frame or 0) + 2)
 
-    module_name = f_back.f_globals["__soleil_qualname__"]
+    #
+    module_name = frame.f_globals["__soleil_qualname__"]
     promoted_name = GLOBAL_LOADER.modules[
-        f_back.f_globals["__soleil_module__"]
+        frame.f_globals["__soleil_module__"]
     ].get_promoted_name()
-    class_name = f_back.f_locals.get("__qualname__", None)
+    class_name = frame.f_locals.get("__qualname__", None)
 
     if promoted_name:
         if class_name is None and target_name == promoted_name:
@@ -136,24 +142,40 @@ def deduce_soleil_qualname(target_name, f_back=None):
         )
 
 
-def override(target_name, value):
+def override(target_name: str, value: Any):
     """
     Returns the assigned value or an override if any was specified.
     """
     from soleil.loader.loader import GLOBAL_LOADER  # TODO: Slow - load at global level
 
-    target_name = deduce_soleil_qualname(target_name)
-    target_ref = parse_ref(target_name)
+    frame = get_caller_frame()
+    target_qualname = deduce_soleil_qualname(target_name, frame=frame)
+    target_ref = None if target_qualname is None else parse_ref(target_qualname)
 
+    ovr_value = Unassigned
     if (
-        _ovr := checked_get_single(
-            filter(
-                lambda x: x.target == target_ref,
-                GLOBAL_LOADER.package_overrides[infer_solconf_package()],
-            ),
-            raise_empty=False,
+        target_ref is not None  # Is None if target is unaccesible due to a promotion
+        and (
+            _ovr := checked_get_single(
+                filter(
+                    lambda x: x.target == target_ref,
+                    GLOBAL_LOADER.package_overrides[infer_solconf_package()],
+                ),
+                raise_empty=False,
+            )
         )
-    ) is NoItem:
-        return value
+        is not NoItem
+    ):
+        # Get the override value
+        ovr_value = _ovr.get_value()
+
+    # Compute the output value
+    if isinstance(value, Overridable):
+        if ovr_value is not Unassigned:
+            value.set(ovr_value)
+        return value.get(target_name, frame)
     else:
-        return _ovr.get_value()
+        if ovr_value is not Unassigned:
+            return ovr_value
+        else:
+            return value

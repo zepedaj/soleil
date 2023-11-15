@@ -33,11 +33,16 @@ class TestSolConfModule:
         assert resolve(module.chosen_color) == "greenish"
 
     def test_reqs(self):
-        loader = ConfigLoader(TEST_DATA_ROOT, name := random_name())
+        loader = GLOBAL_LOADER
+        loader.init_package(
+            TEST_DATA_ROOT, name := uuid4().hex, overrides=[{"a": 1, "b": 2}]
+        )
 
-        assert loader.load(
-            f"{name}.solconf_module_tests.reqs", resolve=True, reqs={"a": 1, "b": 2}
-        ) == {"a": 1, "b": 2, "c": 3}
+        assert loader.load(f"{name}.solconf_module_tests.reqs", resolve=True) == {
+            "a": 1,
+            "b": 2,
+            "c": 3,
+        }
 
     def test_promoted_getitem(self):
         module = load_test_data("solconf_module_tests/subscripting", resolve=False)
@@ -53,23 +58,19 @@ class TestSolConfModule:
         }
 
     def test_derive(self):
-        module = load_test_data(
-            "solconf_module_tests/main", package_name=uuid4().hex, resolve=False
-        )
+        B = load_test_data("solconf_module_tests/derivation/derived", resolve=False)
 
-        assert isinstance(module, type)
+        raise Exception("Missing")
+        assert isinstance(B, type)
 
-        class derived_module(module):
-            red = "orange"
+        # assert module in derived_module.mro()
 
-        assert module in derived_module.mro()
+        # out1 = resolve(module)
+        # out2 = resolve(derived_module)
 
-        out1 = resolve(module)
-        out2 = resolve(derived_module)
-
-        assert out1 is not out2
-        assert out1 == {"chosen_color": "blueish", "red": "redish"}
-        assert out2 == {"chosen_color": "blueish", "red": "orange"}
+        # assert out1 is not out2
+        # assert out1 == {"chosen_color": "blueish", "red": "redish"}
+        # assert out2 == {"chosen_color": "blueish", "red": "orange"}
 
     def test_overrides(self):
         assert load_test_data("overrides/main", resolve=True) == {

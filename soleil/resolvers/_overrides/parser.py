@@ -55,6 +55,7 @@ class Override:
     target: List[Ref]
     assign_type: OverrideType
     value_expr: ast.Expression
+    used: bool = False
 
     def get_value(self, _globals=None, _locals=None):
         """

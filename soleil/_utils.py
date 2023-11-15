@@ -97,3 +97,21 @@ def abs_mod_name(abs_module_name: str, rel_name: str):
                 )
 
     return ".".join(components)
+
+
+def get_caller_frame(levels: int = 1, do_raise=True):
+    """
+    Returns the frame this many levels up (relative to the calling frame).
+    """
+    # Get the frame two levels up by default
+    frame = inspect.currentframe()
+    for _ in range(levels + 1):
+        if frame is None:
+            break
+        else:
+            frame = frame.f_back
+
+    if frame is None and do_raise:
+        raise ValueError("Invalid `None` value for frame.")
+
+    return frame

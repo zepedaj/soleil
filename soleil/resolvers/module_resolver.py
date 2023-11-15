@@ -1,8 +1,8 @@
 from importlib import import_module
 from pglib.validation import NoItem, checked_get_single
 from pathlib import Path
-from types import MappingProxyType, ModuleType
-from typing import Callable, Optional, Set
+from types import FrameType, MappingProxyType, ModuleType
+from typing import Callable, Optional, Set, Union
 from soleil.resolvers._overrides.overrides import deduce_soleil_qualname
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
@@ -63,6 +63,7 @@ class SolConfModule(ModuleType):
         promoted=True,
         resolve=False,
         _target: Optional[str] = None,
+        _frame: Optional[Union[FrameType, int]] = 0,
         **kwargs,
     ):
         """
@@ -77,9 +78,13 @@ class SolConfModule(ModuleType):
         # NOTE: Parameter ``_target`` will be set by the pre-processor in simple load assignments, e.g.
         #   a = load('.sub.module')          # load('.sub.module', _target='a')
         #   b = submodule('.sub', 'module')  # submodule('.sub', 'module', _target='b')
+        #
+        #   _target will be ``None`` e.g., when using load(...) as an argument for a class inheritance: class A(load('.B')): pass
 
         # Build the soleil qualname of the module
-        _qualname = deduce_soleil_qualname(_target)
+        _qualname = (
+            None if _target is None else deduce_soleil_qualname(_target, frame=_frame)
+        )
 
         # Get an absolute module name
         if module_name[0] != ".":
@@ -124,9 +129,6 @@ class SolConfModule(ModuleType):
                 return None
             else:
                 return pair[0]
-
-    def submodule(self, sub_package_name, sub_module_name, /, **kwargs):
-        return self.load(f"{sub_package_name}.{sub_module_name}", **kwargs)
 
     def __str__(self):
         return f"<solconf module '{self.__soleil_module__}' from '{str(self.__soleil_path__.absolute()) if self.__soleil_path__ else '<unknown>'}'>"

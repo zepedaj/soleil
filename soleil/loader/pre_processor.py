@@ -1,5 +1,6 @@
 from importlib import import_module
 import ast
+from typing import Union
 
 SOLEIL_KEYWORDS = frozenset({"load", "submodule", "breakpoint"})
 
@@ -27,7 +28,9 @@ class GetImportedNames(ast.NodeVisitor):
 
 
 class AddTargetToLoads(ast.NodeTransformer):
-    def _add_target_to_load(self, node: ast.Assign):
+    def _add_target_to_load(
+        self, node: Union[ast.Assign, ast.AnnAssign], target_name: str
+    ):
         # Injects the `_target` keyword argument to load() calls.
         # TODO: Need to ensure that the user has not re-defined load.
         if (
@@ -37,26 +40,41 @@ class AddTargetToLoads(ast.NodeTransformer):
         ):
             # Append `_target` keyword
             node.value.keywords.append(
-                ast.keyword("_target", ast.Constant(node.targets[0].id))
+                ast.keyword("_target", ast.Constant(target_name))
             )
         return node
 
-    def _apply_override(self, node: ast.Assign):
-        node.value = ast.Call(
-            ast.Name("override", ctx=ast.Load()),
-            [ast.Constant(node.targets[0].id), node.value],
-            [],
-        )
+    def _apply_override(self, node: Union[ast.Assign, ast.AnnAssign], target_name: str):
+        if node.value is not None:
+            node.value = ast.Call(
+                ast.Name("override", ctx=ast.Load()),
+                [ast.Constant(target_name), node.value],
+                [],
+            )
         return node
 
     def visit_Assign(self, node):
         if len(node.targets) > 1 or not isinstance(node.targets[0], ast.Name):
             # Currently, only single-target assignments are supported for simplicity
             raise NotImplementedError(
-                "Multi-target assignments not currently supported."
+                "Multi-target assignments not currently supported"
             )
-        node = self._add_target_to_load(node)
-        node = self._apply_override(node)
+        node = self._add_target_to_load(node, node.targets[0].id)
+        node = self._apply_override(node, node.targets[0].id)
+
+        return self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign):
+        if (
+            not isinstance(node.target, ast.Name)
+            or not node.simple
+            or not isinstance(node.target, ast.Name)
+        ):
+            # Currently, only single-target assignments are supported for simplicity
+            raise NotImplementedError("Unsupported type of annotated assignment")
+
+        node = self._add_target_to_load(node, node.target.id)
+        node = self._apply_override(node, node.target.id)
 
         return self.generic_visit(node)
 

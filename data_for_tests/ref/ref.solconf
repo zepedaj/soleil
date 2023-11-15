@@ -1,19 +1,19 @@
 r = 1
-x = ref("r")
+x = r
 
 
 class A:
     type: as_type = lambda **kwargs: kwargs
     a = 2
-    y = ref("a")
+    y = a
 
-    r = ref("r")  # Refs global r
-    x = ref("x")
+    r = r
+    x = x
 
     class B:
         type: as_type = lambda **kwargs: kwargs
         b = 3
-        z = ref("b")
+        z = b
 
-        r = ref("r")  # Refs global r
-        x = ref("x")
+        r = r
+        x = x

@@ -1,1 +1,1 @@
-value = "Paris"
+value: promoted = "Paris"

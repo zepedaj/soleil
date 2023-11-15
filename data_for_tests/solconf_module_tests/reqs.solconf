@@ -1,4 +1,4 @@
-a: required
-b: required
+a = req()
+b = req()
 
 c = a + b

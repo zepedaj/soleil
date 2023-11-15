@@ -25,4 +25,4 @@ def test_overrides():
 
 
 def test_id_str():
-    pass
+    raise Exception("Missing")
