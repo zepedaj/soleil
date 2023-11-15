@@ -1,5 +1,5 @@
 from soleil.resolvers import class_resolver as mdl
-from soleil.injected import *
+from soleil import *
 from soleil.resolvers.modifiers import merge_modifiers
 
 

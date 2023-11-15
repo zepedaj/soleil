@@ -1,3 +1,4 @@
+from soleil import *
 class C:
     type: as_type = lambda **kwargs: kwargs
     e = 5

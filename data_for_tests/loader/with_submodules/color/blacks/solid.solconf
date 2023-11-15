@@ -1,1 +1,2 @@
+from soleil import *
 out: promoted = "solid_black"

@@ -1,8 +1,9 @@
+from soleil import *
+
 # Adding extra unused vars to check that the loader sets them to invisible.
-from soleil.injected import as_type
-from soleil.injected import as_args as as_args_alias
 import soleil
 import soleil.resolvers as soleil_resolvers
+from os import chdir
 
 type: as_type = lambda int_value: int_value
 int_value = 1

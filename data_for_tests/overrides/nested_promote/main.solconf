@@ -1,2 +1,3 @@
+from soleil import *
 a = load(".nested1")
 b = a + 1

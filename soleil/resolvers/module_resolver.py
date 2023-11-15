@@ -49,12 +49,10 @@ class SolConfModule(ModuleType):
         self.__soleil_qualname__ = soleil_qualname
 
         # Inject all members of soleil.injected module
-        for attr in (injected := import_module("soleil.injected")).__all__:
-            setattr(self, attr, getattr(injected, attr))
-        self.__soleil_default_hidden_members__ = set(injected.__all__)
+        self.__soleil_default_hidden_members__ = set()
 
         # Add load method
-        for method in ["load", "submodule"]:
+        for method in ["load"]:
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
 

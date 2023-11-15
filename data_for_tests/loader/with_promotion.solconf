@@ -1,1 +1,2 @@
+from soleil import *
 a: promoted = 1

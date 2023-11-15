@@ -1,1 +1,2 @@
+from soleil import *
 color: promoted = "greenish"

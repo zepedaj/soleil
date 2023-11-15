@@ -1,3 +1,4 @@
+from soleil import *
 r = 1
 x = r
 

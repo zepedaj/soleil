@@ -1,1 +1,2 @@
+from soleil import *
 value: promoted = "Chinandega"

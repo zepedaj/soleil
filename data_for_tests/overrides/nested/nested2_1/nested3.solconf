@@ -1,3 +1,4 @@
+from soleil import *
 e = 5
 f = e + 1
 g = f + 1

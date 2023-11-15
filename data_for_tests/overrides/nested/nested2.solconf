@@ -1,3 +1,4 @@
+from soleil import *
 c = 3
 d = c + 1
 m = load(".nested2_1.nested3")

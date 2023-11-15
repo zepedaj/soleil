@@ -1,2 +1,3 @@
+from soleil import *
 country = "Nicaragua"
 city = submodule(".city", "managua")
