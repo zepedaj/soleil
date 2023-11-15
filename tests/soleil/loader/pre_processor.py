@@ -11,6 +11,7 @@ from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
 
 from tests import load_test_data
+from tests.soleil.test_helpers import solconf_file
 
 
 def code_with_imports():
@@ -142,6 +143,8 @@ class TestCLIROverrider:
     #     )
     #     assert module == {"country": "Xicaragua", "city": "Managua"}
 
+
+class TestProtectKeyword:
     def test_keywords_protected(self):
         with TemporaryDirectory() as temp_dir:
             for keyword in mdl.__soleil_keywords__:
@@ -155,3 +158,35 @@ class TestCLIROverrider:
                     ),
                 ):
                     load_config(path)
+
+
+class TestGetPromotedName:
+    def test_double_promoted_fails(self):
+        with solconf_file("A:promoted\nB:promoted") as path:
+            with pytest.raises(
+                SyntaxError,
+                match=re.escape('Multiple promotions detected ("A", "B") - File "')
+                + ".*"
+                + re.escape('main.solconf", line 3'),
+            ):
+                load_config(path)
+
+    def test_non_root_promoted_fails(self):
+        with solconf_file("class A:\n\ta:promoted=1") as path:
+            with pytest.raises(
+                SyntaxError,
+                match=re.escape(
+                    f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
+                ),
+            ):
+                load_config(path)
+
+    def test_non_root_promoted_fails__decorator(self):
+        with solconf_file("class A:\n\ta:promoted=1") as path:
+            with pytest.raises(
+                SyntaxError,
+                match=re.escape(
+                    f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
+                ),
+            ):
+                load_config(path)

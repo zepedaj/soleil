@@ -137,6 +137,10 @@ class SolConfModule(ModuleType):
 
 
 promoted = Modifiers(promoted=True)
+"""
+Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
+CLI overrides in modules with promoted members requires knowing the promoted member before executing the code.
+"""
 unpromoted = Modifiers(promoted=False)
 
 
