@@ -1,6 +1,5 @@
-import inspect
 from types import FrameType
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 from pglib.validation import NoItem, checked_get_single
 from soleil._utils import infer_solconf_package, Unassigned, get_caller_frame
 from .overridable import Overridable
@@ -142,7 +141,7 @@ def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] 
         )
 
 
-def override(target_name: str, value: Any):
+def _soleil_override(target_name: str, value: Any):
     """
     Returns the assigned value or an override if any was specified.
     """

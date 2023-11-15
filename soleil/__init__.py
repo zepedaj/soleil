@@ -30,12 +30,7 @@ from soleil.utils import id_str, sub_dir, derive, temp_dir, spawn
 
 __all__ += ["req", "id_str", "sub_dir", "derive", "temp_dir", "spawn"]
 
-from soleil.resolvers._overrides.overrides import override
+from soleil.resolvers._overrides.overrides import _soleil_override
 from soleil.resolvers._overrides.overridable import submodule
 
-__all__ += ["override", "submodule"]
-
-__keywords__ = [
-    "override",
-    "load",
-]  # Rename override to _soleil_override, check keywords are not re-defined in pre-processor
+__all__ += ["_soleil_override", "submodule"]

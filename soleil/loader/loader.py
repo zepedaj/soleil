@@ -189,7 +189,7 @@ class ConfigLoader:
         tree = ast.parse(code)
 
         # Apply the pre-processor
-        spp = pre_processor.SoleilPreProcessor()
+        spp = pre_processor.SoleilPreProcessor(module_path)
         tree = spp.visit(tree)
 
         # Execute the module

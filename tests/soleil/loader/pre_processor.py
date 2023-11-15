@@ -1,8 +1,13 @@
 from dataclasses import dataclass
+import re
+import pytest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 from soleil.loader import pre_processor as mdl
 from itertools import chain
 import ast
+from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
 
 from tests import load_test_data
@@ -136,3 +141,17 @@ class TestCLIROverrider:
     #         overrides=["country.country[0]='X'"],
     #     )
     #     assert module == {"country": "Xicaragua", "city": "Managua"}
+
+    def test_keywords_protected(self):
+        with TemporaryDirectory() as temp_dir:
+            for keyword in mdl.__soleil_keywords__:
+                with open(path := (Path(temp_dir) / "main.solconf"), "w") as fo:
+                    fo.write(f"{keyword} = 1")
+
+                with pytest.raises(
+                    SyntaxError,
+                    match=re.escape(
+                        f'Attempted to redefine soleil keyword `{keyword}` - File "{path}", line 1'
+                    ),
+                ):
+                    load_config(path)

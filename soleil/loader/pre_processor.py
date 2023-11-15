@@ -1,8 +1,9 @@
 from importlib import import_module
 import ast
+from pathlib import Path
 from typing import Union
 
-SOLEIL_KEYWORDS = frozenset({"load", "submodule", "breakpoint"})
+__soleil_keywords__ = ["_soleil_override", "load"]
 
 
 class GetImportedNames(ast.NodeVisitor):
@@ -47,7 +48,7 @@ class AddTargetToLoads(ast.NodeTransformer):
     def _apply_override(self, node: Union[ast.Assign, ast.AnnAssign], target_name: str):
         if node.value is not None:
             node.value = ast.Call(
-                ast.Name("override", ctx=ast.Load()),
+                ast.Name("_soleil_override", ctx=ast.Load()),
                 [ast.Constant(target_name), node.value],
                 [],
             )
@@ -79,6 +80,27 @@ class AddTargetToLoads(ast.NodeTransformer):
         return self.generic_visit(node)
 
 
-class SoleilPreProcessor(GetImportedNames, AddTargetToLoads, ast.NodeTransformer):
+class ProtectKeywords(ast.NodeVisitor):
+    # path: Path
+    # """ The path of the file being processed """
+
+    def __init__(self, path, *args, **kwargs):
+        self.path = path
+        super().__init__(*args, **kwargs)
+
+    def visit_Name(self, node: ast.Name):
+        if isinstance(node.ctx, ast.Store) and node.id in __soleil_keywords__:
+            raise SyntaxError(
+                f'Attempted to redefine soleil keyword `{node.id}` - File "{self.path}", line {node.lineno}'
+            )
+        if hasattr(super(), "visit_Name"):
+            return super().visit_Name(node)
+        else:
+            return self.generic_visit(node)
+
+
+class SoleilPreProcessor(
+    ProtectKeywords, GetImportedNames, AddTargetToLoads, ast.NodeTransformer
+):
     def visit(self, tree: ast.Module):
         return ast.fix_missing_locations(super().visit(tree))
