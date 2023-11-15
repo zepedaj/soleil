@@ -116,7 +116,7 @@ def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] 
     #
     module_name = frame.f_globals["__soleil_qualname__"]
     promoted_name = GLOBAL_LOADER.modules[
-        frame.f_globals["__soleil_module__"]
+        frame.f_globals["__name__"]
     ].get_promoted_name()
     class_name = frame.f_locals.get("__qualname__", None)
 

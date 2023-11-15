@@ -17,34 +17,35 @@ as_run = Modifiers(as_run=True)
 class SolConfModule(ModuleType):
     """Soleil configuration modules will be of this type."""
 
+    __is_soleil_module__: bool
+    """ Marker to detect soleil modules """
+
+    __name__: str
+    """ The qualified name of the module, including package name """
+
+    __package__: str
+    """ The name of the soleil package -- usually a random string """
+
+    __file__: Path
+    """ The module file path """
+
+    __soleil_qualname__: Optional[str]
+    """ The variable/attribute name sequence to access this module from to the root module, will be ``None`` for the root module"""
+
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
-    __soleil_module__: str  # TODO: Rename to __name__
-    """ The qualified name of the module, including package name """
-
-    __soleil_path__: Path  # TODO: Rename to __file__
-    """ The module file path """
-
-    __soleil_qualname__: Optional[
-        str
-    ]  # TODO: unused, optionally rename to __qualname__
-    """ The variable/attribute name sequence to access this module from to the root module, will be ``None`` for the root module"""
-
-    @property
-    def __package_name__(self):  # TODO: Convert to __package__ and make static
-        """The name of the soleil package"""
-        return self.__soleil_module__.split(".")[0]
-
     def __init__(
         self,
-        soleil_module: Optional[str],
-        soleil_path: Optional[Path],
+        soleil_module: str,
+        soleil_path: Path,
         soleil_qualname: Optional[str] = None,
     ):
         #
-        self.__soleil_module__ = soleil_module
-        self.__soleil_path__ = soleil_path
+        self.__is_soleil_module__ = True
+        self.__name__ = soleil_module
+        self.__package__ = soleil_module.split(".")[0]
+        self.__file__ = soleil_path
         self.__soleil_qualname__ = soleil_qualname
 
         # Inject all members of soleil.injected module
@@ -88,8 +89,8 @@ class SolConfModule(ModuleType):
 
         # Get an absolute module name
         if module_name[0] != ".":
-            module_name = ".".join([self.__package_name__, module_name])
-        module_name = abs_mod_name(self.__soleil_module__, module_name)
+            module_name = ".".join([self.__package__, module_name])
+        module_name = abs_mod_name(self.__name__, module_name)
 
         # Load the module using the global loader
         from soleil.loader import GLOBAL_LOADER
@@ -131,7 +132,7 @@ class SolConfModule(ModuleType):
                 return pair[0]
 
     def __str__(self):
-        return f"<solconf module '{self.__soleil_module__}' from '{str(self.__soleil_path__.absolute()) if self.__soleil_path__ else '<unknown>'}'>"
+        return f"<solconf module '{self.__name__}' from '{str(self.__file__.absolute()) if self.__file__ else '<unknown>'}'>"
 
     def __repr__(self):
         return str(self)

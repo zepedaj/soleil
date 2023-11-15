@@ -18,29 +18,25 @@ def is_solconf_module(module: ModuleType):
     return isinstance(module, SolConfModule)
 
 
-def infer_solconf_module(do_raise=False) -> Optional[str]:
+def infer_solconf_module(do_raise=True) -> Optional[str]:
     """
     Infer the parent solconf module where the (possibly nested) call was made.
     """
 
-    soleil_module_name = None
-    f_back = (
-        None
-        if (current_frame := inspect.currentframe()) is None
-        else current_frame.f_back
-    )
+    f_back = inspect.currentframe().f_back
 
-    while (
-        f_back is not None
-        and (soleil_module_name := f_back.f_globals.get("__soleil_module__", None))
-        is None
+    while f_back is not None and not f_back.f_globals.get(
+        "__is_soleil_module__", False
     ):
         f_back = f_back.f_back
 
-    if do_raise and soleil_module_name is None:
-        raise Exception("Unable to deduce the parent solconf module.")
+    if f_back is None:
+        if do_raise:
+            raise Exception("Unable to deduce the parent solconf module.")
+        else:
+            return None
 
-    return soleil_module_name
+    return f_back.f_globals["__name__"]
 
 
 def infer_solconf_package(do_raise=False):

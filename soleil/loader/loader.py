@@ -121,7 +121,7 @@ class ConfigLoader:
             module = self._build_solconf_module(
                 abs_module_name, sub_module_path, _qualname
             )
-        elif self.package_overrides[module.__package_name__]:
+        elif self.package_overrides[module.__package__]:
             # Reasons - Not clear what to do if
             #  1) overrides were or are specified and
             #  2) the module's __soleil_qualname__ used to find override targets would not be uniquely defined.
@@ -158,7 +158,7 @@ class ConfigLoader:
         if abs_module_name in self.modules:
             # The conf module was previously loaded.
             module = self.modules[abs_module_name]
-            if (loaded_path := Path(module.__soleil_path__)) != module_path:
+            if (loaded_path := Path(module.__file__)) != module_path:
                 # The previous load path differs
                 raise ValueError(
                     f"The specified solconf module `{abs_module_name}` was previously "
@@ -181,7 +181,7 @@ class ConfigLoader:
         self.modules[abs_module_name] = module
 
         # Execute the code in the module
-        with open(module.__soleil_path__, "rt") as fo:
+        with open(module.__file__, "rt") as fo:
             code = fo.read()
         tree = ast.parse(code)
 
@@ -191,7 +191,7 @@ class ConfigLoader:
 
         # Execute the module
         exec(
-            compile(tree, filename=str(module.__soleil_path__), mode="exec"),
+            compile(tree, filename=str(module.__file__), mode="exec"),
             _globals := vars(module),
             _globals,
         )
