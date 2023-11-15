@@ -1,13 +1,7 @@
 B: promoted
 
 
-# load_config(
-#     GLOBAL_LOADER.get_submodule_path(__module__),
-#     overrides=GLOBAL_LOADER.package_overrides[__package__],
-#     resolve=False,
-# )
-
-
-class B(load(".main")):
-    c = 3
-    d = 4
+class B(A := spawn(".main")):
+    type: as_type = lambda **kwargs: kwargs
+    c = A.b + 1
+    d = c + 1

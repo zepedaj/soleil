@@ -19,6 +19,7 @@ def load_config(
     overrides: Optional[List[OverrideSpec]] = None,
     resolve=True,
     promoted=True,
+    _qualname=None,
 ):
     """
     Creates a new package with root at the parent of the spcified configuration path, and loads the specified configuration path as a module in that package.
@@ -39,7 +40,9 @@ def load_config(
     package_name = GLOBAL_LOADER.init_package(conf_path.parent, package_name, overrides)
     module_name = f"{package_name}.{conf_path.stem}"
 
-    return GLOBAL_LOADER.load(module_name, resolve=resolve, promoted=promoted)
+    return GLOBAL_LOADER.load(
+        module_name, resolve=resolve, promoted=promoted, _qualname=_qualname
+    )
 
 
 class ConfigLoader:

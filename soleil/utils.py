@@ -1,8 +1,13 @@
 from pathlib import Path
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
-from soleil.loader.loader import GLOBAL_LOADER
-from ._utils import infer_solconf_package, as_valid_filename
+from soleil.loader.loader import GLOBAL_LOADER, load_config
+from ._utils import (
+    infer_solconf_package,
+    as_valid_filename,
+    infer_solconf_module,
+    abs_mod_name,
+)
 
 # Utilities that can be called from inside solconf modules.
 
@@ -63,3 +68,35 @@ def sub_dir(root: Path, create=True):
             continue
         break
     return str(new_sub_dir)
+
+
+def spawn(rel_module_name, pass_overrides=True, qualname=None):
+    """
+    Takes the name of a target module (relative to the calling module, if dot-prefixed, or the current package
+    otherwise) that promotes a class, and loads it in a new package, providing the calling package's overrides
+    as possible overrides.
+
+    The target module must expose a promoted class that will then be returned with the specified overrides
+    applied (those that are compatible).
+
+    This returned class can then be used as a parent class for a new class in the calling module. The new
+    class will also have the compatible specified overrides applied to it.
+
+    For correct transference of overrides to the parent class, the child class must also be promoted
+    in the calling module or the qualname parameter must be set to the child class's ``__qualname__`` attribute.
+    """
+
+    calling_package = infer_solconf_package()
+    target_module_name = abs_mod_name(infer_solconf_module(), rel_module_name)
+    target_module_path = GLOBAL_LOADER.get_sub_module_path(target_module_name)
+
+    return load_config(
+        target_module_path,
+        overrides=(
+            []
+            if not pass_overrides
+            else GLOBAL_LOADER.package_overrides[calling_package]
+        ),
+        resolve=False,
+        _qualname=qualname,
+    )

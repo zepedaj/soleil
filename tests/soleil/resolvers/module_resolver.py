@@ -59,18 +59,14 @@ class TestSolConfModule:
 
     def test_derive(self):
         B = load_test_data("solconf_module_tests/derivation/derived", resolve=False)
+        assert [x.__name__ for x in B.mro()] == ["B", "A", "object"]
+        assert resolve(B) == {"a": 1, "b": 2, "c": 3, "d": 4}
 
-        raise Exception("Missing")
-        assert isinstance(B, type)
-
-        # assert module in derived_module.mro()
-
-        # out1 = resolve(module)
-        # out2 = resolve(derived_module)
-
-        # assert out1 is not out2
-        # assert out1 == {"chosen_color": "blueish", "red": "redish"}
-        # assert out2 == {"chosen_color": "blueish", "red": "orange"}
+        B = load_test_data(
+            "solconf_module_tests/derivation/derived", resolve=False, overrides=["a=10"]
+        )
+        assert [x.__name__ for x in B.mro()] == ["B", "A", "object"]
+        assert resolve(B) == {"a": 10, "b": 11, "c": 12, "d": 13}
 
     def test_overrides(self):
         assert load_test_data("overrides/main", resolve=True) == {
