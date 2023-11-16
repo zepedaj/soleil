@@ -62,7 +62,7 @@ class TrackQualName(RaisesError, ast.NodeVisitor):
         return node
 
 
-class GetPromotedName(RaisesError, ast.NodeVisitor):
+class GetPromotedName(TrackQualName, RaisesError, ast.NodeVisitor):
     """
     Checks that a promoted name is promoted at the module level and
     registers the name
@@ -73,6 +73,7 @@ class GetPromotedName(RaisesError, ast.NodeVisitor):
 
     @property
     def promoted_name(self):
+        """The name of the promoted member"""
         return self._promoted_name
 
     def raise_non_root_member(self, node, target_name):
@@ -82,11 +83,20 @@ class GetPromotedName(RaisesError, ast.NodeVisitor):
         )
 
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:
-        if len(self.qualname.split(".")) > 1:
-            self.raise_non_root_member(node, f"{self.qualname}")
+        # NOTE: TrackQualName.visit_ClassDef must be called after this call
+        # for the qualnem check to work. This is enforced by having GetPromotedName
+        # derive from TrackQualName
+        if any(not isinstance(x, ast.Name) for x in node.decorator_list):
+            self.raise_error(
+                "Only name decorators currently supported", node, NotImplementedError
+            )
+        if "promoted" in (x.id for x in node.decorator_list):
+            self.set(node.name, node)
         return getattr(super(), "visit_ClassDef", self.generic_visit)(node)
 
     def set(self, name, node):
+        if self.qualname:
+            self.raise_non_root_member(node, f"{self.qualname}.{node.target.id}")
         if self._promoted_name:
             self.raise_error(
                 f'Multiple promotions detected ("{self._promoted_name}", "{name}")',
@@ -97,8 +107,6 @@ class GetPromotedName(RaisesError, ast.NodeVisitor):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         if not isinstance(node.target, ast.Name):
             self.raise_error("Unsupported annotation syntax", node, NotImplementedError)
-        if self.qualname:
-            self.raise_non_root_member(node, f"{self.qualname}.{node.target.id}")
         if isinstance(node.annotation, ast.Name) and node.annotation.id == "promoted":
             self.set(node.target.id, node)
         elif isinstance(node.annotation, ast.Tuple):
@@ -106,7 +114,7 @@ class GetPromotedName(RaisesError, ast.NodeVisitor):
                 self.raise_error("Annotations must be names or tuples of names", node)
             if "promoted" in (x.id for x in node.annotation.elts):
                 self.set(node.target.id, node)
-        return getattr(super(), "visit_ClassDef", self.generic_visit)(node)
+        return getattr(super(), "visit_AnnAssign", self.generic_visit)(node)
 
 
 class ProtectKeywords(RaisesError, ast.NodeVisitor):
@@ -179,8 +187,8 @@ class AddTargetToLoads(RaisesError, ast.NodeTransformer):
 
 class SoleilPreProcessor(
     ProtectKeywords,
-    TrackQualName,
     GetPromotedName,
+    TrackQualName,
     GetImportedNames,
     AddTargetToLoads,
     ast.NodeTransformer,

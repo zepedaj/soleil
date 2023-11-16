@@ -35,6 +35,9 @@ class SolConfModule(ModuleType):
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
+    __pp_promoted__: Optional[str] = None
+    """ The name of the promoted member as detected by the pre-processor """
+
     def __init__(
         self,
         soleil_module: str,
@@ -47,6 +50,7 @@ class SolConfModule(ModuleType):
         self.__package__ = soleil_module.split(".")[0]
         self.__file__ = soleil_path
         self.__soleil_qualname__ = soleil_qualname
+        self.__annotations__ = {}  # Clears class-level annotations
 
         # Inject all members of soleil.injected module
         self.__soleil_default_hidden_members__ = set()
@@ -102,32 +106,6 @@ class SolConfModule(ModuleType):
         )
 
         return module
-
-    def get_promoted_name(self) -> Optional[str]:
-        """
-        Checks the module's ``__annotations__`` to see which variable is promoted
-        """
-        # TODO: This is required to support override name propagation. For names
-        # to propagate correctly through promoted members, the promoted member needs to
-        # be defined at the top of the module file.
-        if not (anns := getattr(self, "__annotations__", None)):
-            return None
-        else:
-            if (
-                pair := checked_get_single(
-                    filter(
-                        lambda x: (
-                            x is promoted or isinstance(x, tuple) and promoted in x
-                        ),
-                        anns.items(),
-                    ),
-                    msg=lambda self=self: f"Multiple promoted members found in solconf module {self}.",
-                    raise_empty=False,
-                )
-            ) is NoItem:
-                return None
-            else:
-                return pair[0]
 
     def __str__(self):
         return f"<solconf module '{self.__name__}' from '{str(self.__file__.absolute()) if self.__file__ else '<unknown>'}'>"

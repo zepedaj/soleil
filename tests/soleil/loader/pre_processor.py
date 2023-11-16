@@ -59,7 +59,7 @@ class ref_call:
 
 class TestGetImportedNames:
     def test_GetImportedNames(self):
-        tree = (snv := mdl.GetImportedNames()).visit(ast.parse(code_with_imports()))
+        tree = (snv := mdl.GetImportedNames(None)).visit(ast.parse(code_with_imports()))
 
         import sys
 

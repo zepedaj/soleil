@@ -1,5 +1,8 @@
+from soleil.loader.loader import load_config
 from soleil.resolvers import modifiers as mdl
 import pytest, re
+
+from tests.soleil.test_helpers import solconf_file
 
 
 class TestModifiers:
@@ -18,3 +21,26 @@ class TestModifiers:
         assert mdl.merge_modifiers(
             mdl.visible, mdl.cast(int), mdl.name("myname")
         ) == mdl.Modifiers(hidden=False, cast=int, name="myname")
+
+    def test_decorator(self):
+        contents = """
+@visible
+class A:
+    a = 1
+"""
+        with solconf_file(contents) as fl:
+            mdl = load_config(fl, resolve=False)
+            assert mdl.__annotations__["A"] == mdl.visible
+            assert mdl.A.a == 1
+
+    def test_decorator_tuple(self):
+        contents = """
+@hidden
+@noid
+class A:
+    a = 1
+"""
+        with solconf_file(contents) as fl:
+            mdl = load_config(fl, resolve=False)
+            assert mdl.__annotations__["A"] == (mdl.noid, mdl.hidden)
+            assert mdl.A.a == 1

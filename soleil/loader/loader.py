@@ -191,6 +191,7 @@ class ConfigLoader:
         # Apply the pre-processor
         spp = pre_processor.SoleilPreProcessor(module_path)
         tree = spp.visit(tree)
+        module.__pp_promoted__ = spp.promoted_name
 
         # Execute the module
         exec(
