@@ -119,7 +119,7 @@ promoted = Modifiers(promoted=True)
 When a module's member is annotated as promoted it will be returned when loading that module. Accordingly, the module will also resolve to the resolution of that member.
 
 Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
-CLI overrides in modules with promoted members requires knowing the promoted member before executing the code.
+CLI overrides in modules with promoted members requires knowing the name of the promoted member before executing the code.
 """
 
 resolves = Modifiers(resolves=True)
