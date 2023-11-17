@@ -111,3 +111,18 @@ def get_caller_frame(levels: int = 1, do_raise=True):
         raise ValueError("Invalid `None` value for frame.")
 
     return frame
+
+
+class _get_global_loader:
+    _loader = None
+
+    def __call__(self):
+        if self._loader is None:
+            from soleil.loader.loader import GLOBAL_LOADER
+
+            self._loader = GLOBAL_LOADER
+        return self._loader
+
+
+get_global_loader = _get_global_loader()
+""" Breaks circular imports and returns the global loader """

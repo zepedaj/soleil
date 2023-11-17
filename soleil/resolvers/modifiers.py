@@ -1,7 +1,7 @@
 from collections import UserDict
 from typing import Tuple, Union
 
-from soleil._utils import Unassigned
+from soleil._utils import Unassigned, get_global_loader
 
 
 class Modifiers(UserDict):
@@ -73,12 +73,10 @@ class Modifiers(UserDict):
         Appends the specified modifier to the class
         """
 
-        from soleil.loader.loader import GLOBAL_LOADER  # TODO: Should load globally
-
         if not isinstance(cls, type):
             raise Exception(f"Expected a class but received {type(cls)}")
 
-        parent = GLOBAL_LOADER.modules[cls.__module__]
+        parent = get_global_loader().modules[cls.__module__]
         components = cls.__qualname__.split(".")
         for name in components[:-1]:
             parent = getattr(parent, name)

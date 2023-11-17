@@ -1,7 +1,12 @@
 from types import FrameType
 from typing import Any, Dict, List, Union
 from pglib.validation import NoItem, checked_get_single
-from soleil._utils import infer_solconf_package, Unassigned, get_caller_frame
+from soleil._utils import (
+    infer_solconf_package,
+    Unassigned,
+    get_caller_frame,
+    get_global_loader,
+)
 from .overridable import Overridable
 
 from .parser import Override, OverrideType, parse_overrides, parse_ref
@@ -106,7 +111,6 @@ def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] 
         deduce_soleil_qualname('b', -1) == 'a.b' # Is True, -1 bc usuallly called within a function `fxn` such as override() or load()
 
     """
-    from soleil.loader.loader import GLOBAL_LOADER  # TODO: Slow - load at global level
 
     # Get the frame two levels up by default
     if not isinstance(frame, FrameType):
@@ -114,7 +118,9 @@ def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] 
 
     #
     module_name = frame.f_globals["__soleil_qualname__"]
-    promoted_name = GLOBAL_LOADER.modules[frame.f_globals["__name__"]].__pp_promoted__
+    promoted_name = (
+        get_global_loader().modules[frame.f_globals["__name__"]].__pp_promoted__
+    )
     class_name = frame.f_locals.get("__qualname__", None)
 
     if promoted_name:
@@ -143,7 +149,6 @@ def _soleil_override(target_name: str, value: Any):
     """
     Returns the assigned value or an override if any was specified.
     """
-    from soleil.loader.loader import GLOBAL_LOADER  # TODO: Slow - load at global level
 
     frame = get_caller_frame()
     target_qualname = deduce_soleil_qualname(target_name, frame=frame)
@@ -156,7 +161,7 @@ def _soleil_override(target_name: str, value: Any):
             _ovr := checked_get_single(
                 filter(
                     lambda x: x.target == target_ref,
-                    GLOBAL_LOADER.package_overrides[infer_solconf_package()],
+                    get_global_loader().package_overrides[infer_solconf_package()],
                 ),
                 raise_empty=False,
             )

@@ -7,7 +7,7 @@ from soleil.resolvers._overrides.overrides import deduce_soleil_qualname
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
 from .base import resolve as call_resolve
-from .._utils import Unassigned, abs_mod_name
+from .._utils import Unassigned, abs_mod_name, get_global_loader
 
 
 as_run = Modifiers(as_run=True)
@@ -95,9 +95,7 @@ class SolConfModule(ModuleType):
         module_name = abs_mod_name(self.__name__, module_name)
 
         # Load the module using the global loader
-        from soleil.loader import GLOBAL_LOADER
-
-        module = GLOBAL_LOADER.load(
+        module = get_global_loader().load(
             module_name,
             resolve=resolve,
             promoted=promoted,

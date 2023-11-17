@@ -2,7 +2,7 @@ import abc
 from types import FrameType
 from typing import Any, Optional
 
-from soleil._utils import infer_solconf_module
+from soleil._utils import infer_solconf_module, get_global_loader
 
 
 class Overridable(abc.ABC):
@@ -62,10 +62,6 @@ class submodule(Overridable):
         self.sub_module_name = sub_module
 
     def get(self, target: str, frame: FrameType):
-        from soleil.loader.loader import (
-            GLOBAL_LOADER,
-        )  # TODO: USE GLOBAL IMPORT, THIS IS SLOW
-
         if (
             frame.f_locals.get("__is_solconf_module__", False)
             and frame.f_locals.get("__pp_promoted__", None) == target
@@ -75,8 +71,12 @@ class submodule(Overridable):
                 "Cannot apply `promoted` modifier to `submodule` overridables - either use `resolves` instead of `promoted` or `load` instead of `submodule`."
             )
 
-        return GLOBAL_LOADER.modules[self.containing_module].load(
-            ".".join([self.module_name or f".{target}", self.sub_module_name]),
-            _target=target,
-            _frame=frame,
+        return (
+            get_global_loader()
+            .modules[self.containing_module]
+            .load(
+                ".".join([self.module_name or f".{target}", self.sub_module_name]),
+                _target=target,
+                _frame=frame,
+            )
         )
