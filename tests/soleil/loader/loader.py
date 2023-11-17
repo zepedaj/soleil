@@ -22,10 +22,6 @@ class TestConfigLoader:
         module = self.load("loader/with_no_promotion")
         assert resolve(module) == {"a": 1, "b": 2}
 
-    def test_with_explicit_unpromotion(self):
-        module = self.load("loader/with_explicit_unpromotion")
-        assert resolve(module) == {"a": 1}
-
     def test_load_submodule(self):
         x = self.load("loader/with_submodules/main", resolve=True)
         assert x == "solid_black"

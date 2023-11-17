@@ -84,6 +84,19 @@ def spawn(rel_module_name, pass_overrides=True, qualname=None):
 
     For correct transference of overrides to the parent class, the child class must also be promoted
     in the calling module or the qualname parameter must be set to the child class's ``__qualname__`` attribute.
+
+    For example, assuming file ``'main.solconf'`` promotes a class:
+
+    .. code-block::
+
+        @promoted
+        class B(A := spawn(".main")):
+            type: as_type = lambda **kwargs: kwargs
+            c = A.b + 1
+            d = c + 1
+
+    Note that one can optionally access the parent class's attributes by assigning it to a local variable
+
     """
 
     calling_package = infer_solconf_package()

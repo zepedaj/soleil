@@ -143,7 +143,13 @@ class ClassResolver(Resolver):
                 f"Expected a single `{flag_name}` argument but got multiple ({', '.join(arg_names)}) for resolvable `{self.resolvable}`"
             )
         elif len(arg_names) == 1:
-            return self.extended_members[arg_names[0]]
+            if (
+                out := self.extended_members.get(arg_names[0], Unassigned)
+            ) is Unassigned:
+                raise ValueError(
+                    f'Annotation with no value provided for explicit special modifier "{flag_name}"'
+                )
+            return out
         else:
             return Unassigned
 

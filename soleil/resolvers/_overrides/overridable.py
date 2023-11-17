@@ -66,6 +66,15 @@ class submodule(Overridable):
             GLOBAL_LOADER,
         )  # TODO: USE GLOBAL IMPORT, THIS IS SLOW
 
+        if (
+            frame.f_locals.get("__is_solconf_module__", False)
+            and frame.f_locals.get("__pp_promoted__", None) == target
+        ):
+            # Promoted submodules can no longer be overriden, hence behave like load.
+            raise SyntaxError(
+                "Cannot apply `promoted` modifier to `submodule` overridables - either use `resolves` instead of `promoted` or `load` instead of `submodule`."
+            )
+
         return GLOBAL_LOADER.modules[self.containing_module].load(
             ".".join([self.module_name or f".{target}", self.sub_module_name]),
             _target=target,

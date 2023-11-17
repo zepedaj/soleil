@@ -1,3 +1,4 @@
 from soleil import *
-red: unpromoted = load(".color.red")
+
+red = load(".color.red")
 chosen_color = submodule(".color", "blue")

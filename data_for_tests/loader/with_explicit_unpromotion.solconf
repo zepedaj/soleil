@@ -1,2 +1,0 @@
-from soleil import *
-a: unpromoted = 1

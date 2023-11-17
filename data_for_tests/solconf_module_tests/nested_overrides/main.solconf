@@ -1,2 +1,3 @@
 from soleil import *
-country: promoted = submodule(".country", "nicaragua")
+
+country: resolves = submodule(".country", "nicaragua")

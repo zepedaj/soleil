@@ -1,8 +1,11 @@
 from uuid import uuid4
+import pytest
 from soleil.loader import GLOBAL_LOADER
+from soleil.loader.loader import load_config
 from tests import TEST_DATA_ROOT, load_test_data
 from soleil import resolve
 from soleil.resolvers.base import displayable
+from tests.soleil.test_helpers import solconf_file
 
 
 class TestSolConfModule:
@@ -96,3 +99,17 @@ class TestSolConfModule:
         assert load_test_data(
             "overrides/nested_promote/main", resolve=True, overrides=["a=3"]
         ) == {"a": 3, "b": 4}
+
+    def test_single_promoted(self):
+        with solconf_file(
+            """
+from soleil import *
+A:resolves = 1
+B:promoted = 2
+"""
+        ) as fl:
+            with pytest.raises(
+                ValueError,
+                match="Solconf modules cannot have both `promoted` and `resolves` members",
+            ):
+                resolve(load_config(fl))

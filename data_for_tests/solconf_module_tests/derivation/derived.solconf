@@ -1,7 +1,7 @@
 from soleil import *
-B: promoted
 
 
+@promoted
 class B(A := spawn(".main")):
     type: as_type = lambda **kwargs: kwargs
     c = A.b + 1

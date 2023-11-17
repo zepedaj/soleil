@@ -26,7 +26,7 @@ def infer_solconf_module(do_raise=True) -> Optional[str]:
     f_back = inspect.currentframe().f_back
 
     while f_back is not None and not f_back.f_globals.get(
-        "__is_soleil_module__", False
+        "__is_solconf_module__", False
     ):
         f_back = f_back.f_back
 

@@ -17,7 +17,7 @@ as_run = Modifiers(as_run=True)
 class SolConfModule(ModuleType):
     """Soleil configuration modules will be of this type."""
 
-    __is_soleil_module__: bool
+    __is_solconf_module__: bool
     """ Marker to detect soleil modules """
 
     __name__: str
@@ -45,7 +45,7 @@ class SolConfModule(ModuleType):
         soleil_qualname: Optional[str] = None,
     ):
         #
-        self.__is_soleil_module__ = True
+        self.__is_solconf_module__ = True
         self.__name__ = soleil_module
         self.__package__ = soleil_module.split(".")[0]
         self.__file__ = soleil_path
@@ -116,19 +116,30 @@ class SolConfModule(ModuleType):
 
 promoted = Modifiers(promoted=True)
 """
+When a module's member is annotated as promoted it will be returned when loading that module. Accordingly, the module will also resolve to the resolution of that member.
+
 Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
 CLI overrides in modules with promoted members requires knowing the promoted member before executing the code.
 """
-unpromoted = Modifiers(promoted=False)
+
+resolves = Modifiers(resolves=True)
+"""
+When a module's member is annotated as ``resolves``, the module will resolve to the resolution of that member.
+"""
 
 
 class ModuleResolver(ClassResolver):
     resolvable: SolConfModule
     valid_modifier_keys = frozenset(
-        {*ClassResolver.valid_modifier_keys, "promoted", "as_run"}
+        {*ClassResolver.valid_modifier_keys, "promoted", "as_run", "resolves"}
     )
     special_members = MappingProxyType(
-        {**ClassResolver.special_members, "run": "as_run", "promoted": "promoted"}
+        {
+            **ClassResolver.special_members,
+            "run": "as_run",
+            "promoted": "promoted",
+            "resolves": "resolves",
+        }
     )
 
     run: Optional[Callable] = None
@@ -136,6 +147,9 @@ class ModuleResolver(ClassResolver):
 
     promoted = Unassigned
     """ The promoted member """
+
+    resolves = Unassigned
+    """ The member that the module resolves to. Modules must have at most one resolved or promoted member. """
 
     def compute_resolved(self):
         """
@@ -151,6 +165,8 @@ class ModuleResolver(ClassResolver):
             if self.promoted is not Unassigned:
                 # A variable is promoted
                 return call_resolve(self.promoted)
+            elif self.resolves is not Unassigned:
+                return call_resolve(self.resolves)
             else:
                 # Use user-provided names if any.
                 return {
@@ -167,3 +183,10 @@ class ModuleResolver(ClassResolver):
 
     def _get_raw_annotations(self):
         return dict(vars(self.resolvable).get("__annotations__", {}))
+
+    def _get_members_and_modifiers(self):
+        super()._get_members_and_modifiers()
+        if self.resolves is not Unassigned and self.promoted is not Unassigned:
+            raise ValueError(
+                "Solconf modules cannot have both `promoted` and `resolves` members"
+            )
