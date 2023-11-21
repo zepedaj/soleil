@@ -1,4 +1,3 @@
-from importlib import import_module
 import inspect
 from pathlib import Path
 from types import ModuleType
@@ -19,9 +18,7 @@ def is_solconf_module(module: ModuleType):
 
 
 def infer_solconf_module(do_raise=True) -> Optional[str]:
-    """
-    Infer the parent solconf module where the (possibly nested) call was made.
-    """
+    """Infer the solconf module where the (possibly nested) call was made. For use inside solconf packages."""
 
     f_back = inspect.currentframe().f_back
 
@@ -39,11 +36,24 @@ def infer_solconf_module(do_raise=True) -> Optional[str]:
     return f_back.f_globals["__name__"]
 
 
-def infer_solconf_package(do_raise=False):
+def infer_solconf_package(do_raise=False) -> Optional[str]:
+    """Deduce the name of the solconf package where the call was made"""
+
     if (mdl := infer_solconf_module(do_raise)) is None:
         return None
     else:
         return mdl.split(".")[0]
+
+
+def infer_root_config(do_raise=True):  # -> Optional[SolConfModule]:
+    """Returns the root configuration of the package where the call was made"""
+
+    if (module_name := infer_solconf_module(do_raise)) is None:
+        return None
+    else:
+        return (
+            module := get_global_loader().modules[module_name]
+        ).__soleil_root_config__ or module
 
 
 def get_all_annotations(cls) -> Dict[str, Any]:

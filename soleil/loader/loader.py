@@ -4,7 +4,7 @@ import ast
 from uuid import uuid4
 from soleil._utils import PathSpec, Unassigned
 
-from soleil.resolvers._overrides.overrides import OverrideSpec, eval_overrides
+from soleil.overrides.overrides import OverrideSpec, eval_overrides
 from . import pre_processor
 
 from soleil.resolvers.module_resolver import ModuleResolver, SolConfModule
@@ -19,7 +19,7 @@ def load_config(
     overrides: Optional[List[OverrideSpec]] = None,
     resolve=True,
     promoted=True,
-    _qualname=None,
+    _var_path=None,
 ):
     """
     Creates a new package with root at the parent of the spcified configuration path, and loads the specified configuration path as a module in that package.
@@ -41,7 +41,7 @@ def load_config(
     module_name = f"{package_name}.{conf_path.stem}"
 
     return GLOBAL_LOADER.load(
-        module_name, resolve=resolve, promoted=promoted, _qualname=_qualname
+        module_name, resolve=resolve, promoted=promoted, _var_path=_var_path
     )
 
 
@@ -102,16 +102,18 @@ class ConfigLoader:
 
     def load(
         self,
-        abs_module_name,
-        resolve=True,
-        promoted=True,
-        _qualname=None,
+        abs_module_name: str,
+        resolve: bool = True,
+        promoted: bool = True,
+        _var_path: Optional[str] = None,
+        _root_config: Optional[SolConfModule] = None,
     ):
         """
         :param module_name: The absolute module name (e.g., ``package_name.sub_module_1.sub_module_2``)
         :param resolve: Return the model's resolved value if ``True``, otherwise the module itself.
         :param promoted: Whether to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
-        :param _qualname: When loading a module from within another module, this will point to the variable/attribute name sequence relative to the root module. Used to apply overrides.
+        :param _var_path: When loading a module from within another module, this will point to the variable/attribute name sequence relative to the root module. Used to apply overrides.
+        :param _root_config: The root configuration of the module being loaded. Root configurations are the starting point where variable paths are resolved from.
         """
 
         sub_module_path = self.get_sub_module_path(abs_module_name)
@@ -122,12 +124,12 @@ class ConfigLoader:
         ) is None:
             # Build and register the module code
             module = self._build_solconf_module(
-                abs_module_name, sub_module_path, _qualname
+                abs_module_name, sub_module_path, _var_path, _root_config
             )
         elif self.package_overrides[module.__package__]:
             # Reasons - Not clear what to do if
             #  1) overrides were or are specified and
-            #  2) the module's __soleil_qualname__ used to find override targets would not be uniquely defined.
+            #  2) the module's __soleil_var_path__ used to find override targets would not be uniquely defined.
             raise NotImplementedError(
                 "Reloading solconf packages not currently supported."
             )
@@ -176,11 +178,14 @@ class ConfigLoader:
         return module
 
     def _build_solconf_module(
-        self, abs_module_name: str, module_path: Path, qualname: Optional[str]
+        self,
+        abs_module_name: str,
+        module_path: Path,
+        var_path: Optional[str],
+        root_config: Optional[SolConfModule],
     ):
         # Instantiate the solconf module
-
-        module = SolConfModule(abs_module_name, module_path, qualname)
+        module = SolConfModule(abs_module_name, module_path, var_path, root_config)
         self.modules[abs_module_name] = module
 
         # Execute the code in the module

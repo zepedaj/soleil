@@ -1,7 +1,7 @@
-from soleil.resolvers._overrides.overrides import deduce_soleil_qualname
+from soleil.overrides.overrides import deduce_soleil_var_path
 from soleil.resolvers.base import Resolver
 from soleil._utils import Unassigned
-from soleil.resolvers._overrides.overridable import Overridable
+from soleil.overrides.overridable import Overridable
 
 
 class req(Overridable):
@@ -21,7 +21,7 @@ class req(Overridable):
     def get(self, target, frame):
         if self.missing:
             raise ValueError(
-                f"Missing required variable {deduce_soleil_qualname(target, frame)}."
+                f"Missing required variable {deduce_soleil_var_path(target, frame)}."
             )
         return self._value
 

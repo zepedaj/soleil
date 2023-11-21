@@ -20,6 +20,8 @@ class RaisesError(ast.NodeVisitor):
 
 
 class GetImportedNames(RaisesError, ast.NodeVisitor):
+    """Keeps track of all imported names"""
+
     def __init__(self, *args, **kwargs):
         self.imported_names = []
         super().__init__(*args, **kwargs)
@@ -84,7 +86,7 @@ class GetPromotedName(TrackQualName, RaisesError, ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:
         # NOTE: TrackQualName.visit_ClassDef must be called after this call
-        # for the qualnem check to work. This is enforced by having GetPromotedName
+        # for the qualname check to work. This is enforced by having GetPromotedName
         # derive from TrackQualName
         if any(not isinstance(x, ast.Name) for x in node.decorator_list):
             self.raise_error(
@@ -131,10 +133,12 @@ class ProtectKeywords(RaisesError, ast.NodeVisitor):
 
 
 class AddTargetToLoads(RaisesError, ast.NodeTransformer):
+    """Injects the `_target` keyword argument to load() calls and converts all assignments to ``_soleil_override`` calls."""
+
     def _add_target_to_load(
         self, node: Union[ast.Assign, ast.AnnAssign], target_name: str
     ):
-        # Injects the `_target` keyword argument to load() calls.
+        # Injects the `_target` keyword argument to load() calls
         if (
             isinstance(node.value, ast.Call)
             and isinstance(node.value.func, ast.Name)
@@ -147,6 +151,7 @@ class AddTargetToLoads(RaisesError, ast.NodeTransformer):
         return node
 
     def _apply_override(self, node: Union[ast.Assign, ast.AnnAssign], target_name: str):
+        # Converts all assignments to ``_soleil_override`` calls
         if node.value is not None:
             node.value = ast.Call(
                 ast.Name("_soleil_override", ctx=ast.Load()),

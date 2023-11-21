@@ -8,7 +8,7 @@ Soleil is a Python object configuration mechanism inspired by Facebook's Hydra t
 * Soleil includes the built-in command line tool :mod:`solex` that automatically converts any soleil package into a fully fledged, extensible command line utility that plays nicely with the builtin
    :mod:`argparse` module.
         * Soleil configuration packages can also be added directly to :mod:`argparse` parsers as arguments that resolve to the object described by the loaded configuration.
-* CLI tools that take soleil configured objects as arguments inherit the ability to override any component of the package from the command line using Python syntax.
+* CLI tools that take soleil configured objects as arguments inherit the ability to override any component of the package from the command line using a subset of Python syntax.
 
 
 Soleil Pre-processor
@@ -78,16 +78,16 @@ Overriding Configurations
 Syntax
 ------------
 
-The :func:`load_config` function supports specifying values that will override those in the loaded configuration by means of its ``overrides`` keyword argument:
+The :func:`~soleil.load_config` function supports specifying values that will override those in the loaded configuration by means of its ``overrides`` parameter which must be a list with entries of various possible types (see :class:`OverrideSpec`):
 
 .. testcode::
 
    from soleil import load_config
 
-   obj = load_config('./main.solconf', overrides=overrides)
+   obj = load_config('./main.solconf', overrides=[...])
 
 
-The ``overrides`` argument can be specified as strings in various forms:
+For example, entries of ``overrides`` can be strings in various python-syntax-compatible forms, possibly specifying more than one override in each entry:
 
 .. testcode::
 
@@ -98,18 +98,24 @@ The ``overrides`` argument can be specified as strings in various forms:
    b=-4
    """]
 
+.. note::
 
-Overrides can also be specified as dictionaries:
+   CLI overrides will be passed to :func:`~soleil.load_config` verbatim as a list of strings and will be parsed using an overrides parser that has been restricted to only admit a subset of the Python syntax.
+
+
+
+Any useful type admitted by ``overrides``is a dictionary dictionaries:
 
 .. testcode::
 
    overrides=[{'a':3, 'b':-4}]
 
-Finally, all override syntaxes can combined in a single list:
+All override syntaxes can further combined in a single list:
 
 .. testcode::
 
    overrides=['a=1', {'b':2}, "c=3;d=4", {'e':5, 'f':6}]
+
 
 
 .. rubric:: Evaluation of string overrides

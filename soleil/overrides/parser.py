@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, List, Tuple, Type
 from pglib.py import strict_zip
 from soleil._utils import Unassigned
-from .variable_path import VariablePath, Attribute, Subscript
+from .variable_path import VarPath, Attribute, Subscript
 
 
 class OverrideType(Enum):
@@ -14,7 +14,7 @@ class OverrideType(Enum):
 
 @dataclass
 class Override:
-    target: VariablePath
+    target: VarPath
     assign_type: OverrideType
     value_expr: ast.Expression
     source: str = ""
@@ -79,14 +79,14 @@ class RefExtractor(_RestrictedNodeVisitor):
         ast.Store,
     )
 
-    _refs: VariablePath
+    _refs: VarPath
 
     @property
     def refs(self):
         return self._refs[::-1]
 
     def __init__(self, *args, **kwargs):
-        self._refs = VariablePath()
+        self._refs = VarPath()
         super().__init__(*args, **kwargs)
 
     def visit_Attribute(self, node: ast.Attribute):

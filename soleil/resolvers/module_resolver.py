@@ -3,7 +3,8 @@ from pglib.validation import NoItem, checked_get_single
 from pathlib import Path
 from types import FrameType, MappingProxyType, ModuleType
 from typing import Callable, Optional, Set, Union
-from soleil.resolvers._overrides.overrides import deduce_soleil_qualname
+from soleil.overrides.overrides import deduce_soleil_var_path
+from soleil.overrides.variable_path import VarPath
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
 from .base import resolve as call_resolve
@@ -29,7 +30,7 @@ class SolConfModule(ModuleType):
     __file__: Path
     """ The module file path """
 
-    __soleil_qualname__: Optional[str]
+    __soleil_var_path__: VarPath
     """ The variable/attribute name sequence to access this module from to the root module, will be ``None`` for the root module"""
 
     __soleil_default_hidden_members__: Set[str]
@@ -38,18 +39,28 @@ class SolConfModule(ModuleType):
     __pp_promoted__: Optional[str] = None
     """ The name of the promoted member as detected by the pre-processor """
 
+    __soleil_root_config__: Optional["SolConfModule"]
+    """ The root configuration of the module -- will be ``None`` if this module is the root config """
+
     def __init__(
         self,
         soleil_module: str,
         soleil_path: Path,
-        soleil_qualname: Optional[str] = None,
+        soleil_var_path: Optional[Union[VarPath, str]] = None,
+        root_config: Optional["SolConfModule"] = None,
     ):
         #
         self.__is_solconf_module__ = True
         self.__name__ = soleil_module
         self.__package__ = soleil_module.split(".")[0]
         self.__file__ = soleil_path
-        self.__soleil_qualname__ = soleil_qualname
+        self.__soleil_var_path__ = (
+            VarPath()
+            if not soleil_var_path
+            else soleil_var_path
+            if isinstance(soleil_var_path, VarPath)
+            else VarPath.from_str(soleil_var_path)
+        )
         self.__annotations__ = {}  # Clears class-level annotations
 
         # Inject all members of soleil.injected module
@@ -59,6 +70,9 @@ class SolConfModule(ModuleType):
         for method in ["load"]:
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
+
+        # Add root config
+        self.__soleil_root_config__ = root_config
 
     def load(
         self,
@@ -84,9 +98,9 @@ class SolConfModule(ModuleType):
         #
         #   _target will be ``None`` e.g., when using load(...) as an argument for a class inheritance: class A(load('.B')): pass
 
-        # Build the soleil qualname of the module
-        _qualname = (
-            None if _target is None else deduce_soleil_qualname(_target, frame=_frame)
+        # Build the soleil var_path of the module
+        _var_path = (
+            None if _target is None else deduce_soleil_var_path(_target, frame=_frame)
         )
 
         # Get an absolute module name
@@ -99,7 +113,8 @@ class SolConfModule(ModuleType):
             module_name,
             resolve=resolve,
             promoted=promoted,
-            _qualname=_qualname,
+            _var_path=_var_path,
+            _root_config=(self.__soleil_root_config__ or self),
             **kwargs,
         )
 

@@ -1,4 +1,3 @@
-from types import FrameType
 from typing import Any, Dict, List, Union
 from pglib.validation import NoItem, checked_get_single
 from soleil._utils import (
@@ -8,17 +7,13 @@ from soleil._utils import (
     get_global_loader,
 )
 from .overridable import Overridable
-
+from .variable_path import deduce_soleil_var_path, CompoundRefStr
 from .parser import Override, OverrideType, parse_overrides, parse_ref
 
-CompoundRefStr = str
-"""
-A reference string such as ``'a[0].b.c[0]'``
-"""
 
 OverrideSpec = Union[str, Dict[CompoundRefStr, Any], Override]
 """
-Various possible override specifications:
+An override specification -- Various possibilities:
 
 .. code-block::
 
@@ -97,74 +92,23 @@ def eval_overrides(
     ]
 
 
-def deduce_soleil_qualname(target_name: str, frame: Union[FrameType, int, None] = 0):
-    """
-    Returns a string specifying a variables name as seen from the root configuration.
-
-    Example:
-
-    .. code-block::
-
-        # main.solconf
-        assert __soleil_qualname__ is None # Is True
-        a = load('module2') # Will propagate 'a' as the module's __soleil_qualname__
-
-        # module2.solconf
-        assert __soleil_qualname__ == 'a' # Is True
-        b = 1
-        deduce_soleil_qualname('b', -1) == 'a.b' # Is True, -1 bc usuallly called within a function `fxn` such as override() or load()
-
-    """
-
-    # Get the frame two levels up by default
-    if not isinstance(frame, FrameType):
-        frame = get_caller_frame((frame or 0) + 2)
-
-    #
-    module_name = frame.f_globals["__soleil_qualname__"]
-    promoted_name = (
-        get_global_loader().modules[frame.f_globals["__name__"]].__pp_promoted__
-    )
-    class_name = frame.f_locals.get("__qualname__", None)
-
-    if promoted_name:
-        if class_name is None and target_name == promoted_name:
-            # The promoted variable is overriden in the loading module
-            # and not in the containing module.
-            return None
-        elif (
-            class_name is not None
-            and (class_components := class_name.split("."))[0] == promoted_name
-        ):
-            # The promoted variable is a root-level class, skip the name of that root-level class
-            return ".".join(
-                filter(
-                    lambda x: x is not None,
-                    [module_name] + class_components[1:] + [target_name],
-                )
-            )
-    else:
-        return ".".join(
-            filter(lambda x: x is not None, [module_name, class_name, target_name])
-        )
-
-
 def _soleil_override(target_name: str, value: Any):
     """
     Returns the assigned value or an override if any was specified.
     """
 
     frame = get_caller_frame()
-    target_qualname = deduce_soleil_qualname(target_name, frame=frame)
-    target_ref = None if target_qualname is None else parse_ref(target_qualname)
+    target_var_path = deduce_soleil_var_path(target_name, frame=frame)
+    overrides = get_global_loader().package_overrides[infer_solconf_package()]
 
     ovr_value = Unassigned
     if (
-        target_ref is not None  # Is None if target is inaccesible due to a promotion
+        target_var_path
+        is not None  # Is None if target is inaccesible due to a promotion
         and (
             _ovr := checked_get_single(
                 filter(
-                    lambda x: x.target == target_ref,
+                    lambda x: x.target == target_var_path,
                     get_global_loader().package_overrides[infer_solconf_package()],
                 ),
                 raise_empty=False,

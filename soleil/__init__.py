@@ -30,7 +30,7 @@ from soleil.utils import id_str, sub_dir, derive, temp_dir, spawn
 
 __all__ += ["req", "id_str", "sub_dir", "derive", "temp_dir", "spawn"]
 
-from soleil.resolvers._overrides.overrides import _soleil_override
-from soleil.resolvers._overrides.overridable import submodule
+from soleil.overrides.overrides import _soleil_override
+from soleil.overrides.overridable import submodule
 
 __all__ += ["_soleil_override", "submodule"]

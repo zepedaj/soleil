@@ -1,5 +1,5 @@
 #
-from soleil.resolvers._overrides import parser as mdl
+from soleil.overrides import parser as mdl
 
 S = mdl.Subscript
 A = mdl.Attribute

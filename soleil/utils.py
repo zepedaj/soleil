@@ -70,7 +70,7 @@ def sub_dir(root: Path, create=True):
     return str(new_sub_dir)
 
 
-def spawn(rel_module_name, pass_overrides=True, qualname=None):
+def spawn(rel_module_name, pass_overrides=True, var_path=None):
     """
     Takes the name of a target module (relative to the calling module, if dot-prefixed, or the current package
     otherwise) that promotes a class, and loads it in a new package, providing the calling package's overrides
@@ -83,7 +83,7 @@ def spawn(rel_module_name, pass_overrides=True, qualname=None):
     class will also have the compatible specified overrides applied to it.
 
     For correct transference of overrides to the parent class, the child class must also be promoted
-    in the calling module or the qualname parameter must be set to the child class's ``__qualname__`` attribute.
+    in the calling module or the ``var_path`` parameter must be set to the child class's ``__qualname__`` attribute.
 
     For example, assuming file ``'main.solconf'`` promotes a class:
 
@@ -111,5 +111,5 @@ def spawn(rel_module_name, pass_overrides=True, qualname=None):
             else GLOBAL_LOADER.package_overrides[calling_package]
         ),
         resolve=False,
-        _qualname=qualname,
+        _var_path=var_path,
     )
