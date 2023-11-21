@@ -1,48 +1,10 @@
-import abc
 import ast
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, List, Tuple, Type
+from pglib.py import strict_zip
 from soleil._utils import Unassigned
-
-
-class Ref(abc.ABC):
-    @abc.abstractmethod
-    def get(self, obj):
-        ...
-
-    @abc.abstractmethod
-    def set(self, obj, value):
-        ...
-
-
-def refs_get(refs: List[Ref], obj):
-    """Applies the get methods of a a sequence of refs to an object"""
-    for _ref in refs:
-        obj = _ref.get(obj)
-    return obj
-
-
-@dataclass
-class Attribute(Ref):
-    name: str
-
-    def get(self, obj):
-        return getattr(obj, self.name)
-
-    def set(self, obj, value):
-        return setattr(obj, self.name, value)
-
-
-@dataclass
-class Subscript(Ref):
-    value: Any = Unassigned
-
-    def get(self, obj):
-        return obj.__getitem__(self.value)
-
-    def set(self, obj, value):
-        obj.__setitem__(self.value, value)
+from .variable_path import VariablePath, Attribute, Subscript
 
 
 class OverrideType(Enum):
@@ -52,10 +14,13 @@ class OverrideType(Enum):
 
 @dataclass
 class Override:
-    target: List[Ref]
+    target: VariablePath
     assign_type: OverrideType
     value_expr: ast.Expression
+    source: str = ""
+    """ The source code corresponding to this override"""
     used: bool = False
+    """ Whether the override has been used """
 
     def get_value(self, _globals=None, _locals=None):
         """
@@ -97,6 +62,8 @@ class _RestrictedNodeVisitor(ast.NodeVisitor):
         else:
             raise ValueError(f"Invalid node type {type(node)}")
 
+        return node
+
 
 class RefExtractor(_RestrictedNodeVisitor):
     """
@@ -112,14 +79,14 @@ class RefExtractor(_RestrictedNodeVisitor):
         ast.Store,
     )
 
-    _refs: List[Ref]
+    _refs: VariablePath
 
     @property
     def refs(self):
         return self._refs[::-1]
 
     def __init__(self, *args, **kwargs):
-        self._refs = []
+        self._refs = VariablePath()
         super().__init__(*args, **kwargs)
 
     def visit_Attribute(self, node: ast.Attribute):
@@ -184,6 +151,7 @@ class OverrideSplitter(_RestrictedNodeVisitor):
         self.overrides.append(
             Override(ref_xtrctr.refs, OverrideType.existing, ast.Expression(node.value))
         )
+        return node
 
 
 def parse_ref(ref: str):
@@ -201,7 +169,7 @@ def parse_ref(ref: str):
 
 def parse_overrides(overrides: str) -> List[Override]:
     """
-    Takes code containing one or more assignment such as ``'a.b[0].x = a.c + 3'`` and returns a list :class:`Overrides`
+    Takes code containing one or more assignment such as ``'a.b[0].x = a.c + 3'`` and returns a list of :class:`Overrides`
     """
     tree = ast.parse(overrides)
 
@@ -209,4 +177,20 @@ def parse_overrides(overrides: str) -> List[Override]:
     splitter = OverrideSplitter()
     tree = splitter.visit(tree)
 
-    return splitter.overrides
+    # Append source expression
+    sources = [extract_string_expression(overrides, _expr) for _expr in tree.body]
+    split_overrides = splitter.overrides
+    for _ovr, _src in strict_zip(split_overrides, sources):
+        _ovr.source = _src
+
+    return split_overrides
+
+
+def extract_string_expression(source: str, expr: ast.Expr):
+    # Extracts the string containing the override from a possibly multi-override string (e.g., a multi-line string or semi-colon separated string).
+    if expr.lineno != expr.end_lineno:
+        raise NotImplementedError(
+            "Currently, only single-line expressions within multi-line overrides are supported"
+        )
+    lines = source.split("\n")
+    return lines[expr.lineno - 1][expr.col_offset : expr.end_col_offset]

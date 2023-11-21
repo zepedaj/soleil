@@ -6,7 +6,9 @@ from tests import load_test_data
 def test_overrides():
     assert resolve(
         actual2 := load_test_data(
-            "utils/overrides/main", overrides=["symbol='Alpha'", "color='green'"]
+            "utils/overrides/main",
+            overrides=["symbol='Alpha'", "color='green'"],
+            resolve=True,
         )
     ) == {
         "symbol": "Alpha",

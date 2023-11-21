@@ -49,7 +49,11 @@ class PreCompOverride(Override):
         cls, ovr: Override, globals_: dict, locals_: dict
     ) -> "PreCompOverride":
         return cls(
-            ovr.target, ovr.assign_type, ovr.get_value(globals_, locals_), ovr.used
+            target=ovr.target,
+            assign_type=ovr.assign_type,
+            value_expr=ovr.get_value(globals_, locals_),
+            used=ovr.used,
+            source=ovr.source,
         )
 
     def get_value(self, *args, **kwargs):
@@ -156,7 +160,7 @@ def _soleil_override(target_name: str, value: Any):
 
     ovr_value = Unassigned
     if (
-        target_ref is not None  # Is None if target is unaccesible due to a promotion
+        target_ref is not None  # Is None if target is inaccesible due to a promotion
         and (
             _ovr := checked_get_single(
                 filter(
