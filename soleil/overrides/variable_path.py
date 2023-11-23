@@ -10,6 +10,8 @@ from soleil._utils import (
 )
 import abc
 
+from soleil.resolvers.modifiers import Modifiers, from_annotation
+
 CompoundRefStr = str
 """
 A reference string such as ``'a[0].b.c[0]'`` that can be converted to a :class:`VarPath`
@@ -66,33 +68,68 @@ class VarPath(UserList):
     def get(self, obj=Unassigned):
         """Applies the get methods of a a sequence of refs to the root config or the specified object"""
 
+        return self.get_with_container(obj)[0]
+
+    def get_modifiers(self, obj=Unassigned):
+        """Returns the explicit modifiers for the referenced variable or ``None`` if none are specified"""
+        obj, container = self.get_with_container(obj)
+        if container is None:
+            raise ValueError("Root objects have no modifiers -- only their members do")
+        if isinstance(self[-1], Subscript):
+            raise NotImplementedError(
+                "Getting modifiers of a subscripted item not currently supported"
+            )
+        return from_annotation(
+            getattr(container, "__annotations__", {}).get(self[-1].name, None)
+        )
+
+    def get_with_container(self, obj=Unassigned):
+        """
+        Returns a tuple with the referenced  object and its container (either a class or a solconf object) of the variable pointed to by the path. If the path points to the root, then ``None`` is returned.
+        Note that the parent of a promoted member is its solconf module (promoted members can only exist at the global level within a solconf module).
+        """
+
         from soleil.resolvers.module_resolver import (
             SolConfModule,
-        )  # TODO: Breaks circular imports
+        )  # TODO: Finad another way to break circular imports
 
         if obj is Unassigned:
             obj = infer_root_config()
 
-        # Skip to promoted
-        if obj.__pp_promoted__:
-            obj = getattr(obj, obj.__pp_promoted__)
+        container = None
+        ref_iter = iter(self)
 
-        for _ref in self:
-            obj = _ref.get(obj)
+        while True:
             if isinstance(obj, SolConfModule) and obj.__pp_promoted__:
-                # Skip to promoted
+                container = obj
                 obj = getattr(obj, obj.__pp_promoted__)
+            try:
+                _ref = next(ref_iter)
+            except StopIteration:
+                break
+            container = obj
+            obj = _ref.get(obj)
 
-        return obj
-
-    def get_modifiers(self):
-        pass
+        return obj, container
 
     @classmethod
     def from_str(cls, value: str):
         from .parser import parse_ref
 
         return parse_ref(value)
+
+    def as_str(self):
+        out = ""
+        for _ref in self:
+            if isinstance(_ref, Attribute):
+                if out:
+                    out += f".{_ref.name}"
+                else:
+                    out = _ref.name
+            elif isinstance(_ref, Subscript):
+                out += f"[{_ref.value}]"
+
+        return out
 
 
 def deduce_soleil_var_path(

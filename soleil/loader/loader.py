@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Optional, List, Union
+from typing import Dict, Optional, List, Union
 import ast
 from uuid import uuid4
 from soleil._utils import PathSpec, Unassigned

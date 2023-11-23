@@ -109,8 +109,8 @@ name = lambda value: Modifiers(name=value)
 """ Change the name of the member when passed as a type arg """
 cast = lambda value: Modifiers(cast=value)
 """ Used to format the value after pre-processing but before resolution """
-noid = Modifiers()
-""" A no-op modifier that works as a pre-processor flag indicating that an override of a given member should not be used by :func:`soleil.utils.id_str`  """
+noid = Modifiers(noid=True)
+""" Indicates that the specified member should not be used by :func:`soleil.utils.id_str`  """
 
 
 def merge_modifiers(*modifiers: Modifiers):

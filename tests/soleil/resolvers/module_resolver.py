@@ -5,7 +5,7 @@ from soleil.loader.loader import load_config
 from tests import TEST_DATA_ROOT, load_test_data
 from soleil import resolve
 from soleil.resolvers.base import displayable
-from tests.soleil.test_helpers import solconf_file
+from tests.helpers import solconf_file
 
 
 class TestSolConfModule:

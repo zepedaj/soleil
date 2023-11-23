@@ -33,7 +33,9 @@ class DisplayableFromClassResolver(UserDict):
 class ClassResolver(Resolver):
     args = tuple()
     type = None
-    valid_modifier_keys = frozenset({"name", "hidden", "cast", "as_type", "as_args"})
+    valid_modifier_keys = frozenset(
+        {"name", "hidden", "cast", "as_type", "as_args", "noid"}
+    )
     special_members = MappingProxyType({"args": "as_args", "type": "as_type"})
     """Tuples of attribute names and modifier type for special members."""
 

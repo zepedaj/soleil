@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 from pglib.validation import NoItem, checked_get_single
 from soleil._utils import (
     infer_solconf_package,

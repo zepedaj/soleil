@@ -1,7 +1,7 @@
 import pytest
 from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
-from tests.soleil.test_helpers import solconf_file
+from tests.helpers import solconf_file
 
 
 class TestSubmodule:

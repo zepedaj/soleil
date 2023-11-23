@@ -11,7 +11,7 @@ from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
 
 from tests import load_test_data
-from tests.soleil.test_helpers import solconf_file
+from tests.helpers import solconf_file
 
 
 def code_with_imports():

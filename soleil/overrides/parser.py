@@ -1,7 +1,7 @@
 import ast
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, List, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 from pglib.py import strict_zip
 from soleil._utils import Unassigned
 from .variable_path import VarPath, Attribute, Subscript
@@ -14,11 +14,15 @@ class OverrideType(Enum):
 
 @dataclass
 class Override:
+    """
+    Contains a parsed override and components.
+    """
+
     target: VarPath
     assign_type: OverrideType
     value_expr: ast.Expression
-    source: str = ""
-    """ The source code corresponding to this override"""
+    source: Optional[str] = None
+    """ The source code corresponding to this override, if available"""
     used: bool = False
     """ Whether the override has been used """
 
@@ -178,6 +182,7 @@ def parse_overrides(overrides: str) -> List[Override]:
     tree = splitter.visit(tree)
 
     # Append source expression
+    # TODO: use ast.get_source_segment in the code below
     sources = [extract_string_expression(overrides, _expr) for _expr in tree.body]
     split_overrides = splitter.overrides
     for _ovr, _src in strict_zip(split_overrides, sources):
