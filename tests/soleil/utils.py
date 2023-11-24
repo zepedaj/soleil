@@ -15,14 +15,14 @@ def test_overrides():
     ) == {
         "symbol": "Alpha",
         "color": "Green",
-        "filename": "Alpha/color='green'.yaml",
+        "filename": "Alpha/main,color='green'.yaml",
     }
 
     #
     assert resolve(actual1 := load_test_data("utils/overrides/main")) == {
         "symbol": "Omega",
         "color": "Red",
-        "filename": "Omega/default.yaml",
+        "filename": "Omega/main.yaml",
     }
 
     #
@@ -40,13 +40,14 @@ id_str_1 = id_str()
 """,
                 "submod": """
 c:noid = 2
+d = 3
 """,
             }
         ) as root:
             #
             rslvd = load_config(root / "main.solconf")
-            assert rslvd["id_str_0"] == rslvd["id_str_1"] == ""
+            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main"
 
             #
-            rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3"])
-            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "a=2"
+            rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"])
+            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,b.d=4"

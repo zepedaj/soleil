@@ -1,4 +1,5 @@
 from soleil import *
+
 symbol: noid = "Omega"
 color = submodule(".color", "red")
-filename = f"{symbol}/{id_str() or 'default'}.yaml"
+filename = symbol / id_str() + ".yaml"

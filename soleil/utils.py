@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
 from soleil.loader.loader import GLOBAL_LOADER, load_config
+from soleil.rstr import RStr
 from ._utils import (
     infer_solconf_package,
     as_valid_filename,
@@ -14,31 +15,55 @@ from ._utils import (
 
 from tempfile import mkdtemp as temp_dir
 
+temp_dir = temp_dir
+""" Returns a temporary directory """
+
 
 def derive(*parents, **new_vars):
+    # TODO: How does this play with overrides?
     return type(f"<{','.join(x.__name__ for x in parents)} derived>", parents, new_vars)
 
 
-def id_str(glue=",", safe=True, full=False):
+def root_stem(root_config=None) -> str:
     """
-    An id string built from the overrides.
-
-    :param glue: String that joins all the override strings
-    :param safe: Whether the escape characters that are invalid in filenames
-    :param full: If ``False`` (the default), only the right-most target attribute is used. (e.g., with the default ``full=False``,  ``'height=2'``  instead of  ``'rectangle.dimensions.height=2``).
+    Returns the stem of the filename name of the root configuration
     """
-    overrides = GLOBAL_LOADER.package_overrides[infer_solconf_package()]
+    return (root_config or infer_root_config()).__file__.stem
 
-    out = glue.join(
-        [
-            _x.source
-            for _x in overrides
-            if _x.target not in _x.target.get_module().__soleil_pp_meta__["noids"]
-        ]
-    )
-    if safe:
-        out = as_valid_filename(out)
-    return out
+
+class id_str(RStr):
+    def __init__(self, glue=",", safe=True, full=False, with_root_stem=True):
+        """
+        An id string built from the overrides that are not annotated with :attr:`noid`.
+
+        :param glue: String that joins all the override strings
+        :param safe: Whether the escape characters that are invalid in filenames
+        :param full: If ``False`` (the default), only the right-most target attribute is used. (e.g., with the default ``full=False``,  ``'height=2'``  instead of  ``'rectangle.dimensions.height=2``).
+        :param with_root_stem: Whether to include the file path stem of the root config.
+        """
+        self.glue = glue
+        self.safe = safe
+        self.full = full
+        self.package_name = infer_solconf_package()
+        self.root_config = infer_root_config()
+        self.with_root_stem = with_root_stem
+
+    def to_str(self):
+        overrides = GLOBAL_LOADER.package_overrides[self.package_name]
+
+        out = self.glue.join(
+            ([root_stem(self.root_config)] if self.with_root_stem else [])
+            + [
+                _x.source
+                for _x in overrides
+                if not (_x.target.get_modifiers(self.root_config) or {}).get(
+                    "noid", False
+                )
+            ]
+        )
+        if self.safe:
+            out = as_valid_filename(out)
+        return out
 
 
 def _is_int(string):

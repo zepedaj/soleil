@@ -53,6 +53,13 @@ class Subscript(Ref):
 class VarPath(UserList):
     """
     Contains a sequence of references relative to the root configuration that point to a variable.
+
+    .. warning::
+
+        The ``get_*`` methods will only work once all the modules nested in the root config and have been loaded --
+        i.e., after the root config is loaded. In practice, this means that they should only be called as part of
+        member resolution.
+
     """
 
     # TODO: Support for subscripts needs work
@@ -83,12 +90,6 @@ class VarPath(UserList):
     def get_modifiers(self, obj=Unassigned):
         """
         Returns the explicit modifiers for the referenced variable or ``None`` if none are specified
-
-        .. warning::
-
-            This will only return modifiers for variables that have been previously defined, and can result
-            in infinite loops when trying to access variables in the same module.
-
         """
         ## TODO: Use the modifiers from the pre-processor
         obj, container = self.get_with_container(obj)
