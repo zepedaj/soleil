@@ -2,7 +2,7 @@ from importlib import import_module
 from pglib.validation import NoItem, checked_get_single
 from pathlib import Path
 from types import FrameType, MappingProxyType, ModuleType
-from typing import Callable, Optional, Set, Union
+from typing import Callable, Dict, Optional, Set, Union
 from soleil.overrides.overrides import deduce_soleil_var_path
 from soleil.overrides.variable_path import VarPath
 from soleil.resolvers.modifiers import Modifiers
@@ -12,7 +12,21 @@ from .._utils import Unassigned, abs_mod_name, get_global_loader
 
 
 as_run = Modifiers(as_run=True)
-""" Annotates a callable (or the fully qualified name of one) that solex will run on the resolved module """
+""" Indicates that the annotated member is a callable that :func:`solex` will run on the module """
+
+promoted = Modifiers(promoted=True)
+"""
+When a module's member is annotated as promoted it will be returned when that module is loaded without resolving. Accordingly, the module will also resolve to the resolution of that member.
+
+Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
+CLI overrides in modules with promoted members requires knowing the name of the promoted member before executing the code.
+"""
+
+resolves = Modifiers(resolves=True)
+"""
+When a module's member is annotated as ``resolves``, the module will resolve to the resolution of that member. Unlike :attr:`promoted` members,
+loading a module (without resolving) containing a ``resolves``-annoted member will still produce that module.
+"""
 
 
 class SolConfModule(ModuleType):
@@ -36,8 +50,9 @@ class SolConfModule(ModuleType):
     __soleil_default_hidden_members__: Set[str]
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
-    __pp_promoted__: Optional[str] = None
-    """ The name of the promoted member as detected by the pre-processor """
+    __soleil_pp_meta__: Dict
+    """ Pro-processor-extracted meta-data, including the promoted member name (key ``'promoted'``)
+    and noid-annotated variable paths (key ``'noids'``). """
 
     __soleil_root_config__: Optional["SolConfModule"]
     """ The root configuration of the module -- will be ``None`` if this module is the root config """
@@ -50,6 +65,7 @@ class SolConfModule(ModuleType):
         root_config: Optional["SolConfModule"] = None,
     ):
         #
+        self.__soleil_pp_meta__ = {}
         self.__is_solconf_module__ = True
         self.__name__ = soleil_module
         self.__package__ = soleil_module.split(".")[0]
@@ -125,20 +141,6 @@ class SolConfModule(ModuleType):
 
     def __repr__(self):
         return str(self)
-
-
-promoted = Modifiers(promoted=True)
-"""
-When a module's member is annotated as promoted it will be returned when loading that module. Accordingly, the module will also resolve to the resolution of that member.
-
-Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
-CLI overrides in modules with promoted members requires knowing the name of the promoted member before executing the code.
-"""
-
-resolves = Modifiers(resolves=True)
-"""
-When a module's member is annotated as ``resolves``, the module will resolve to the resolution of that member.
-"""
 
 
 class ModuleResolver(ClassResolver):

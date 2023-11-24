@@ -1,9 +1,10 @@
+import abc
 from importlib import import_module
 import ast
 from pathlib import Path
-from typing import Any, Type, Union
+from typing import Any, List, Tuple, Type, Union
 
-__soleil_keywords__ = ["_soleil_override", "load", "promoted"]
+__soleil_keywords__ = ["_soleil_override", "load", "promoted", "noid"]
 
 
 class RaisesError(ast.NodeVisitor):
@@ -56,6 +57,9 @@ class TrackQualName(RaisesError, ast.NodeVisitor):
     def qualname(self):
         return ".".join(self._qualname)
 
+    def from_qualname(self, name):
+        return ".".join(self._qualname + [name])
+
     def visit_ClassDef(self, node: ast.ClassDef) -> Any:
         class_name = node.name
         self._qualname.append(class_name)
@@ -64,13 +68,62 @@ class TrackQualName(RaisesError, ast.NodeVisitor):
         return node
 
 
-class GetPromotedName(TrackQualName, RaisesError, ast.NodeVisitor):
+class ProcessClassDecorators(TrackQualName, abc.ABC):
     """
-    Checks that a promoted name is promoted at the module level and
-    registers the name
+    Applies some processing when a class has known decorators
     """
 
-    qualname: str
+    @abc.abstractmethod
+    def process_class_decorators(self, node: ast.ClassDef, decorators: Tuple[str]):
+        ...
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
+        if any(not isinstance(x, ast.Name) for x in node.decorator_list):
+            self.raise_error(
+                "Only name decorators currently supported", node, NotImplementedError
+            )
+        self.process_class_decorators(node, tuple(x.id for x in node.decorator_list))
+        # NOTE: TrackQualName.visit_ClassDef must be called after this call
+        # for the qualname check to work. This is enforced by the next call
+        # and having ProcessClassDecorators derive from TrackQualName
+        return getattr(super(), "visit_ClassDef", self.generic_visit)(node)
+
+
+class ProcessModifiers(TrackQualName, abc.ABC):
+    """
+    Applies some processing when an assignment has annotations.
+    """
+
+    @abc.abstractmethod
+    def process_modifiers(
+        self, node: Union[ast.Assign, ast.AnnAssign], modifiers: Union[str, Tuple[str]]
+    ):
+        ...
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        if not isinstance(node.target, ast.Name):
+            self.raise_error("Unsupported annotation syntax", node, NotImplementedError)
+        if isinstance(node.annotation, ast.Name):
+            self.process_modifiers(node, node.annotation.id)
+
+        elif isinstance(node.annotation, ast.Tuple):
+            if not all(isinstance(x, ast.Name) for x in node.annotation.elts):
+                self.raise_error("Annotations must be names or tuples of names", node)
+            else:
+                self.process_modifiers(
+                    node, tuple(_x.id for _x in node.annotation.elts)
+                )
+        return getattr(super(), "visit_AnnAssign", self.generic_visit)(node)
+
+
+class GetPromotedName(ProcessClassDecorators, ProcessModifiers):
+    """
+    Checks that a promoted name is promoted at the module level and
+    registers the name.
+
+    Keeps a dicitionary of (unpromoted) qualified names and modifiers (as strings).
+    """
+
     _promoted_name = None
 
     @property
@@ -84,21 +137,9 @@ class GetPromotedName(TrackQualName, RaisesError, ast.NodeVisitor):
             node,
         )
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
-        # NOTE: TrackQualName.visit_ClassDef must be called after this call
-        # for the qualname check to work. This is enforced by having GetPromotedName
-        # derive from TrackQualName
-        if any(not isinstance(x, ast.Name) for x in node.decorator_list):
-            self.raise_error(
-                "Only name decorators currently supported", node, NotImplementedError
-            )
-        if "promoted" in (x.id for x in node.decorator_list):
-            self.set(node.name, node)
-        return getattr(super(), "visit_ClassDef", self.generic_visit)(node)
-
     def set(self, name, node):
         if self.qualname:
-            self.raise_non_root_member(node, f"{self.qualname}.{node.target.id}")
+            self.raise_non_root_member(node, f"{self.from_qualname(node.target.id)}")
         if self._promoted_name:
             self.raise_error(
                 f'Multiple promotions detected ("{self._promoted_name}", "{name}")',
@@ -106,17 +147,59 @@ class GetPromotedName(TrackQualName, RaisesError, ast.NodeVisitor):
             )
         self._promoted_name = name
 
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-        if not isinstance(node.target, ast.Name):
-            self.raise_error("Unsupported annotation syntax", node, NotImplementedError)
-        if isinstance(node.annotation, ast.Name) and node.annotation.id == "promoted":
+    def process_modifiers(self, node, modifiers):
+        if (isinstance(modifiers, str) and modifiers == "promoted") or (
+            isinstance(modifiers, tuple)
+            and "promoted" in (x.id for x in node.annotation.elts)
+        ):
             self.set(node.target.id, node)
-        elif isinstance(node.annotation, ast.Tuple):
-            if not all(isinstance(x, ast.Name) for x in node.annotation.elts):
-                self.raise_error("Annotations must be names or tuples of names", node)
-            if "promoted" in (x.id for x in node.annotation.elts):
-                self.set(node.target.id, node)
-        return getattr(super(), "visit_AnnAssign", self.generic_visit)(node)
+
+        super().process_modifiers(node, modifiers)
+
+    def process_class_decorators(self, node, decorators):
+        if "promoted" in decorators:
+            self.set(node.name, node)
+        return super().process_class_decorators(node, decorators)
+
+
+class GetNoids(GetPromotedName):
+    _noids: List[str]
+    """ All qualnames with noid modifiers """
+
+    def __init__(self, *args, **kwargs):
+        self._noids = []
+        super().__init__(*args, **kwargs)
+
+    @property
+    def noids(self):
+        if self.promoted_name:
+            unpromoted = (".".split(_x) for _x in self._noids)
+            return [_x[1:] for _x in unpromoted if _x[0] == self.promoted_name]
+        else:
+            return list(self._noids)
+
+    def process_modifiers(
+        self, node: Union[ast.Assign, ast.AnnAssign], modifiers: Union[str, Tuple[str]]
+    ):
+        if "noid" == modifiers or isinstance(modifiers, tuple) and "noid" in modifiers:
+            self._noids.append(self.from_qualname(node.target.id))
+        return super().process_modifiers(node, modifiers)
+
+    def process_class_decorators(self, node: ast.ClassDef, decorators: Tuple[str]):
+        if "noid" in decorators:
+            self._noids.append(self.from_qualname(node.name))
+        return super().process_class_decorators(node, decorators)
+
+
+class ExtractDocStrings(TrackQualName):
+    """Docstrings are only supported for classes and functions in python. This extractor adds support
+    for sphinx-like global/class variable documentation"""
+
+    def visit_Assign(self):
+        pass
+
+    def visit_AnnAssign(self):
+        pass
 
 
 class ProtectKeywords(RaisesError, ast.NodeVisitor):
@@ -192,8 +275,8 @@ class AddTargetToLoads(RaisesError, ast.NodeTransformer):
 
 class SoleilPreProcessor(
     ProtectKeywords,
+    GetNoids,
     GetPromotedName,
-    TrackQualName,
     GetImportedNames,
     AddTargetToLoads,
     ast.NodeTransformer,

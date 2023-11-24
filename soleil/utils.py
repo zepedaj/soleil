@@ -6,6 +6,7 @@ from ._utils import (
     infer_solconf_package,
     as_valid_filename,
     infer_solconf_module,
+    infer_root_config,
     abs_mod_name,
 )
 
@@ -27,13 +28,12 @@ def id_str(glue=",", safe=True, full=False):
     :param full: If ``False`` (the default), only the right-most target attribute is used. (e.g., with the default ``full=False``,  ``'height=2'``  instead of  ``'rectangle.dimensions.height=2``).
     """
     overrides = GLOBAL_LOADER.package_overrides[infer_solconf_package()]
+
     out = glue.join(
         [
             _x.source
             for _x in overrides
-            if not (_x.target.get_modifiers() or {}).get(
-                "noid", False
-            )  # Use pre-processor-collected modifiers
+            if _x.target not in _x.target.get_module().__soleil_pp_meta__["noids"]
         ]
     )
     if safe:

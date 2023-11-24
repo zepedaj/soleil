@@ -6,7 +6,11 @@ from soleil._utils import infer_solconf_module, get_global_loader
 
 
 class Overridable(abc.ABC):
-    """Members that can be overriden in a special way"""
+    """
+    When an overridable is assigned as a value to a member variable,
+    soleil overrides will be applied to that member using its :meth:`set` and :meth:`get` methods
+    (see :func:`_soleil_override`).
+    """
 
     @abc.abstractmethod
     def set(self, new_value):
@@ -64,7 +68,8 @@ class submodule(Overridable):
     def get(self, target: str, frame: FrameType):
         if (
             frame.f_locals.get("__is_solconf_module__", False)
-            and frame.f_locals.get("__pp_promoted__", None) == target
+            and frame.f_locals.get("__soleil_pp_meta__", {}).get("promoted", None)
+            == target
         ):
             # Promoted submodules can no longer be overriden, hence behave like load.
             raise SyntaxError(

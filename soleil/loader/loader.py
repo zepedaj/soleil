@@ -5,6 +5,7 @@ from uuid import uuid4
 from soleil._utils import PathSpec, Unassigned
 
 from soleil.overrides.overrides import OverrideSpec, eval_overrides
+from soleil.overrides.variable_path import VarPath
 from . import pre_processor
 
 from soleil.resolvers.module_resolver import ModuleResolver, SolConfModule
@@ -116,23 +117,16 @@ class ConfigLoader:
         :param _root_config: The root configuration of the module being loaded. Root configurations are the starting point where variable paths are resolved from.
         """
 
-        sub_module_path = self.get_sub_module_path(abs_module_name)
+        # Create, parse and register the module
+        if (module := self.modules.get(abs_module_name, None)) is None:
+            module = self._parse_solconf_module(
+                abs_module_name, _var_path, _root_config
+            )
+            self.modules[abs_module_name] = module
 
-        # Create the module
-        if (
-            module := self._get_solconf_module(abs_module_name, sub_module_path)
-        ) is None:
-            # Build and register the module code
-            module = self._build_solconf_module(
-                abs_module_name, sub_module_path, _var_path, _root_config
-            )
-        elif self.package_overrides[module.__package__]:
-            # Reasons - Not clear what to do if
-            #  1) overrides were or are specified and
-            #  2) the module's __soleil_var_path__ used to find override targets would not be uniquely defined.
-            raise NotImplementedError(
-                "Reloading solconf packages not currently supported."
-            )
+        # Execute the module
+        if not module.__soleil_pp_meta__["executed"]:
+            self._execute_solconf_module(module)
 
         # Get the promoted member
         if (
@@ -150,45 +144,19 @@ class ConfigLoader:
         else:
             return out
 
-    def _get_solconf_module(self, abs_module_name: str, module_path: Path):
-        """
-        Returns a previously-built module or ``None`` if not previously-built.
-
-        :param path: The path to the file.
-        :param abs_module_name: [Default is ``'solconf.<module_path stem>'``] The name of the module in python. A package name can be pre-pended to the module-name with a '.' separator. After calling this function, the module can be imported from any other module using ``import <abs_module_name>``.
-        """
-
-        module = None
-
-        if abs_module_name in self.modules:
-            # The conf module was previously loaded.
-            module = self.modules[abs_module_name]
-            if (loaded_path := Path(module.__file__)) != module_path:
-                # The previous load path differs
-                raise ValueError(
-                    f"The specified solconf module `{abs_module_name}` was previously "
-                    f"loaded from a path `{loaded_path}` that is not the requested path `{module_path}`."
-                )
-            if ModuleResolver(module)._get_required_member_names():
-                # The module has required vars that need to be injected
-                raise ValueError(
-                    f"Solconf modules with required members can only be loaded once."
-                )
-
-        return module
-
-    def _build_solconf_module(
+    def _parse_solconf_module(
         self,
         abs_module_name: str,
-        module_path: Path,
         var_path: Optional[str],
         root_config: Optional[SolConfModule],
     ):
+        #
+        module_path = self.get_sub_module_path(abs_module_name)
+
         # Instantiate the solconf module
         module = SolConfModule(abs_module_name, module_path, var_path, root_config)
-        self.modules[abs_module_name] = module
 
-        # Execute the code in the module
+        # Parse the code in the module
         with open(module.__file__, "rt") as fo:
             code = fo.read()
         tree = ast.parse(code)
@@ -196,17 +164,29 @@ class ConfigLoader:
         # Apply the pre-processor
         spp = pre_processor.SoleilPreProcessor(module_path)
         tree = spp.visit(tree)
-        module.__pp_promoted__ = spp.promoted_name
-
-        # Execute the module
-        exec(
-            compile(tree, filename=str(module.__file__), mode="exec"),
-            _globals := vars(module),
-            _globals,
-        )
+        module.__soleil_pp_meta__["tree"] = tree
+        module.__soleil_pp_meta__["executed"] = False
+        module.__soleil_pp_meta__["promoted"] = spp.promoted_name
+        module.__soleil_pp_meta__["noids"] = [
+            module.__soleil_var_path__ + VarPath.from_str(_x) for _x in spp.noids
+        ]
 
         # Append the imported ignores
         module.__soleil_default_hidden_members__.update(spp.imported_names)
+
+        return module
+
+    def _execute_solconf_module(self, module):
+        # Execute the module
+        exec(
+            compile(
+                module.__soleil_pp_meta__["tree"],
+                filename=str(module.__file__),
+                mode="exec",
+            ),
+            _globals := vars(module),
+            _globals,
+        )
 
         return module
 

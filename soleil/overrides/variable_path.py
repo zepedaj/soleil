@@ -70,8 +70,27 @@ class VarPath(UserList):
 
         return self.get_with_container(obj)[0]
 
+    def get_module(self, obj=Unassigned):
+        """Returns the module containing the variable where the variable path points to"""
+        from soleil.resolvers.module_resolver import SolConfModule
+
+        _, container = self.get_with_container(obj)
+        if not isinstance(container, SolConfModule):
+            return get_global_loader().modules[container.__module__]
+        else:
+            return container
+
     def get_modifiers(self, obj=Unassigned):
-        """Returns the explicit modifiers for the referenced variable or ``None`` if none are specified"""
+        """
+        Returns the explicit modifiers for the referenced variable or ``None`` if none are specified
+
+        .. warning::
+
+            This will only return modifiers for variables that have been previously defined, and can result
+            in infinite loops when trying to access variables in the same module.
+
+        """
+        ## TODO: Use the modifiers from the pre-processor
         obj, container = self.get_with_container(obj)
         if container is None:
             raise ValueError("Root objects have no modifiers -- only their members do")
@@ -100,9 +119,11 @@ class VarPath(UserList):
         ref_iter = iter(self)
 
         while True:
-            if isinstance(obj, SolConfModule) and obj.__pp_promoted__:
+            if isinstance(obj, SolConfModule) and (
+                promoted_name := obj.__soleil_pp_meta__["promoted"]
+            ):
                 container = obj
-                obj = getattr(obj, obj.__pp_promoted__)
+                obj = getattr(obj, promoted_name)
             try:
                 _ref = next(ref_iter)
             except StopIteration:
@@ -166,7 +187,10 @@ def deduce_soleil_var_path(
     module_var_path = frame.f_globals["__soleil_var_path__"]
     # The name of the promoted variable as a variable path
     promoted_rel_var_path = VarPath.from_str(
-        get_global_loader().modules[frame.f_globals["__name__"]].__pp_promoted__ or ""
+        get_global_loader()
+        .modules[frame.f_globals["__name__"]]
+        .__soleil_pp_meta__["promoted"]
+        or ""
     )
     # The (nested) path to the (nested) variable relative to the containing module
     class_rel_var_path = VarPath.from_str(frame.f_locals.get("__qualname__", ""))
