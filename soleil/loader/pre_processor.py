@@ -162,35 +162,6 @@ class GetPromotedName(ProcessClassDecorators, ProcessModifiers):
         return super().process_class_decorators(node, decorators)
 
 
-class GetNoids(GetPromotedName):
-    _noids: List[str]
-    """ All qualnames with noid modifiers """
-
-    def __init__(self, *args, **kwargs):
-        self._noids = []
-        super().__init__(*args, **kwargs)
-
-    @property
-    def noids(self):
-        if self.promoted_name:
-            unpromoted = (".".split(_x) for _x in self._noids)
-            return [_x[1:] for _x in unpromoted if _x[0] == self.promoted_name]
-        else:
-            return list(self._noids)
-
-    def process_modifiers(
-        self, node: Union[ast.Assign, ast.AnnAssign], modifiers: Union[str, Tuple[str]]
-    ):
-        if "noid" == modifiers or isinstance(modifiers, tuple) and "noid" in modifiers:
-            self._noids.append(self.from_qualname(node.target.id))
-        return super().process_modifiers(node, modifiers)
-
-    def process_class_decorators(self, node: ast.ClassDef, decorators: Tuple[str]):
-        if "noid" in decorators:
-            self._noids.append(self.from_qualname(node.name))
-        return super().process_class_decorators(node, decorators)
-
-
 class ExtractDocStrings(TrackQualName):
     """Docstrings are only supported for classes and functions in python. This extractor adds support
     for sphinx-like global/class variable documentation"""
@@ -275,7 +246,6 @@ class AddTargetToLoads(RaisesError, ast.NodeTransformer):
 
 class SoleilPreProcessor(
     ProtectKeywords,
-    GetNoids,
     GetPromotedName,
     GetImportedNames,
     AddTargetToLoads,

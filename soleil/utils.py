@@ -34,19 +34,26 @@ def root_stem(root_config=None) -> str:
 class id_str(RStr):
     def __init__(self, glue=",", safe=True, full=False, with_root_stem=True):
         """
-        An id string built from the overrides that are not annotated with :attr:`noid`.
+        A special class that resolves to an id string built from the overrides that are not annotated with :attr:`noid`.
 
         :param glue: String that joins all the override strings
         :param safe: Whether the escape characters that are invalid in filenames
         :param full: If ``False`` (the default), only the right-most target attribute is used. (e.g., with the default ``full=False``,  ``'height=2'``  instead of  ``'rectangle.dimensions.height=2``).
-        :param with_root_stem: Whether to include the file path stem of the root config.
+        :param with_root_stem: Whether to include the file path stem of the root config
         """
+        # NOTE: The initializer code executes within a *.solconf file
+        # while the ``to_str`` does not and runs within a standard python
+        # program.
         self.glue = glue
         self.safe = safe
         self.full = full
         self.package_name = infer_solconf_package()
         self.root_config = infer_root_config()
         self.with_root_stem = with_root_stem
+
+    @property
+    def _components(self):
+        return (self,)
 
     def to_str(self):
         overrides = GLOBAL_LOADER.package_overrides[self.package_name]

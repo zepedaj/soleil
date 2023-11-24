@@ -167,9 +167,6 @@ class ConfigLoader:
         module.__soleil_pp_meta__["tree"] = tree
         module.__soleil_pp_meta__["executed"] = False
         module.__soleil_pp_meta__["promoted"] = spp.promoted_name
-        module.__soleil_pp_meta__["noids"] = [
-            module.__soleil_var_path__ + VarPath.from_str(_x) for _x in spp.noids
-        ]
 
         # Append the imported ignores
         module.__soleil_default_hidden_members__.update(spp.imported_names)

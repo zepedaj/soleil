@@ -51,8 +51,7 @@ class SolConfModule(ModuleType):
     """ Members that default to hidden. They can be made visible with an explicit `visible` annotation """
 
     __soleil_pp_meta__: Dict
-    """ Pro-processor-extracted meta-data, including the promoted member name (key ``'promoted'``)
-    and noid-annotated variable paths (key ``'noids'``). """
+    """ Pro-processor-extracted meta-data, including the promoted member name (key ``'promoted'``)"""
 
     __soleil_root_config__: Optional["SolConfModule"]
     """ The root configuration of the module -- will be ``None`` if this module is the root config """
