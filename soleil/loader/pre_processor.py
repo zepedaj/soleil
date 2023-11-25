@@ -107,12 +107,11 @@ class ProcessModifiers(TrackQualName, abc.ABC):
             self.process_modifiers(node, node.annotation.id)
 
         elif isinstance(node.annotation, ast.Tuple):
-            if not all(isinstance(x, ast.Name) for x in node.annotation.elts):
-                self.raise_error("Annotations must be names or tuples of names", node)
-            else:
-                self.process_modifiers(
-                    node, tuple(_x.id for _x in node.annotation.elts)
-                )
+            self.process_modifiers(
+                node,
+                tuple(_x.id for _x in node.annotation.elts if isinstance(_x, ast.Name)),
+            )
+
         return getattr(super(), "visit_AnnAssign", self.generic_visit)(node)
 
 
@@ -149,8 +148,7 @@ class GetPromotedName(ProcessClassDecorators, ProcessModifiers):
 
     def process_modifiers(self, node, modifiers):
         if (isinstance(modifiers, str) and modifiers == "promoted") or (
-            isinstance(modifiers, tuple)
-            and "promoted" in (x.id for x in node.annotation.elts)
+            isinstance(modifiers, tuple) and "promoted" in modifiers
         ):
             self.set(node.target.id, node)
 
