@@ -23,8 +23,8 @@ class Override:
     value_expr: ast.Expression
     source: Optional[str] = None
     """ The source code corresponding to this override, if available"""
-    used: bool = False
-    """ Whether the override has been used """
+    used: int = 0
+    """ The number of times the override has been used -- can be used multiple times when overrides are shared by a spawned parent class and its child class """
 
     def get_value(self, _globals=None, _locals=None):
         """

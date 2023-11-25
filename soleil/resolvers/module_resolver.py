@@ -1,9 +1,8 @@
-from importlib import import_module
-from pglib.validation import NoItem, checked_get_single
 from pathlib import Path
 from types import FrameType, MappingProxyType, ModuleType
-from typing import Callable, Dict, Optional, Set, Union
-from soleil.overrides.overrides import deduce_soleil_var_path
+from typing import Callable, Dict, Optional, Set, Union, List
+from soleil.overrides.overrides import OverrideSpec, deduce_soleil_var_path
+from soleil.overrides.parser import Override
 from soleil.overrides.variable_path import VarPath
 from soleil.resolvers.modifiers import Modifiers
 from .class_resolver import ClassResolver
@@ -56,11 +55,15 @@ class SolConfModule(ModuleType):
     __soleil_root_config__: Optional["SolConfModule"]
     """ The root configuration of the module -- will be ``None`` if this module is the root config """
 
+    __soleil_reqs__: List[Override]
+    """ Contains values to supply to :class:`req` members by default """
+
     def __init__(
         self,
         soleil_module: str,
         soleil_path: Path,
         soleil_var_path: Optional[Union[VarPath, str]] = None,
+        soleil_reqs: Optional[List[Override]] = None,
         root_config: Optional["SolConfModule"] = None,
     ):
         #
@@ -89,11 +92,14 @@ class SolConfModule(ModuleType):
         # Add root config
         self.__soleil_root_config__ = root_config
 
+        self.__soleil_reqs__ = soleil_reqs or []
+
     def load(
         self,
         module_name,
         promoted=True,
         resolve=False,
+        reqs: Optional[List[OverrideSpec]] = None,
         _target: Optional[str] = None,
         _frame: Optional[Union[FrameType, int]] = 0,
         **kwargs,
@@ -106,6 +112,8 @@ class SolConfModule(ModuleType):
 
         :param module_name: The relative or absolute (without package name) module name.
         :param promoted: Whether the return the promoted member, if it exists, otherwise (or if ``promoted=False``) the full module.
+        :param resolve: Whether to resolve the module.
+        :param reqs: Default values for :class:`req` members.
         """
         # NOTE: Parameter ``_target`` will be set by the pre-processor in simple load assignments, e.g.
         #   a = load('.sub.module')          # load('.sub.module', _target='a')
@@ -128,6 +136,7 @@ class SolConfModule(ModuleType):
             module_name,
             resolve=resolve,
             promoted=promoted,
+            reqs=reqs,
             _var_path=_var_path,
             _root_config=(self.__soleil_root_config__ or self),
             **kwargs,

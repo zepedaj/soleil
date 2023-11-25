@@ -117,6 +117,7 @@ def _soleil_override(target_name: str, value: Any):
         is not NoItem
     ):
         # Get the override value
+        _ovr.used += 1
         ovr_value = _ovr.get_value()
 
     # Compute the output value

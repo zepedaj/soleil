@@ -155,7 +155,7 @@ class VarPath(UserList):
 
 
 def deduce_soleil_var_path(
-    target_name: str, frame: Union[FrameType, int, None] = 0
+    target_name: str, frame: Union[FrameType, int, None] = 0, relative=False
 ) -> Optional[VarPath]:
     """
     Returns a :class:`VarPath` specifying how to access a variable named ``target_name`` defined in the specified frame relative to the root configuration.
@@ -164,6 +164,8 @@ def deduce_soleil_var_path(
     :param target_name: The name of the variable whose name is being deduced.
     :param frame: The frame where the variable named ``target_name`` is being defined -- by default assumed to be the the parent frame of the caller,
     since ``deduce_soleil_var_path`` is usually called within :func:`_soleil_overrides` or :func:``.
+    :param relative: Whether to return a variable path relative to the containing module. By default, an absoulte var path is returned that is relative
+    to the root config.
 
     Example:
 
@@ -205,4 +207,8 @@ def deduce_soleil_var_path(
             # The target_name is contained (possibly with nesting) within the promoted variable
             return module_var_path + class_rel_var_path[1:] + [Attribute(target_name)]
     else:
-        return module_var_path + class_rel_var_path + [Attribute(target_name)]
+        return (
+            ([] if relative else module_var_path)
+            + class_rel_var_path
+            + [Attribute(target_name)]
+        )

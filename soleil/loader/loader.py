@@ -20,14 +20,14 @@ def load_config(
     overrides: Optional[List[OverrideSpec]] = None,
     resolve=True,
     promoted=True,
-    _var_path=None,
+    _var_path=VarPath(),
 ):
     """
     Creates a new package with root at the parent of the spcified configuration path, and loads the specified configuration path as a module in that package.
 
     :param conf_path: The path of the module to load.
     :param package_name: The package name -- defaults to a random string.
-    :param overrides: The overrides to apply when loading the module.
+    :param overrides: The overrides to apply when loading the module -- these will be overriden by any package-level overrides specified when creating the pacakge.
 
     (See :meth:`ConfigLoader.load` for the interpretation of parameters ``resolve`` and ``promoted``)
     """
@@ -41,9 +41,23 @@ def load_config(
     package_name = GLOBAL_LOADER.init_package(conf_path.parent, package_name, overrides)
     module_name = f"{package_name}.{conf_path.stem}"
 
-    return GLOBAL_LOADER.load(
+    out = GLOBAL_LOADER.load(
         module_name, resolve=resolve, promoted=promoted, _var_path=_var_path
     )
+
+    # Check that all overrides were used
+    if resolve and (
+        unused_ovrds := [
+            _ovr
+            for _ovr in GLOBAL_LOADER.package_overrides[package_name]
+            if not _ovr.used
+        ]
+    ):
+        raise ValueError(
+            f"Unused overrides {', '.join(_x.source or _x.target.as_str() for _x in unused_ovrds)}"
+        )
+
+    return out
 
 
 class ConfigLoader:
@@ -106,6 +120,7 @@ class ConfigLoader:
         abs_module_name: str,
         resolve: bool = True,
         promoted: bool = True,
+        reqs: Optional[List[OverrideSpec]] = None,
         _var_path: Optional[str] = None,
         _root_config: Optional[SolConfModule] = None,
     ):
@@ -113,6 +128,7 @@ class ConfigLoader:
         :param module_name: The absolute module name (e.g., ``package_name.sub_module_1.sub_module_2``)
         :param resolve: Return the model's resolved value if ``True``, otherwise the module itself.
         :param promoted: Whether to return the promoted member of teh full module. Only has an effect when ``resolve=False``.
+        :param reqs: Default values for all :class:`req` members provided as part of load/submodule within a solconf file.
         :param _var_path: When loading a module from within another module, this will point to the variable/attribute name sequence relative to the root module. Used to apply overrides.
         :param _root_config: The root configuration of the module being loaded. Root configurations are the starting point where variable paths are resolved from.
         """
@@ -120,7 +136,7 @@ class ConfigLoader:
         # Create, parse and register the module
         if (module := self.modules.get(abs_module_name, None)) is None:
             module = self._parse_solconf_module(
-                abs_module_name, _var_path, _root_config
+                abs_module_name, _var_path, _root_config, reqs
             )
             self.modules[abs_module_name] = module
 
@@ -149,12 +165,19 @@ class ConfigLoader:
         abs_module_name: str,
         var_path: Optional[str],
         root_config: Optional[SolConfModule],
+        reqs: Optional[List[OverrideSpec]] = None,
     ):
         #
         module_path = self.get_sub_module_path(abs_module_name)
 
         # Instantiate the solconf module
-        module = SolConfModule(abs_module_name, module_path, var_path, root_config)
+        module = SolConfModule(
+            abs_module_name,
+            module_path,
+            var_path,
+            eval_overrides(reqs or [], {}, {}),
+            root_config,
+        )
 
         # Parse the code in the module
         with open(module.__file__, "rt") as fo:

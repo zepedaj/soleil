@@ -30,7 +30,7 @@ class submodule(Overridable):
     sub_module_name: str
     containing_module: str
 
-    def __init__(self, *args):
+    def __init__(self, *args, reqs=None):
         """
 
         Options:
@@ -62,6 +62,8 @@ class submodule(Overridable):
         else:
             raise Exception("Invalid number of input arguments.")
 
+        self.reqs = reqs
+
     def set(self, sub_module):
         self.sub_module_name = sub_module
 
@@ -81,6 +83,7 @@ class submodule(Overridable):
             .modules[self.containing_module]
             .load(
                 ".".join([self.module_name or f".{target}", self.sub_module_name]),
+                reqs=self.reqs,
                 _target=target,
                 _frame=frame,
             )
