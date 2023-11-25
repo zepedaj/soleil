@@ -11,6 +11,7 @@ class req(Overridable):
     """
 
     _value = Unassigned
+    var_path_str = "<unknown path>"
 
     @property
     def missing(self):
@@ -35,9 +36,8 @@ class req(Overridable):
         ) is not NoItem:
             return ovr.get_value()
         else:
-            raise ValueError(
-                f"Missing required variable {deduce_soleil_var_path(target, frame)}."
-            )
+            self.var_path = deduce_soleil_var_path(target, frame).as_str()
+            return self  # will fail at resolution
 
 
 class reqResolver(Resolver):
@@ -50,7 +50,4 @@ class reqResolver(Resolver):
         return isinstance(value, req)
 
     def compute_resolved(self):
-        # Should never be resolved -- resolution should happen at override time
-        raise SyntaxError(
-            "Unexpected attempt to resolve a `req()` -- req() can only be assigned directly to a name and cannot be used in expressions"
-        )
+        raise ValueError(f"Missing required variable `{self.resolvable.var_path_str}`.")

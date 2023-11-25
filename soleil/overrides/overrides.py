@@ -55,7 +55,7 @@ class PreCompOverride(Override):
         return self.value_expr
 
 
-def cast_overrides(*overrides: OverrideSpec) -> List[Override]:
+def cast_overrides(overrides: List[OverrideSpec]) -> List[Override]:
     """
     Takes strings with one or more overrides, dictionaries with refs and values (e.g., {'a.b[0].x':3}) or :class:`Override` objects
     obtained from :func:`parse_overrides` and converts them to a list of :class:`Override` objects.
@@ -81,14 +81,16 @@ def cast_overrides(*overrides: OverrideSpec) -> List[Override]:
 
 
 def eval_overrides(
-    overrides: List[OverrideSpec], globals_, locals_
+    overrides: Union[OverrideSpec, List[OverrideSpec]], globals_, locals_
 ) -> List[PreCompOverride]:
     """
     Computes the value of all input overrides.
     """
+    if not isinstance(overrides, List):
+        overrides = [overrides]
     return [
         PreCompOverride.from_override(_ovr, globals_, locals_)
-        for _ovr in cast_overrides(*overrides)
+        for _ovr in cast_overrides(overrides)
     ]
 
 

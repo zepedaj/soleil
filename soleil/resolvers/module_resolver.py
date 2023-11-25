@@ -1,7 +1,11 @@
 from pathlib import Path
 from types import FrameType, MappingProxyType, ModuleType
 from typing import Callable, Dict, Optional, Set, Union, List
-from soleil.overrides.overrides import OverrideSpec, deduce_soleil_var_path
+from soleil.overrides.overrides import (
+    OverrideSpec,
+    deduce_soleil_var_path,
+    _soleil_override,
+)
 from soleil.overrides.parser import Override
 from soleil.overrides.variable_path import VarPath
 from soleil.resolvers.modifiers import Modifiers
@@ -93,6 +97,9 @@ class SolConfModule(ModuleType):
         self.__soleil_root_config__ = root_config
 
         self.__soleil_reqs__ = soleil_reqs or []
+
+        # Inject _soleil_override
+        self._soleil_override = _soleil_override
 
     def load(
         self,

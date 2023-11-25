@@ -162,11 +162,15 @@ def parse_ref(ref: str):
     """
     Takes a reference such as ``'a.b[0].x`` and parses it into a sequence of attribute or item references.
     """
-    tree = ast.parse(ref)
 
-    # Apply the pre-processor
-    ref_exctr = RefExtractor()
-    tree = ref_exctr.visit(tree)
+    try:
+        tree = ast.parse(ref)
+
+        # Apply the pre-processor
+        ref_exctr = RefExtractor()
+        tree = ref_exctr.visit(tree)
+    except Exception as err:
+        raise SyntaxError(f"Error parsing ref string `{ref}`") from err
 
     return ref_exctr.refs
 
@@ -175,18 +179,21 @@ def parse_overrides(overrides: str) -> List[Override]:
     """
     Takes code containing one or more assignment such as ``'a.b[0].x = a.c + 3'`` and returns a list of :class:`Overrides`
     """
-    tree = ast.parse(overrides)
+    try:
+        tree = ast.parse(overrides)
 
-    # Apply the pre-processor
-    splitter = OverrideSplitter()
-    tree = splitter.visit(tree)
+        # Apply the pre-processor
+        splitter = OverrideSplitter()
+        tree = splitter.visit(tree)
 
-    # Append source expression
-    # TODO: use ast.get_source_segment in the code below
-    sources = [extract_string_expression(overrides, _expr) for _expr in tree.body]
-    split_overrides = splitter.overrides
-    for _ovr, _src in strict_zip(split_overrides, sources):
-        _ovr.source = _src
+        # Append source expression
+        # TODO: use ast.get_source_segment in the code below
+        sources = [extract_string_expression(overrides, _expr) for _expr in tree.body]
+        split_overrides = splitter.overrides
+        for _ovr, _src in strict_zip(split_overrides, sources):
+            _ovr.source = _src
+    except Exception as err:
+        raise SyntaxError(f"Error parsing override(s) `{overrides}`") from err
 
     return split_overrides
 
