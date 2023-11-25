@@ -2,7 +2,7 @@ from collections import UserDict
 import inspect
 from itertools import chain
 from types import MappingProxyType
-from soleil.resolvers.req import req
+from soleil.overrides.req import req
 from soleil.resolvers.modifiers import Modifiers, from_annotation, merge_modifiers
 from soleil._utils import Unassigned, get_all_annotations
 from .base import Resolver, displayable, resolve

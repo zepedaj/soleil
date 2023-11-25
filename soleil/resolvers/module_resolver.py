@@ -93,13 +93,14 @@ class SolConfModule(ModuleType):
             setattr(self, method, getattr(self, method))
             self.__soleil_default_hidden_members__.add(method)
 
+        # Inject _soleil_override
+        self._soleil_override = _soleil_override
+        self.__soleil_default_hidden_members__.add("_soleil_override")
+
         # Add root config
         self.__soleil_root_config__ = root_config
 
         self.__soleil_reqs__ = soleil_reqs or []
-
-        # Inject _soleil_override
-        self._soleil_override = _soleil_override
 
     def load(
         self,

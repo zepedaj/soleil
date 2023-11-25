@@ -25,12 +25,13 @@ __all__ += [
 ]
 
 # Utilities
-from soleil.resolvers.req import req
 from soleil.utils import id_str, root_stem, sub_dir, derive, temp_dir, spawn
 
-__all__ += ["req", "id_str", "root_stem", "sub_dir", "derive", "temp_dir", "spawn"]
+__all__ += ["id_str", "root_stem", "sub_dir", "derive", "temp_dir", "spawn"]
 
-from soleil.overrides.overrides import _soleil_override
+# Overridables
+#
 from soleil.overrides.overridable import submodule
+from soleil.overrides.req import req
 
-__all__ += ["_soleil_override", "submodule"]
+__all__ += ["submodule", "req"]
