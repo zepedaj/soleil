@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+from typing import Type, Union
 from soleil.cli_tools.solex import solex
 from soleil.resolvers.module_resolver import ModuleResolver, SolConfModule
-from soleil import resolve
 
 
 @solex(resolve=False)
-def run(conf: SolConfModule):
+def run(conf: Union[SolConfModule, Type]):
+    # Supports `as_run` argument when conf is a Type and not a SolConf Module in case it is a promoted class
+    #
     resolver = ModuleResolver(conf)
     run = resolver.run or (lambda _: None)
     run(resolver.resolve())
