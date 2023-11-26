@@ -1,6 +1,6 @@
 from typing import Tuple, Union, Any
 
-from soleil.resolvers.base import TypeResolver
+from soleil.resolvers.base import TypeResolver, resolve
 
 
 class RStr:
@@ -24,9 +24,10 @@ class RStr:
     def __rtruediv__(self, x):
         return RStr((x, "/", *self._components))
 
-    def to_str(self):
+    def compute_resolved(self):
         return "".join(
-            x.to_str() if isinstance(x, RStr) else str(x) for x in self._components
+            x.compute_resolved() if isinstance(x, RStr) else str(resolve(x))
+            for x in self._components
         )
 
     def __str__(self):
@@ -37,4 +38,4 @@ class RStr:
 
 class RStrResolver(TypeResolver, handled_type=RStr):
     def compute_resolved(self):
-        return self.resolvable.to_str()
+        return self.resolvable.compute_resolved()

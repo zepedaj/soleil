@@ -56,7 +56,7 @@ class id_str(RStr):
     def _components(self):
         return (self,)
 
-    def to_str(self):
+    def compute_resolved(self):
         overrides = GLOBAL_LOADER.package_overrides[self.package_name]
 
         out = self.glue.join(
