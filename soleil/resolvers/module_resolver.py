@@ -20,6 +20,8 @@ as_run = Modifiers(as_run=True)
 promoted = Modifiers(promoted=True)
 """
 When a module's member is annotated as promoted it will be returned when that module is loaded without resolving. Accordingly, the module will also resolve to the resolution of that member.
+When a member in a module is marked as promoted, all other members in the module no longer have a variable path, since the module's variable path becomes the promoted member's variable path.
+Hence, no other members can be overriden by CLI overrides.
 
 Modifier :attr:`promoted` is special because it also operates as a pre-processor directive. The reason is that correct dereferencing of
 CLI overrides in modules with promoted members requires knowing the name of the promoted member before executing the code.
