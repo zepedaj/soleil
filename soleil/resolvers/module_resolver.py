@@ -162,19 +162,15 @@ class SolConfModule(ModuleType):
 class ModuleResolver(ClassResolver):
     resolvable: SolConfModule
     valid_modifier_keys = frozenset(
-        {*ClassResolver.valid_modifier_keys, "promoted", "as_run", "resolves"}
+        {*ClassResolver.valid_modifier_keys, "promoted", "resolves"}
     )
     special_members = MappingProxyType(
         {
             **ClassResolver.special_members,
-            "run": "as_run",
             "promoted": "promoted",
             "resolves": "resolves",
         }
     )
-
-    run: Optional[Callable] = None
-    """ The callable that :func:`solex` calls on the resolved module by default """
 
     promoted = Unassigned
     """ The promoted member """

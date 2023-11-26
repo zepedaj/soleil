@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Type
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
 from soleil.loader.loader import GLOBAL_LOADER, load_config
@@ -110,7 +111,7 @@ def sub_dir(root: Path, create=True):
     return str(new_sub_dir)
 
 
-def spawn(rel_module_name, pass_overrides=True, var_path=None):
+def spawn(rel_module_name, pass_overrides=True, var_path=None) -> Type:
     """
     Takes the name of a target module (relative to the calling module, if dot-prefixed, or the current package
     otherwise) that promotes a class, and loads it in a new package, providing the calling package's overrides

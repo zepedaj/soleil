@@ -131,6 +131,9 @@ class ValueVerifier(_RestrictedNodeVisitor):
         ast.Subscript,
         ast.BinOp,
         ast.operator,
+        ast.Tuple,
+        ast.List,
+        ast.Load,  # Required for tuples, lists.
     )
 
 

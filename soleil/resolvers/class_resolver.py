@@ -6,7 +6,7 @@ from soleil.overrides.req import req
 from soleil.resolvers.modifiers import Modifiers, from_annotation, merge_modifiers
 from soleil._utils import Unassigned, get_all_annotations
 from .base import Resolver, displayable, resolve
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 from pglib.py import entity_from_name
 
 
@@ -33,10 +33,18 @@ class DisplayableFromClassResolver(UserDict):
 class ClassResolver(Resolver):
     args = tuple()
     type = None
+    run: Optional[Callable] = None
+    """ The callable that :func:`solex` calls on the resolved module by default """
+    # See comment for as_run below
+
     valid_modifier_keys = frozenset(
-        {"name", "hidden", "cast", "as_type", "as_args", "noid"}
+        # 'as_run' is better in ModuleResolver - moving here to support modules with promoted class
+        # until a better solution is available
+        {"name", "hidden", "cast", "as_type", "as_args", "noid", "as_run"}
     )
-    special_members = MappingProxyType({"args": "as_args", "type": "as_type"})
+    special_members = MappingProxyType(
+        {"args": "as_args", "type": "as_type", "run": "as_run"}
+    )
     """Tuples of attribute names and modifier type for special members."""
 
     def __init__(self, resolvable, _build=True):
