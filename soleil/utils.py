@@ -63,6 +63,8 @@ class id_str(RStr):
             ([root_stem(self.root_config)] if self.with_root_stem else [])
             + [
                 _x.source
+                if self.full
+                else _x.source.replace(_x.target.as_str(), _x.target[-1:].as_str())
                 for _x in overrides
                 if not (_x.target.get_modifiers(self.root_config) or {}).get(
                     "noid", False

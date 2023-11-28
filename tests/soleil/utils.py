@@ -29,6 +29,29 @@ def test_overrides():
 
 
 class TestIDStr:
+    def test_base_full(self):
+        with solconf_package(
+            {
+                "main": """
+a = 1
+id_str_0 = id_str(full=True)
+b = load('.submod')
+id_str_1 = id_str(full=True)
+""",
+                "submod": """
+c:noid = 2
+d = 3
+""",
+            }
+        ) as root:
+            #
+            rslvd = load_config(root / "main.solconf")
+            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main"
+
+            #
+            rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"])
+            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,b.d=4"
+
     def test_base(self):
         with solconf_package(
             {
@@ -50,4 +73,4 @@ d = 3
 
             #
             rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"])
-            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,b.d=4"
+            assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,d=4"
