@@ -12,15 +12,16 @@ class TestSolConfModule:
     def test_load(self):
         mdl = load_test_data("solconf_module_tests/main", resolve=False)
         assert (
-            load_test_data("solconf_module_tests/main", resolve=True)["red"] == "redish"
+            load_test_data("solconf_module_tests/main", resolve=True)["red"]
+            == "reddish"
         )
-        assert resolve(load_test_data("solconf_module_tests/main").red) == "redish"
+        assert resolve(load_test_data("solconf_module_tests/main").red) == "reddish"
 
     def test_submodule(self):
         # No overrides
         module = load_test_data("solconf_module_tests/main", package_name=uuid4().hex)
-        assert resolve(module)["red"] == "redish"
-        assert resolve(module.red) == "redish"
+        assert resolve(module)["red"] == "reddish"
+        assert resolve(module.red) == "reddish"
         assert resolve(module)["chosen_color"] == "blueish"
         assert resolve(module.chosen_color) == "blueish"
 
@@ -30,8 +31,8 @@ class TestSolConfModule:
             package_name=uuid4().hex,
             overrides=["chosen_color='green'"],
         )
-        assert resolve(module)["red"] == "redish"
-        assert resolve(module.red) == "redish"
+        assert resolve(module)["red"] == "reddish"
+        assert resolve(module.red) == "reddish"
         assert resolve(module)["chosen_color"] == "greenish"
         assert resolve(module.chosen_color) == "greenish"
 
@@ -56,7 +57,7 @@ class TestSolConfModule:
         module = load_test_data("solconf_module_tests/main", package_name=uuid4().hex)
         out = displayable(module)
         assert out == {
-            "red:{'promoted': False}": {"color": "redish"},
+            "red:{'promoted': False}": {"color": "reddish"},
             "chosen_color": {"color": "blueish"},
         }
 

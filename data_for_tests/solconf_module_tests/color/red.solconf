@@ -1,2 +1,3 @@
 from soleil import *
-color: promoted = "redish"
+
+color: promoted = "reddish"
