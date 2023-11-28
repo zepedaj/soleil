@@ -32,6 +32,15 @@ def root_stem(root_config=None) -> str:
     return (root_config or infer_root_config()).__file__.stem
 
 
+def package_overrides(as_source=True):
+    overrides = GLOBAL_LOADER.package_overrides[infer_solconf_package()]
+    if as_source:
+        overrides = [ovr.source for ovr in overrides]
+        if any(ovr is None for ovr in overrides):
+            raise ValueError(f"Could not retrieve the source for override {ovr}")
+    return overrides
+
+
 class id_str(RStr):
     def __init__(self, glue=",", safe=True, full=False, with_root_stem=True):
         """

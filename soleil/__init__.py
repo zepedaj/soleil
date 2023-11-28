@@ -25,10 +25,27 @@ __all__ += [
 ]
 
 # Utilities
-from soleil.utils import id_str, root_stem, sub_dir, derive, temp_dir, spawn
+from soleil.utils import (
+    id_str,
+    root_stem,
+    sub_dir,
+    derive,
+    temp_dir,
+    spawn,
+    package_overrides,
+)
 from soleil.rcall import rcall
 
-__all__ += ["id_str", "root_stem", "sub_dir", "derive", "temp_dir", "spawn", "rcall"]
+__all__ += [
+    "id_str",
+    "root_stem",
+    "sub_dir",
+    "derive",
+    "temp_dir",
+    "spawn",
+    "rcall",
+    "package_overrides",
+]
 
 # Overridables
 #
