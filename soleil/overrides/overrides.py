@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 from pglib.validation import NoItem, checked_get_single
 from soleil._utils import (
@@ -81,17 +82,45 @@ def cast_overrides(overrides: List[OverrideSpec]) -> List[Override]:
 
 
 def eval_overrides(
-    overrides: Union[OverrideSpec, List[OverrideSpec]], globals_, locals_
+    overrides: Union[OverrideSpec, List[OverrideSpec]],
+    globals_=None,
+    locals_=None,
+    check_unique=True,
 ) -> List[PreCompOverride]:
     """
     Computes the value of all input overrides.
     """
+    globals_ = globals_ or {}
+    locals_ = locals_ or {}
     if not isinstance(overrides, List):
         overrides = [overrides]
-    return [
+    out = [
         PreCompOverride.from_override(_ovr, globals_, locals_)
         for _ovr in cast_overrides(overrides)
     ]
+
+    # Check unique targets
+    if check_unique:
+        counts = Counter(_y.target.as_str() for _y in out)
+        if multiply_defined := [_t for _t, _c in counts.items() if _c > 1]:
+            raise ValueError(
+                f"Multiple overrides provided for target(s) `{', '.join(multiply_defined)}`"
+            )
+
+    return out
+
+
+def merge_overrides(
+    overrides: List[PreCompOverride], new_overrides: List[PreCompOverride]
+):
+    """ """
+
+    new_targets = {x.target.as_str(): x for x in new_overrides}
+
+    return [
+        x if (ts := x.target.as_str()) not in new_targets else new_targets.pop(ts)
+        for x in overrides
+    ] + list(new_targets.values())
 
 
 def _soleil_override(target_name: str, value: Any):

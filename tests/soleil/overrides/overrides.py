@@ -1,5 +1,8 @@
 from tests import load_test_data
+import re
+import pytest
 from soleil.overrides.variable_path import VarPath
+from soleil.overrides import overrides as mdl
 
 
 class TestOverrides:
@@ -100,3 +103,25 @@ class TestOverrides:
             "b": 2,
             "m": {"c": 4, "d": 5},
         }
+
+
+class TestFxns:
+    def test_multiply_defined(self):
+        with pytest.raises(
+            ValueError, match=re.escape("Multiple overrides provided for target(s) `a`")
+        ):
+            mdl.eval_overrides(["a=2", "a=3"], {}, {})
+
+        with pytest.raises(
+            ValueError,
+            match=re.escape("Multiple overrides provided for target(s) `a.x.y`"),
+        ):
+            mdl.eval_overrides(["a.x.y=2", "a.z.b=3", {"a.x.y": 5}], {}, {})
+
+    def test_merge(self):
+        os1 = mdl.eval_overrides(["a=1", "b=2"])
+        os2 = mdl.eval_overrides(["c=1", "b=3"])
+
+        mos = mdl.merge_overrides(os1, os2)
+
+        assert {x.source for x in mos} == {"a=1", "b=3", "c=1"}
