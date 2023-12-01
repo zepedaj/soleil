@@ -1,16 +1,19 @@
+""" Resolved calls with resolved parameters """
 from typing import Any, Callable
 from soleil import resolve
 from soleil.resolvers.base import TypeResolver
 
 
 class rcall:
+    """Supports calling resolvables with resolvable parameters"""
+
     def __init__(self, fxn: Callable, *args: Any, **kwargs: Any):
         self.fxn = fxn
         self.args = args
         self.kwargs = kwargs
 
     def __call__(self):
-        """Resolves the arguments and fxn and makes the call"""
+        """Resolves the arguments and callable and then makes the call"""
 
         return resolve(self.fxn)(
             *[resolve(_x) for _x in self.args],

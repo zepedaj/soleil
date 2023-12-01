@@ -38,7 +38,7 @@ class submodule(Overridable):
         #. ``target = submodule(parent_module, overridable_submodule)``
 
         #. ``target = submodule(overridable_submodule)`` In this case, the the parent
-        module name is deduced from the target name -- e.g., this is equivalent to ``target = submodule('.target', overridable_submodule)
+        module name is deduced from the target name -- e.g., this is equivalent to ``target = submodule('.target', overridable_submodule)``
 
         .. code-block::
 

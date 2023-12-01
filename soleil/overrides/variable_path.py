@@ -162,14 +162,12 @@ def deduce_soleil_var_path(
     Will return ``None`` if the variable is not visible (e.g., it is promoted, and hence its name is not accessible)
 
     :param target_name: The name of the variable whose name is being deduced.
-    :param frame: The frame where the variable named ``target_name`` is being defined -- by default assumed to be the the parent frame of the caller,
-    since ``deduce_soleil_var_path`` is usually called within :func:`_soleil_overrides` or :func:``.
-    :param relative: Whether to return a variable path relative to the containing module. By default, an absoulte var path is returned that is relative
-    to the root config.
+    :param frame: The frame where the variable named ``target_name`` is being defined -- by default assumed to be the the parent frame of the caller, since ``deduce_soleil_var_path`` is usually called within :func:`_soleil_overrides`.
+    :param relative: Whether to return a variable path relative to the containing module. By default, an absoulte var path is returned that is relative to the root config.
 
     Example:
 
-    .. test-code::
+    .. testcode::
 
         # main.solconf
         assert __soleil_var_path__ == VarPath() # Is True (this is the root config)

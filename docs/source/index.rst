@@ -1,18 +1,27 @@
 
-Soleil - Lucid configuration
-===================================
+
+.. include:: content/intro.rst
 
 .. toctree::
+   :hidden:
+
+   self
+
+.. toctree::
+   :hidden:
    :maxdepth: 2
 
-   content/intro
    content/getting_started
+   content/solconf_modules
+   content/overrides
+   content/pre_processor
+   content/getting_started_old
    content/cli_overrides
    content/modules
    content/todo
 
-Indices and tables
-------------------
+Indices
+--------
 
 * :ref:`genindex`
 * :ref:`modindex`

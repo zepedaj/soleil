@@ -72,3 +72,11 @@ autodoc_default_options = {
 }
 autosummary_generate = True
 todo_include_todos = True
+
+
+##
+rst_prolog = """
+.. |argparse| replace:: `argparse <https://docs.python.org/3/library/argparse.html>`__
+.. |SolConfArg| replace:: :class:`~soleil.cli_tools.solconfarg.SolConfArg`
+.. |ast| replace:: `ast <https://docs.python.org/3/library/ast.html>`__
+"""

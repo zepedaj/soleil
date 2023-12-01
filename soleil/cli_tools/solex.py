@@ -27,7 +27,10 @@ def solex(
     """
     Decorator that builds a CLI command similar to the :ref:`solex script <solex script>` and applies the wrapped callable, if any, to the object resolved from the configuration file.
 
-    The returned command exposes a ``parser`` attribute of type |argparse.ArgumentParser| that can be used to add extra CLI arguments that are passed to the wrapped callable. Depending on the specifications of the ``conf`` argument of type |SolConfArg|, these extra arguments might need to be optional |argparse| arguments (see :ref:`Number of consumed CLI arguments` in the |SolConfArg| documentation).
+    The returned command exposes a ``parser`` attribute of type `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser> `_ that can be used
+    to add extra CLI arguments that are passed to the wrapped callable. Depending on the specifications of the ``conf`` argument of type :class:`~soleil.cli_tools.solconfarg.SolConfArg`,
+    these extra arguments might need to be optional `argparse <https://docs.python.org/3/library/argparse.html> `_ arguments (see :ref:`Number of consumed CLI arguments` in the
+    :class:`~soleil.cli_tools.solconfarg.SolConfArg` documentation).
 
     :param group: Pass in a climax group to make the solex call a sub-command.
 

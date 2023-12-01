@@ -15,11 +15,11 @@ from ._argparse_patches import ReduceAction
 
 class SolConfArg:
     """
-    Enables |SolConf| arguments in |argparse| CLIs.
+    Enables adding soleil configured objects as arguments in |argparse| CLIs.
 
     Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation).
 
-    Assuming no :ref:`overrides <CLI overrides>` are specified, doing so will set the parsed value of that argument to the resolved |SolConf| object loaded from the ``config_source`` initialization argument:
+    Assuming no :ref:`overrides <CLI overrides>` are specified, doing so will set the parsed value of that argument to the resolved object loaded from the ``config_source`` initialization argument:
 
     .. testsetup:: SolConfArg
 
@@ -82,13 +82,11 @@ class SolConfArg:
 
       Even when :class:`SolConfArg` is instantiated with a ``config_source`` argument, the value of ``config_source`` can be overriden from the command line using a :ref:`source clobber <source clobber>` override.
 
-    .. _CLI overrides:
-
     .. rubric:: CLI overrides
 
-    Extra CLI arguments passed to an |argparse| argument of type |SolConfArg| specify overrides that change the values in the loaded |SolConf| object. Override specifiers can be of three types:
+    Extra CLI arguments passed to an |argparse| argument of type |SolConfArg| specify overrides that change the values in the loaded resolvable. Override specifiers can be of three types:
 
-        * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case the assignment replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value. This new value can be a literal or |dstring|.
+        * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case the assignment replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
         * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. The target node, if any, is discarded, and the new node added.
         * **Source clobber (**=)**: Sets or replaces the ``config_source`` argument of the ``SolConfArg`` object. See :ref:`below <source clobber>`.
 
@@ -112,7 +110,7 @@ class SolConfArg:
           >>> sca2(["typing_a=c++", "typing_b=c++"])
           {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
 
-        Looking at the source file for :ref:`load_with_choices/config.yaml`, the |load| and |choices| modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
+        Looking at the source file for load_with_choices/config.yaml, modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
 
         .. doctest:: SolConfArg
           :options: +NORMALIZE_WHITESPACE
@@ -167,7 +165,7 @@ class SolConfArg:
 
         .. rubric:: Deeper overrides
 
-        The target of an override provided to the left of the override assignment operator can consist of any valid :ref:`reference string <with reference strings>`:
+        The target of an override provided to the left of the override assignment operator can consist of any valid :ref:`variable name path <variable name paths>`:
 
         .. doctest:: SolConfArg
            :options: +NORMALIZE_WHITESPACE
@@ -246,7 +244,7 @@ class SolConfArg:
         2) For each override:
 
           1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
-          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitly with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are |load| targets. Because of this application of modifiers, the order in which overrides are provided is important.
+          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitly with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are load targets. Because of this application of modifiers, the order in which overrides are provided is important.
           3) Assign the override value depending on the :ref:`override type <CLI overrides>`.
 
         """
