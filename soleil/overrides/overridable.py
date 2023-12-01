@@ -1,6 +1,6 @@
 import abc
 from types import FrameType
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from soleil._utils import infer_solconf_module, get_global_loader
 
@@ -88,3 +88,33 @@ class submodule(Overridable):
                 _frame=frame,
             )
         )
+
+
+class choices(Overridable):
+    """
+    Choice supporting convenient string-based CLI override
+
+    .. code-block::
+
+        # main.solconf
+        a:as_type = choices({'A':'submod1:A', 'B':'symbod2:B'}, 'A')
+        color = choices({'red':[1,0,0], 'green':[0,1,0]}, 'blue':[0,0,1], 'red')
+
+    .. code-block:: bash
+
+
+        bash:~$ solex ./main a='"B"' color='"green"'
+
+
+
+    """
+
+    def __init__(self, values: Dict[str, Any], default):
+        self.values = dict(values)
+        self.choice = default
+
+    def set(self, choice):
+        self.choice = choice
+
+    def get(self, *args, **kwargs):
+        return self.values[self.choice]

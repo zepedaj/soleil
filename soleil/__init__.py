@@ -49,7 +49,7 @@ __all__ += [
 
 # Overridables
 #
-from soleil.overrides.overridable import submodule
+from soleil.overrides.overridable import submodule, choices
 from soleil.overrides.req import req
 
-__all__ += ["submodule", "req"]
+__all__ += ["submodule", "choices", "req"]
