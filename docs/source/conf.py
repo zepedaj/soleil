@@ -22,7 +22,7 @@ copyright = "2023, Joaquin Zepeda"
 author = "Joaquin Zepeda"
 
 # The full version, including alpha/beta/rc tags
-release = "beta"
+release = "alpha"
 
 
 # -- General configuration ---------------------------------------------------
@@ -54,6 +54,11 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+html_logo = "images/soleil_transparent.png"
+html_theme_options = {
+    #    "logo_only": True,
+    "display_version": True,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -79,4 +84,6 @@ rst_prolog = """
 .. |argparse| replace:: `argparse <https://docs.python.org/3/library/argparse.html>`__
 .. |SolConfArg| replace:: :class:`~soleil.cli_tools.solconfarg.SolConfArg`
 .. |ast| replace:: `ast <https://docs.python.org/3/library/ast.html>`__
+.. |solex| replace:: :ref:`solex <solex>`
+.. |@solex| replace:: :ref:`@solex <@solex>`
 """
