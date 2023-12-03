@@ -35,6 +35,7 @@ from soleil.utils import (
     package_overrides,
 )
 from soleil.rcall import rcall
+from soleil.special.resolved import resolved
 
 __all__ += [
     "id_str",
@@ -44,6 +45,7 @@ __all__ += [
     "temp_dir",
     "spawn",
     "rcall",
+    "resolved",
     "package_overrides",
 ]
 
