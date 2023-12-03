@@ -1,0 +1,68 @@
+# coding: utf-8
+from soleil import *
+import torch
+import torch.nn as nn
+
+type: as_type = train_all
+# model,
+# corpus,
+# train_data,
+# val_data,
+# test_data,
+# clip,
+# bptt,
+# batch_size,
+# criterion,
+# log_interval,
+# lr,
+# epochs,
+# save,
+# onnx_export,
+
+device: (hidden, cast(torch.device)) = choices(["cpu", "mps", "cuda"])
+seed: (hidden, cast(torch.manual_seed)) = 1111
+
+
+class corpus:
+    type: as_type = "soleil_examples.world_language_model.data:Corpus"
+    path = "/tmp/soleil_examples/world_language_model"
+
+
+eval_batch_size = 10
+
+
+class batchified:
+    type: as_type = lambda corpus, name, bsz, device: batchify(
+        getattr(corpus, name), bsz, device
+    )
+    corpus = corpus
+    name = req()
+    bsz = req()
+
+
+class train_data(batchified):
+    name = "train"
+    bsz = 20
+
+
+class eval_data(batchified):
+    name = "valid"
+    bsz = 10
+
+
+class test_data(eval_data):
+    name = "test"
+
+
+# To access `dictionary`, we first need to resolve corpus. We delay
+# that until resolution using r() -- r('corpus').dictionary returns a resolvable
+# and not the actual attribute. The call to len() also  needs to be delayed until
+# resolution with rcall()
+model = submodule(
+    ".models", "LSTM", reqs={"ntokens": rcall(len, r("corpus").dictionary)}
+)
+
+criterion = nn.NLLLoss()
+
+
+lr = 20

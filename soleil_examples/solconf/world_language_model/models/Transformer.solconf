@@ -1,0 +1,7 @@
+from soleil import promoted, as_type, spawn
+
+
+@promoted
+class model(spawn("._base_model")):
+    type: as_type = "soleil_examples.world_language_model:TransformerModel"
+    nhead = 2

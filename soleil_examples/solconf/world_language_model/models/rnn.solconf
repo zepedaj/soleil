@@ -1,0 +1,7 @@
+from soleil import spawn, as_type, promoted, choices, name
+
+
+@promoted
+class model(spawn("._base_model")):
+    type: as_type = "soleil_examples.world_language_model:RNNModel"
+    flavor: name("rnn_type") = choices(["RNN_TANH, RNN_RELU, LSTM, GRU"])

@@ -1,0 +1,10 @@
+from soleil import promoted, req
+
+
+@promoted
+class model:
+    ntokens = req()
+    emsize = 200
+    nhid = 200
+    nlayers = 2
+    dropout = 0.2
