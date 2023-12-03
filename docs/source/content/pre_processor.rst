@@ -1,16 +1,16 @@
 
 Soleil Pre-processor
-########################
+===========================
 
-Various functionalities provided by soleil rely on Python language modifications carried out by the **soleil pre-processor**. The pre-processor exploits Python's `ast module <https://docs.python.org/3/library/ast.html>`_ to modify the parsed syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
+Various functionalities provided by |soleil| rely on Python language modifications carried out by the **|soleil| pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
 
 
 
 Pre-processor Directives
-=========================
+---------------------------
 
 :func:`load`
----------------
+^^^^^^^^^^^^^^
 
 When used as a simple assignment such as
 
@@ -26,11 +26,11 @@ the pre-processor will automatically inject the target name keyword argument to 
 
     a = load('.option', _target='a')
 
-
+This makes it possible to compute |var name paths| to support CLI overrides.
 
 
 :func:`promoted`
------------------
+^^^^^^^^^^^^^^^^^
 
 See the documentation for :func:`promoted`. Promoted members are skipped when building :ref:`variable name paths` and thus the name of the promoted module member needs to be known before the module executes. Extracting this name is part of the job the pre-processor does.
 
@@ -38,7 +38,7 @@ See the documentation for :func:`promoted`. Promoted members are skipped when bu
 Converting assignments to override checks
 -------------------------------------------
 
-The pre-processor converts any variable assignment to a call to the soleil override checker:
+The pre-processor converts any variable assignment to a call to the |soleil| override checker:
 
 For example, the code
 
@@ -52,9 +52,17 @@ is converted to
 
    a = _soleil_override('a', 1)
 
-The :func:`_soleil_override` function is not a user-facing function but rather operates under the hood. Its main task is to check the provided CLI overrides and return the matching one, if any, or the original value otherwise.
+The :func:`~soleil.overrides.overrides._soleil_override` function is not a user-facing function but rather operates under the hood. Its main task is to check the provided CLI overrides and return the matching one, if any, or the original value otherwise. It also adds support for special :class:`~soleil.overrides.overridable.Overridable` values such as :class:`~soleil.overrides.overridable.submodule` and :class:`~soleil.overrides.overridable.choices` that use the user-supplied override value to choose a submodule or value.
 
 Hiding imported members
 ------------------------
 
-The pre-processor also checks whether any imports are done within a solconf module and adds those names to the list of default-hidden module members that will not be passed as keywords to the module's type call.
+The pre-processor also checks whether any imports are done within a solconf module and adds those names to the list of default-hidden module members that will not be passed as keywords to the module's type call. This can lead to unexpected behavior when a loaded member is re-defined, as this re-defined member will still be hidden::
+
+  import os # os is implicitly hidden
+
+  os = 'new value' # os is still hideen
+
+  os:visible = 'new value' # os is now visible
+
+Explicitly annotating the member with |visible|, as shown above, overrides the implicit hidden annotation.

@@ -26,7 +26,7 @@ class SolConfArg:
       import conf
       from pathlib import Path
       examples_root = str(Path(conf.__file__).parent / 'content') + '/'  # Necessary bc CWD changes between `make doctest` runs.
-      from soleil import SolConfArg
+      from soleil.cli_tools import SolConfArg
       from rich import print
 
 

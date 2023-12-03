@@ -13,11 +13,9 @@
 
    content/getting_started
    content/automatic_cli
-   content/solconf_modules
    content/overrides
    content/pre_processor
-   content/getting_started_old
-   content/cli_overrides
+   content/resolvables
    content/modules
    content/todo
 

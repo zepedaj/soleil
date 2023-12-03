@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from soleil.cli_tools import solex as mdl
+from soleil.cli_tools import solex_decorator as mdl
 
 global OUTPUT
 
@@ -27,7 +27,7 @@ def test_group():
     global OUTPUT
     OUTPUT = None
 
-    from soleil import solex
+    from soleil.cli_tools.solex_decorator import solex
     import climax as clx
 
     @clx.group()

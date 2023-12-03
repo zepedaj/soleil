@@ -1,9 +1,8 @@
 # Core
 from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
-from soleil.cli_tools.solex import solex
 
-__all__ = ["load_config", "resolve", "solex"]
+__all__ = ["load_config", "resolve"]
 
 
 # Modifiers

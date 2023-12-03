@@ -125,7 +125,8 @@ def merge_overrides(
 
 def _soleil_override(target_name: str, value: Any):
     """
-    Returns the assigned value or an override if any was specified.
+    Returns the assigned value or an override if any was specified. Adds support for special adds support for special :class:`~soleil.overrides.overridable.Overridable` values such as
+    :class:`~soleil.overrides.overridable.submodule` and :class:`~soleil.overrides.overridable.choices` that use the user-supplied override value to choose a submodule or value.
     """
 
     frame = get_caller_frame()

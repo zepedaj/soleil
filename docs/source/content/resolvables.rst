@@ -1,27 +1,8 @@
-Getting Started Old
-========================
+Resolvables
+===================
 
 
-Soleil is a configuration system that allows you to specify arbitrary python objects in terms of reconfigurable meta parameters. For example, a set of presentation colors can be specified in terms
-of the following meta-parameters organized into a python class:
-
-.. testcode::
-
-   class model:
-        type:as_type = 'torch.nn.Linear'
-
-
-Meta parameters are resolved into objects used in target programs:
-
-.. testcode::
-
-   assert resolve(presentation_colors) == {'foreground':'blue', 'background':'yellow', 'font':'black'}
-
-Loading a soleil configuration
-
-Solconf files can be seen as specification of meta parameters that will then be resolved into an actual paramtere
-
-SolConf modules
+SolConf Modules
 -----------------
 Solconf modules are regular python modules augmented with extra functionality and stored in solconf package directory hierarchies containing files having ``'.solconf'`` extensions. To load a solconf package, use :func:`soleil.load_config` to load any of the modules in the package root:
 
@@ -57,8 +38,76 @@ Any sub-directory within the package root can be loaded from within a solconf mo
 
 Solconf modules that have a promoted member that supports subscripting (e.g., a dictionary or a list) can be accessed directly with a subscript even if the member has not been resolved.
 
-File syntax
---------------
+Resolving SolConf Modules
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Solconf modules can be resolved by specifying a member with an explicit :func:`as_type` annotation:
+
+.. code-block::
+
+   type:as_type = 'numpy.array'
+   object=[0,1,2,3]
+   dtype='f'
+
+
+If no :func:`as_type`-annotated member is provided, the module will instead resolve to a dictionary containing all members:
+
+.. code-block::
+
+   alpha = 1
+   beta = 2
+   gamma = 3
+
+If no :func:`as_type` member is provided and further a single member is annotated with :func:`promoted`, then the module
+will resolve to that member :
+
+.. code-block::
+
+   # package/config.solconf
+   alpha = 1
+   beta:promoted = 2
+   gamma = 3
+
+   # main.py
+   assert load_config('package/config.solconf') == 2
+
+Loading a module containing a promoted member will return that member by default:
+
+.. code-block::
+
+
+
+    # package/config.solconf
+
+    class Trunk:
+       ...
+
+
+    class NonLinearity:
+        ...
+
+    @promoted
+    class Model:
+        trunk = Trunk
+        ...
+
+
+   # main.py
+   assert load(main.solconf) is Model
+
+
+Classes
+--------
+Missing
+
+Python Containers
+--------------------
+
+Dictionaries, lists, tuples, sets
+
+.. warning:: Currently, container resolution does not preserve resolved instance uniqueness. The non-container members of resolved containers, however, will preserve uniqueness.
+
+Uniqueness of Resolution
+---------------------------------
 
 
 A resolvable object will only resolve once, meaning that all other references to that resolvable object will point to the same resolved object.
@@ -80,7 +129,7 @@ For the case of resolvable classes, this can be overriden by deriving from a giv
 
 
 Modifiers
-===========
+-----------
 
 Modifiers can be chained using a tuple:
 
@@ -107,60 +156,3 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
         
     class B(A):
         a:visible # TODO: need to implement a 'squash' version of merge where old values get overwritten if available.
-
-
-Pre-processor
-========================================
-
-
-Imported name hidding:
-----------------------------
-
-
-The pre-processor will automatically hide any imported names, regardless of the level at which the import happens:
-
-.. code-block::
-
-    # Will be automatically hidden in solconf modules:
-    
-    from numpy import array
-    from pandas import *
-    from scipy import linalg as la
-    
-    # We would like to resolve this
-    from my_solconf_module import important_parameter
-    
-    class A:
-        import numpy as np # Name np is hidden globally in the module
-    
-    
-Automatically-hidden imported variables can be made visible by assigning to a new variable or with an explicit annotation:
-
-.. code-block::
-
-    # Made visible by assignment to new name 
-    also_visible = important_parameter
-
-    # Original name made visible with modifier type hint
-    important_parameter:visible
-      
-  
-Converting assignments to :class:`Ref`
------------------------------------------
-
-In order to support :ref:`CLI overrides`, assignments involving expressions with named variables will be substituted by expressions instead having *references* to those named variables. This is so that any CLI override of a variable is propagated to any expression that depends on that variable. Function calls will also be replaced by calls that first resolve the input parameters. In the example below, when overriding ``var``, the new value will be correctly used in the two dependent expressions:
-
-.. code-block::
-
-   # Original code
-   var = 1
-   expr_1 = var
-   expr_2 = fxn(var)
-
-.. code-block::
-
-   # Equivalent modified code produced by the pre-processor
-   # that supports CLI overrides of `var`
-   var = 1
-   expr_1 = Ref('var')
-   expr_2 = refs_call(fxn, Ref('var'))

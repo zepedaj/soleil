@@ -1,7 +1,9 @@
-Getting started
+.. _Getting Started:
+
+Getting Started
 ================
 
-As an example of how to use soleil, we will build a system to train a basic classifier. The approach presented is a soleil porting of the `CIFAR classification example in the PyTorch website <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html>`_.
+As an example of how to use |soleil|, we will build a system to train a basic classifier. The approach presented is a |soleil| porting of the `CIFAR classification example in the PyTorch website <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html>`_.
 
 .. note:: An installable Python package with code for this and other examples can be found in ``<soleil code root>/soleil_examples``. You can install these examples as follows:
 
@@ -34,6 +36,10 @@ A solconf package is just a directory hierarchy containing ``*.solconf`` files t
 
 Since our aim is to create a training system, we will create a root configuration called ``train.solconf`` inside folder ``"soleil_examples/cifar/solconf/"``:
 
+.. _train.solconf:
+
+.. rubric:: train.solconf
+
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
 
 
@@ -51,8 +57,8 @@ routine by means of the line:
 
    type: as_type = "soleil_examples.cifar.train:train"
 
-The ``as_type`` annotation on the ``type`` member indicates to soleil that all other non-hidden members will be gathered as keyword variables and passed to this callable. The annotation further lets
-soleil know that any string value for the member will in fact contain a ``<module>:<entity>`` address that soleil will use to retrieve the actual callable. This is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
+The ``as_type`` annotation on the ``type`` member indicates to |soleil| that all other non-hidden members will be gathered as keyword variables and passed to this callable. The annotation further lets
+|soleil| know that any string value for the member will in fact contain a ``<module>:<entity>`` address that |soleil| will use to retrieve the actual callable. This is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
 
   from soleil_examples.cifar.train import train
 
@@ -92,9 +98,9 @@ When describing an object, it is often useful to rely on meta data that is not p
   data: hidden = load(".data.default")
   trainloader = data.trainloader
 
-This tells soleil not to pass in the ``data`` member to the module's ``as_type`` member. The dependent variable ``trainloader``, however, will be passed in.
+This tells |soleil| not to pass in the ``data`` member to the module's ``as_type`` member. The dependent variable ``trainloader``, however, will be passed in.
 
-Soleil will by default mark as hidden any member with a name prefixed by an underscore character ``'_'``. When an ``'_'``-prefixed name is expected by the ``as_type``  member, the variable can explicitly be marked as visible::
+|Soleil| will by default mark as hidden any member with a name prefixed by an underscore character ``'_'``. When an ``'_'``-prefixed name is expected by the ``as_type``  member, the variable can explicitly be marked as visible::
 
    _param:visible = ...
 
@@ -117,7 +123,7 @@ The path provided to the |load| function follows rules similar to module paths p
 Inheriting descriptions
 _________________________
 
-The data description solconf module ``"data.default"``  (path ``"soleil_examples/cifar/solconf/data/default.solconf"``) contains the following code:
+The data description solconf module ``"data.default"`` contains the following code:
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/data/default.solconf
 
@@ -153,7 +159,7 @@ The training and testing datasets inherit all the non-required members and overl
 
 .. rubric:: Differentiating instantiations
 
-A given soleil resolvable (e.g., ``trainset`` above) always resolves to the same instance of the description::
+A given |soleil| resolvable (e.g., ``trainset`` above) always resolves to the same instance of the description::
 
   obj1 = resolve(trainset)
   obj2 = resolve(trainset)
@@ -177,3 +183,7 @@ This can also be done with the convenience method ``derive``::
   obj2 = resolve(trainset2)
 
   assert obj1 is not obj2
+
+Inheriting from modules -- *promoted* and *spawn*
+------------------------------------------------------
+Pending

@@ -1,3 +1,5 @@
+.. _Overriding Configurations:
+
 Overriding Configurations
 ===========================
 
@@ -62,7 +64,7 @@ are included in the global context when executing the overrides.
 Mechanism
 ------------
 
-In order to support overrides, the soleil pre-processor converts every variable assignment such as
+In order to support overrides, the |soleil| pre-processor converts every variable assignment such as
 
 .. code-block::
 
@@ -108,7 +110,7 @@ For example, the variable paths for all variables are given in the comments belo
 
 
 
-In order to maintain the :attr:`__soleil_qualname__` module variables, the soleil pre-processor injects ``_target`` keywords into all simple :func:`load` statements (see the example above).
+In order to maintain the :attr:`__soleil_qualname__` module variables, the |soleil| pre-processor injects ``_target`` keywords into all simple :func:`load` statements (see the example above).
 
 
 String overrides parser

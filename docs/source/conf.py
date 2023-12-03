@@ -22,7 +22,7 @@ copyright = "2023, Joaquin Zepeda"
 author = "Joaquin Zepeda"
 
 # The full version, including alpha/beta/rc tags
-release = "alpha"
+release = "0.0.0 alpha"
 
 
 # -- General configuration ---------------------------------------------------
@@ -83,9 +83,14 @@ todo_include_todos = True
 rst_prolog = """
 .. |argparse| replace:: `argparse <https://docs.python.org/3/library/argparse.html>`__
 .. |SolConfArg| replace:: :class:`~soleil.cli_tools.solconfarg.SolConfArg`
-.. |ast| replace:: `ast <https://docs.python.org/3/library/ast.html>`__
+.. |ast| replace:: `AST <https://docs.python.org/3/library/ast.html>`__
 .. |solex| replace:: :ref:`solex <solex>`
 .. |@solex| replace:: :ref:`@solex <@solex>`
 .. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
 .. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
+.. |visible| replace:: :meth:`~soleil.resolvers.module_resolver.modifiers.visible`
+.. |var name paths| replace:: variable name paths
+.. |soleil| replace:: Soleil
+.. |as_type| replace:: ``as_type``
+.. |as_run| replace:: ``as_type``
 """
