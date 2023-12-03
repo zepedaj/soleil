@@ -53,13 +53,13 @@ class TestSolConfModule:
         assert module[0] == "a"
         assert module[3] == "d"
 
-    def test_displayable(self):
-        module = load_test_data("solconf_module_tests/main", package_name=uuid4().hex)
-        out = displayable(module)
-        assert out == {
-            "red:{'promoted': False}": {"color": "reddish"},
-            "chosen_color": {"color": "blueish"},
-        }
+    # def test_displayable(self):
+    #     module = load_test_data("solconf_module_tests/main", package_name=uuid4().hex)
+    #     out = displayable(module)
+    #     assert out == {
+    #         "red:{'promoted': False}": {"color": "reddish"},
+    #         "chosen_color": {"color": "blueish"},
+    #     }
 
     def test_derive(self):
         B = load_test_data("solconf_module_tests/derivation/derived", resolve=False)

@@ -12,7 +12,7 @@ An example of such a system is a machine learning training system, where the dif
 Usually, all of these components are hard-coded into a single `main.py <https://github.com/pytorch/examples/blob/main/word_language_model/main.py>`_ file with an |argparse| command line interface that uses a global parameter namespace. Together, this *main.py*/*argparse* recipe becomes unwieldy and error-prone when more and more combinations are explored, slowing down further research development.
 
 
-.. rubric:: The Soleil Way
+.. rubric:: Soleil's Approach
 
 Soleil's answer to the above problems is comprised of the following:
 

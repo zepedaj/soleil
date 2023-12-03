@@ -1,0 +1,45 @@
+from soleil import *
+import torch
+import torchvision
+import torchvision.transforms as transforms
+
+
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+)
+
+
+class dataset:
+    type: as_type = "torchvision.datasets:CIFAR10"
+    root = "/tmp/soleil_examples/cifar"
+    train = req()
+    download = True
+    transform = transform
+
+
+class dataloader:
+    type: as_type = "torch.utils.data:DataLoader"
+    dataset = req()
+    shuffle = req()
+    batch_size = 4
+    num_workers = 2
+
+
+###
+class trainset(dataset):
+    train = True
+
+
+class testset(dataset):
+    train = False
+
+
+###
+class trainloader(dataloader):
+    dataset = trainset
+    shuffle = True
+
+
+class testloader(dataloader):
+    dataset = trainset
+    shuffle = False
