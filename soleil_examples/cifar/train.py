@@ -1,3 +1,6 @@
+# soleil_examples.cifar.train
+
+
 def train(net, trainloader, optimizer, criterion):
     for epoch in range(2):  # loop over the dataset multiple times
         running_loss = 0.0

@@ -86,4 +86,6 @@ rst_prolog = """
 .. |ast| replace:: `ast <https://docs.python.org/3/library/ast.html>`__
 .. |solex| replace:: :ref:`solex <solex>`
 .. |@solex| replace:: :ref:`@solex <@solex>`
+.. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
+.. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
 """

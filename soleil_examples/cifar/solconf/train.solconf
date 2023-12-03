@@ -1,5 +1,6 @@
+# soleil_examples/cifar/solconf/train.solconf
+
 from soleil import *
-from torch.optim import SGD
 from torch import nn
 
 type: as_type = "soleil_examples.cifar.train:train"

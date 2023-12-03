@@ -1,3 +1,5 @@
+# soleil_examples.cifar.model
+
 import torch
 from torch import nn
 from torch.nn import functional as F
