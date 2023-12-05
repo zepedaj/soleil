@@ -9,6 +9,7 @@ transform = transforms.Compose(
 )
 
 
+## Declaring unresolved templates
 class dataset:
     type: as_type = "torchvision.datasets:CIFAR10"
     root = "/tmp/soleil_examples/cifar"
@@ -25,7 +26,7 @@ class dataloader:
     num_workers = 2
 
 
-###
+## Declaing resolvable datasets
 class trainset(dataset):
     train = True
 
@@ -34,7 +35,7 @@ class testset(dataset):
     train = False
 
 
-###
+## Declaing resolvable dataloaders
 class trainloader(dataloader):
     dataset = trainset
     shuffle = True

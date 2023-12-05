@@ -3,14 +3,18 @@
 from soleil import *
 from torch import nn
 
+# The callable that resolves this module
 type: as_type = "soleil_examples.cifar.train:train"
+
+
+# The parameters of the as_type member are
+# `net`, `optimizer`, `criterion` and `trainloader`.
 
 
 class net:
     type: as_type = "soleil_examples.cifar.model:Net"
 
 
-# adding the parameters
 class optimizer:
     type: as_type = "torch.optim:SGD"
     params = resolved(net).parameters()
@@ -20,6 +24,7 @@ class optimizer:
 
 criterion = nn.CrossEntropyLoss()
 
+# `data` is hidden -- it is not passed to the as_type callable
 data: hidden = load(".data.default")
 
 trainloader = data.trainloader

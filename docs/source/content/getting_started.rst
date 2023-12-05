@@ -12,21 +12,23 @@ As an example of how to use |soleil|, we will build a system to train a basic cl
             cd <soleil code root>/soleil_examples
             pip install .
 
-          For convenience, ``solconf`` directories are placed inside each example module directory -- note that these do not need to be installed.
+          For convenience, ``solconf`` directories are placed inside each example module directory -- note that these do not need to be installed but assume that the *soleil_examples*
+          Python packge is installed.
 
 Model and training routine
 ----------------------------
 
-The Python codebase for the CIFAR training includes two modules.
-
+The Python codebase for the CIFAR classifier training includes two modules.
 
 The first module contains a model:
 
 .. literalinclude:: ../../../soleil_examples/cifar/model.py
+                    :linenos:
 
 The second module contains a training routine:
 
 .. literalinclude:: ../../../soleil_examples/cifar/train.py
+                    :linenos:
 
 
 The solconf package
@@ -41,6 +43,7 @@ Since our aim is to create a training system, we will create a root configuratio
 .. rubric:: train.solconf
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
 
 
 .. note:: Solconf package **root configurations** are ``*.solconf`` files within the package that are intended to be loaded by the user using |load_config|. All ``*.solconf`` files can be root
@@ -53,9 +56,12 @@ _____________________________
 The first **member** on this package specifies that the package describes a call to the training
 routine by means of the line:
 
-.. code-block::
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: as_type
+                    :end-at: as_type
+                    :lineno-match:
 
-   type: as_type = "soleil_examples.cifar.train:train"
 
 The ``as_type`` annotation on the ``type`` member indicates to |soleil| that all other non-hidden members will be gathered as keyword variables and passed to this callable. The annotation further lets
 |soleil| know that any string value for the member will in fact contain a ``<module>:<entity>`` address that |soleil| will use to retrieve the actual callable. This is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
@@ -71,13 +77,23 @@ Description attributes vs. instance attributes
 __________________________________________________________
 
 The second member -- ``optimizier`` -- describes an instance of PyTorch's `torch.optim:SGD <https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD>`_ optimizer. This description
-poses a problem since it requires a call to ``net.parameters()`` to let the optimizer know what parameters we will optimize. But at this point we only have ``net``'s description and not the actual instance. We hence create a special object ``resolved(net)`` that will lazily evaluate all nested attributes, subscripts and calls  to ``net``, resolving these until the entire solconf module is resolved::
+poses a problem since it requires a call to ``net.parameters()`` to let the optimizer know what parameters we will optimize. But at this point we only have ``net``'s description and not the actual instance. We hence create a special object ``resolved(net)`` that will lazily evaluate all nested attributes, subscripts and calls  to ``net``, resolving these until the entire solconf module is resolved:
 
-  params = resolved(net).parameters()
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: params = resolved(net).parameters()
+                    :end-at: params = resolved(net).parameters()
+                    :lineno-match:
 
-If we did not need to enable configuration of ``net``, we could have instead assigned the instance of net directly, as is the case for the `CrossEntropyLoss <https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss>`_ criterion::
 
-  criterion = nn.CrossEntropyLoss()
+
+If we did not need to enable configuration of ``net``, we could have instead assigned the instance of net directly, as is the case for the `CrossEntropyLoss <https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss>`_ criterion:
+
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: criterion = nn.CrossEntropyLoss()
+                    :end-at: criterion = nn.CrossEntropyLoss()
+                    :lineno-match:
 
 
 For completeness, a possible configurable description of ``criterion`` could instead be::
@@ -93,10 +109,13 @@ For completeness, a possible configurable description of ``criterion`` could ins
 Hidden, visible and named members
 ___________________________________
 
-When describing an object, it is often useful to rely on meta data that is not passed to the ``as_type`` member -- we can do this by annotating members with the special :attr:`~soleil.resolvers.modifiers.hidden` modifier::
+When describing an object, it is often useful to rely on meta data that is not passed to the ``as_type`` member -- we can do this by annotating members with the special :attr:`~soleil.resolvers.modifiers.hidden` modifier:
 
-  data: hidden = load(".data.default")
-  trainloader = data.trainloader
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: data: hidden = load(".data.default")
+                    :end-at: trainloader = data.trainloader
+                    :lineno-match:
 
 This tells |soleil| not to pass in the ``data`` member to the module's ``as_type`` member. The dependent variable ``trainloader``, however, will be passed in.
 
@@ -112,9 +131,13 @@ Alternatively, a different name can be used for the member and the keyword argum
 Loading sub-modules
 ____________________
 
-Since a description of the data used to train and test the model is complex and a concern of its own, we create it in a separate solconf module that we |load| using::
+Since a description of the data used to train and test the model is complex and a concern of its own, we create it in a separate solconf module that we |load| using:
 
-  data: hidden = load(".data.default")
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: data: hidden = load(".data.default")
+                    :end-at: data: hidden = load(".data.default")
+                    :lineno-match:
 
 The path provided to the |load| function follows rules similar to module paths provided to Python ``import`` statements. The main difference is that absolute paths will refer to top-level sub-modules within the same package. In this case, since the root config ``"train.solconf"`` is at the root of the package, then ``load(".data.default")`` and ``load("data.default")`` would both load the same sub-module.
 
@@ -126,6 +149,7 @@ _________________________
 The data description solconf module ``"data.default"`` contains the following code:
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/data/default.solconf
+                    :linenos:
 
 The module contains two base descriptions -- ``dataset`` and ``dataloader`` -- that will be derived by the training and testing datasets and dataloader descriptions. These base descriptions on their own cannot be resolved because they contain unspecified required members::
 
@@ -161,16 +185,21 @@ The training and testing datasets inherit all the non-required members and overl
 
 A given |soleil| resolvable (e.g., ``trainset`` above) always resolves to the same instance of the description::
 
+  from soleil import resolve
+
   obj1 = resolve(trainset)
   obj2 = resolve(trainset)
 
   assert obj1 is obj2
 
-This makes it possible to pass the same object to multiple ``as_type`` members. When different instances are required, one needs to derive a description for each instance::
+This makes it possible to pass the same object to multiple ``as_type`` members.
+
+When different instances are required, one needs to derive a description for each instance::
+
+  obj1 = resolve(trainset)
 
   class trainset2(trainset): pass
 
-  obj1 = resolve(trainset)
   obj2 = resolve(trainset2)
 
   assert obj1 is not obj2
