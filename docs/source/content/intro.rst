@@ -9,13 +9,14 @@ Taming the Curse of *main.py*
 |soleil|'s main goal is to provide a Python mechanism to assemble complex systems in a way that is
 
     * *declarative and extensible*,
-    * *automatically CLI-invokable* and
-    * *intuitively overridable*, while requiring
+    * *automatically CLI-invokable*,
+    * *intuitively overridable* and
+    * *fosters reusability* with
     * *minimal coding overhead*.
 
 An example of one such complex system is a machine learning training system, where the different components (model, optimizer, learning rate scheduler, dataset, dataloader, transformations/augmentations, and visualizations) have multiple options each defined by many different parameters.
 
-Usually, all of these components are hard-coded into a single `main.py <https://github.com/pytorch/examples/blob/main/word_language_model/main.py>`_ file with an |argparse| command line interface that uses a global parameter namespace. Together, this *main.py*/*argparse* recipe becomes unwieldy, difficult to extend and error-prone, slowing down further research development.
+Usually, all of these components are hard-coded into a single *main.py* file with an |argparse| command line interface that uses a global parameter namespace. Together, this *main.py*/*argparse* recipe becomes unwieldy, difficult to extend and error-prone, slowing down further research development.
 
 
 |soleil|'s Approach
@@ -29,4 +30,4 @@ Usually, all of these components are hard-coded into a single `main.py <https://
 * **Automatic, Flexible CLI:** Any |soleil| configuration file can be run as an executable directly using the built-in |solex| tool -- a fully fledged, extensible command line utility that plays nicely with the builtin :mod:`argparse` module. Usage as a decorator (see |@solex|) or within a standard :mod:`argparse` parser is also supported (See :ref:`Automatic CLI`).
 * **Sandboxed Overridability:** CLI calls (through |solex| or :ref:`argparse <argparse CLI>`) involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
 
-.. note:: The |soleil| logo was produced using a free version of `DALL-E <https://openai.com/research/dall-e>`_
+.. note:: The |soleil| logo and other images in this documentation were produced using a free version of `DALL-E <https://openai.com/research/dall-e>`_

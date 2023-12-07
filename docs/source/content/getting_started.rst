@@ -5,7 +5,7 @@ Getting Started
 
 As an example of how to use |soleil|, we will build a system to train a basic classifier. The approach presented is a |soleil| porting of the `CIFAR classification example in the PyTorch website <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html>`_.
 
-.. note:: An installable Python package with code for this and other examples can be found in ``<soleil code root>/soleil_examples``. You can install these examples as follows:
+.. note:: An installable Python package with code for this can be found in ``<soleil code root>/soleil_examples``. You can install these examples as follows:
 
           .. code-block:: bash
 
@@ -13,7 +13,7 @@ As an example of how to use |soleil|, we will build a system to train a basic cl
             pip install .
 
           For convenience, ``solconf`` directories are placed inside each example module directory -- note that these do not need to be installed but assume that the *soleil_examples*
-          Python packge is installed.
+          Python package is installed.
 
 Model and training routine
 ----------------------------
