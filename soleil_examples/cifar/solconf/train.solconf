@@ -7,7 +7,7 @@ from torch import nn
 type: as_type = "soleil_examples.cifar.train:train"
 
 
-# The parameters of the as_type member are
+# The parameters of the as_type member, declared below, are
 # `net`, `optimizer`, `criterion` and `trainloader`.
 
 

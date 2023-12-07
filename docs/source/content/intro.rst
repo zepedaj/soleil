@@ -30,4 +30,8 @@ Usually, all of these components are hard-coded into a single *main.py* file wit
 * **Automatic, Flexible CLI:** Any |soleil| configuration file can be run as an executable directly using the built-in |solex| tool -- a fully fledged, extensible command line utility that plays nicely with the builtin :mod:`argparse` module. Usage as a decorator (see |@solex|) or within a standard :mod:`argparse` parser is also supported (See :ref:`Automatic CLI`).
 * **Sandboxed Overridability:** CLI calls (through |solex| or :ref:`argparse <argparse CLI>`) involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
 
+
+.. warning:: Soleil configurations are in effect Python programs -- only run configurations that you trust.
+
+
 .. note:: The |soleil| logo and other images in this documentation were produced using a free version of `DALL-E <https://openai.com/research/dall-e>`_
