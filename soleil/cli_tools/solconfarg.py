@@ -23,23 +23,23 @@ class SolConfArg:
 
     .. testsetup:: SolConfArg
 
-      import conf
       from pathlib import Path
-      examples_root = str(Path(conf.__file__).parent / 'content') + '/'  # Necessary bc CWD changes between `make doctest` runs.
       from soleil.cli_tools import SolConfArg
       from rich import print
 
+      from soleil.cli_tools import solconfarg
+      soleil_examples = Path(solconfarg.__file__).parent.parent.parent / 'soleil_examples'
 
     .. doctest:: SolConfArg
 
       >>> from argparse import ArgumentParser
-      >>> from soleil import SolConfArg
+      >>> from soleil.cli_tools import SolConfArg
 
       >>> parser = ArgumentParser()
-      >>> parser.add_argument('sc', type=SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml'))
+      >>> parser.add_argument('sc', type=SolConfArg(soleil_examples / 'vanilla/main.solconf'))
       ReduceAction(...)
       >>> parser.parse_args([])
-      Namespace(sc={'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'})
+      Namespace(sc={'a': 1, 'b': 2, 'c': 3})
 
     .. _argparse patches note:
 
@@ -102,13 +102,13 @@ class SolConfArg:
 
           # Option 1: Path must be provided with argparse arguments
           >>> sca1 = SolConfArg()
-          >>> sca1([f'{examples_root}/yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"])
-          {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
+          >>> sca1([soleil_examples/'vanilla/main.solconf', "typing_a=c++", "typing_b=c++"])
+          {'a': 1, 'b': 2, 'c': 3}
 
           # Option 2: Path provided with argument definition
-          >>> sca2 = SolConfArg(f'{examples_root}/yaml/load_with_choices/config.yaml')
-          >>> sca2(["typing_a=c++", "typing_b=c++"])
-          {'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'}
+          >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
+          >>> sca2(["a=10", "c=30"])
+          {'a': 10, 'b': 2, 'c': 30}
 
         Looking at the source file for load_with_choices/config.yaml, modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
 
@@ -144,20 +144,13 @@ class SolConfArg:
 
         .. rubric:: Source clobber
 
-        In the case where a path is specified in the initializer, it can still be overriden using a root clobber assignment, *but doing so has a disadvantage*:
-
-        .. doctest:: SolConfArg
-
-          # Use a source clobber assignment **=<path> instead of this!
-          >>> sca2(['.*={"_::load,promote": ' + examples_root + 'yaml/colors/colors_config.yaml}'])
-          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': ...
-
-        Besides verbosity, the disadvantage of this approach is that the original ``config_source`` will still be loaded before the clobber assignment override is carried out. The **source clobber**  special syntax ``**=<path>`` has the same effect but is less verbose and avoids this drawback:
+        In the case where a path is specified in the initializer, it can still be overriden using a  **source clobber** override:
 
         .. doctest:: SolConfArg
 
           # Source clobber assignment must be the first argument in the overrides list
-          >>> sca2([f'**={examples_root}/yaml/colors/colors_config.yaml'])
+
+          >>> sca2([f"**={soleil_examples/'vanilla/main2.solconf'}"])
           {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': ...
 
         Note that the source clobber override must be the first item in the overrides list.
@@ -170,7 +163,7 @@ class SolConfArg:
         .. doctest:: SolConfArg
            :options: +NORMALIZE_WHITESPACE
 
-           >>> sca = SolConfArg(f'{examples_root}/yaml/colors/colors_config.yaml')
+           >>> sca = SolConfArg(soleil_examples/'vanilla/main.solconf')
            >>> sca()
            {...'layout': {'shape': 'spots',...}
            >>> sca(['layout.shape=square'])
@@ -196,12 +189,12 @@ class SolConfArg:
           SystemExit: 2
 
           # With no overrides
-          >>> parser.parse_args([f'{examples_root}/yaml/load_with_choices/config.yaml'])
-          Namespace(arg1={'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'})
+          >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf"])
+          Namespace(arg1={'a': 1, 'b': 2, 'c': 3})
 
           # With overrides
-          >>> parser.parse_args([f'{examples_root}/yaml/load_with_choices/config.yaml', "typing_a=c++", "typing_b=c++"])
-          Namespace(arg1={'typing_a': 'hard', 'typing_b': 'hard', 'typing_c': 'hard'})
+          >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf", "a=10", "c=30"])
+          Namespace(arg1={'a': 10, 'b': 2, 'c': 30})
 
 
 

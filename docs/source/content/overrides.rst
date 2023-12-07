@@ -13,7 +13,7 @@ Syntax
 
 The :func:`~soleil.load_config` function supports specifying values that will override those in the loaded configuration by means of its ``overrides`` parameter which must be a list with entries of various possible types (see :class:`OverrideSpec`):
 
-.. testcode::
+.. code-block::
 
    from soleil import load_config
 

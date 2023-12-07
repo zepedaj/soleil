@@ -22,7 +22,7 @@ class _NotProvided:
 
 
 def solex(
-    group: Callable, *, _fxn: Callable = _NotProvided, **solconfarg_kwargs
+    group: Callable = clx, *, _fxn: Callable = _NotProvided, **solconfarg_kwargs
 ) -> Callable:
     """
     Decorator that builds a CLI command similar to the |solex| and applies the wrapped callable, if any, to the object resolved from the configuration file.
@@ -42,10 +42,11 @@ def solex(
 
     .. testcode:: solex
 
-      import soleil as sl
+      from soleil.cli_tools import solex
+      import climax as clx
 
-      @sl.solex()
-      @sl.argument('--my-opt', default=0, type=int, help='My optional argument.')
+      @solex()
+      @clx.argument('--my-opt', default=0, type=int, help='My optional argument.')
       def foo(obj, my_opt):
           \"\"\" Optional doc string will override the default. \"\"\"
           ...
@@ -63,24 +64,21 @@ def solex(
     .. testoutput:: solex
       :options: +NORMALIZE_WHITESPACE
 
-      usage: ... [-h] [--print {final,resolved,tree,tree-no-modifs}]
-             [--my-opt MY_OPT] conf [conf ...]
+
+      usage: sphinx-build [-h] [--profile [DO_PROFILE]] [--pdb] [--show] [--my-opt MY_OPT] conf [conf ...]
 
       Optional doc string will override the default.
 
       positional arguments:
-        conf                  The path of the configuration file to launch and, optionally, any argument
-                              overrides.
+        conf                  The path of the configuration file to launch and, optionally, any argument overrides
 
       optional arguments:
         -h, --help            show this help message and exit
-        --print {final,resolved,tree,tree-no-modifs}
-                              Prints ('final') the final value, after the post-processor is applied,
-                              ('resolved') the resolved contents before applying the post-processor or
-                              ('tree') the node tree, optionally ('tree-no-modifs') before applying
-                              modifications.
+        --profile [DO_PROFILE]
+                              Profile the code and dump the stats to a file. The flag can be followed by a filename ('solex.prof' by default)
+        --pdb                 Start an interative debugging session on error
+        --show                Display solconf module without resolving and exit
         --my-opt MY_OPT       My optional argument.
-
 
     Note that the option also supports adding an extra arguments ``--my-opt`` that is also passed to the test function ``foo`` as argument ``my_opt``.
 
@@ -95,16 +93,17 @@ def solex(
 
     .. testcode:: solex
 
-      import soleil as sl
+      from soleil.cli_tools import solex
+      import climax as clx
 
-      @sl.group()
+      @clx.group()
       def my_command_group(): pass
 
       @my_command_group.command()
       def bar(): pass
 
-      @sl.solex(my_command_group)
-      @sl.argument('--my_opt', default=0, type=int, help='My optional argument.')
+      @solex(my_command_group)
+      @clx.argument('--my_opt', default=0, type=int, help='My optional argument.')
       def foo(obj, my_opt):
           \"\"\" Optional doc string will override the default. \"\"\"
           ...

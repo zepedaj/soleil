@@ -167,7 +167,7 @@ def deduce_soleil_var_path(
 
     Example:
 
-    .. testcode::
+    .. code-block::
 
         # main.solconf
         assert __soleil_var_path__ == VarPath() # Is True (this is the root config)

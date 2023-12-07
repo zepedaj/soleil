@@ -1,6 +1,9 @@
 Resolvables
 ===================
 
+.. testsetup::
+
+   from soleil import as_type, resolve, hidden, visible, name, cast
 
 SolConf Modules
 -----------------
@@ -117,7 +120,7 @@ For the case of resolvable classes, this can be overriden by deriving from a giv
 .. testcode::
 
     class RslvblA:
-        type:type_arg = lambda **x: x
+        type:as_type = lambda **x: x
         a = 1
         b = 2
 
