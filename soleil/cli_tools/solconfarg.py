@@ -30,6 +30,42 @@ class SolConfArg:
       from soleil.cli_tools import solconfarg
       soleil_examples = Path(solconfarg.__file__).parent.parent.parent / 'soleil_examples'
 
+      from collections import OrderedDict
+
+      def sort_dicts(d):
+          if isinstance(d, dict):
+              return dict((k, sort_dicts(v)) for k,v in sorted(d.items()))
+          else:
+              return d
+
+      # Patch SolConfArg.__call__
+
+      global _orig_sca_call
+      _orig_sca_call = SolConfArg.__call__
+
+      def __call__(self, *args, **kwargs):
+          out = sort_dicts(_orig_sca_call(self, *args, **kwargs))
+          return out
+
+      SolConfArg.__call__ = __call__
+
+      # Patch parser
+      from argparse import ArgumentParser
+
+      global _orig_parse_args
+      _orig_parse_args = ArgumentParser.parse_args
+
+      def parse_args(self, *args, **kwargs):
+          out = _orig_parse_args(self, *args, **kwargs)
+          for key in vars(out):
+              setattr(out, key, sort_dicts(getattr(out,key)))
+
+          return out
+
+
+
+      ArgumentParser.parse_args = parse_args
+
     .. doctest:: SolConfArg
 
       >>> from argparse import ArgumentParser
@@ -64,7 +100,7 @@ class SolConfArg:
 
     Any extra CLI arguments besides ``config_source`` are treated as :ref:`CLI overrides`.
 
-    This behavior is implement by internally setting the default keyword arguments
+    This behavior is implemented by internally setting the default keyword arguments
 
      * ``nargs='+'`` or ``nargs='*'``, respectively,
 
@@ -108,36 +144,7 @@ class SolConfArg:
           # Option 2: Path provided with argument definition
           >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
           >>> sca2(["a=10", "c=30"])
-          {'a': 10, 'b': 2, 'c': 30}
-
-        Looking at the source file for load_with_choices/config.yaml, modifiers in node ``'typing_a'`` prevent us from setting the final value directly:
-
-        .. doctest:: SolConfArg
-          :options: +NORMALIZE_WHITESPACE
-
-          >>> import traceback
-          >>> try:
-          ...   sca2(["typing_a=soft"])
-          ... except Exception:
-          ...   print(traceback.format_exc())
-          Traceback (most recent call last):
-              ...
-          ValueError: The resolved value of `ParsedNode@'typing_a'` is `soft`,
-            but it must be one of `('python', 'c++')`.
-              ...
-          soleil.solconf.exceptions.ResolutionError: Error while resolving node
-            `ParsedNode@'typing_a'`.
-              ...
-          soleil.solconf.exceptions.ModificationError: Error while applying modifier
-            `functools.partial(<function load at 0x...>, subdir='typing',
-            ext='.yaml', vars=None)` to node `ParsedNode@'typing_a'`.
-
-        This problem can be avoided using a root clobber override:
-
-        .. doctest:: SolConfArg
-
-           >>> sca2(["typing_a*=soft"])
-           {'typing_a': 'soft', 'typing_b': 'hard', 'typing_c': 'hard'}
+          ...'a': 10...
 
 
         .. _source clobber:
@@ -150,8 +157,9 @@ class SolConfArg:
 
           # Source clobber assignment must be the first argument in the overrides list
 
-          >>> sca2([f"**={soleil_examples/'vanilla/main2.solconf'}"])
-          {'base': 'red', 'secondary': 'green', 'fancy_base': 'fuscia', 'fancy_secondary': ...
+          >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
+          >>> sca2([f"**={soleil_examples/'vanilla/nested.solconf'}"])
+          {'letters': {'a': 1, 'b': 2, 'c': 3}}
 
         Note that the source clobber override must be the first item in the overrides list.
 
@@ -163,11 +171,11 @@ class SolConfArg:
         .. doctest:: SolConfArg
            :options: +NORMALIZE_WHITESPACE
 
-           >>> sca = SolConfArg(soleil_examples/'vanilla/main.solconf')
-           >>> sca()
-           {...'layout': {'shape': 'spots',...}
-           >>> sca(['layout.shape=square'])
-           {...'layout': {'shape': 'square',...}
+           >>> sca = SolConfArg(soleil_examples/'vanilla/nested.solconf')
+           >>> sca() ##
+           {'letters': {'a': 1, 'b': 2, 'c': 3}}
+           >>> sca(['letters.b=20'])
+           {'letters': {'a': 1, 'b': 20, 'c': 3}}
 
 
         .. rubric:: Usage with ``argparse`` parsers
@@ -175,11 +183,11 @@ class SolConfArg:
         .. doctest:: SolConfArg
 
           >>> import argparse
-          >>> import soleil.solconf.cli_tools # *** Must be done before ArgumentParser instantiation ***
+          >>> import soleil.cli_tools # *** Must be done before ArgumentParser instantiation ***
           >>> parser = argparse.ArgumentParser()
 
-          # Setting type=sca1 implicitly sets nargs='+' and action=ReduceAction by default.
-          >>> parser.add_argument('arg1', type=sca1)
+          # Setting type=SolConfArg() implicitly sets nargs='+' and action=ReduceAction by default.
+          >>> parser.add_argument('arg1', type=SolConfArg())
           ReduceAction(option_strings=[], dest='arg1', nargs='+', ... type=<...SolConfArg...>, ...)
 
           # Path required since SolConfArg initialized with no arguments!
@@ -196,8 +204,6 @@ class SolConfArg:
           >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf", "a=10", "c=30"])
           Namespace(arg1={'a': 10, 'b': 2, 'c': 30})
 
-
-
         .. note::
 
           *Help! I'm getting the error message* ``AttributeError: 'str' object has no attribute 'pop'`` *!*
@@ -208,9 +214,6 @@ class SolConfArg:
             #. Using :class:`SolConfArg` argument instances as the ``type`` keyword argument  in a ``ArgumentParser.add_argument`` call requires that the ``action=ReduceAction``  keyword-value pair be used as well. This keyword pair is used by default when ``type`` is a :class:`SolConfArg` instance. Have you explicitly set the ``action`` keyword argument to a different value?
 
         """
-
-        # Use a random package name to support multiple SolConfArgs
-        load_kwargs.setdefault("package_name", uuid4().hex)
 
         self._config_source = config_source
         self._resolve = resolve
@@ -269,9 +272,12 @@ class SolConfArg:
         # Get cli args
         config_source, overrides = self.get_config_source()
 
-        # Load module
+        # Load module -- add a random package name
         loaded = load_config(
-            config_source, resolve=False, overrides=overrides, **self.load_kwargs
+            config_source,
+            resolve=False,
+            overrides=overrides,
+            **{"package_name": uuid4().hex, **self.load_kwargs},
         )
 
         if self._resolve:

@@ -23,7 +23,7 @@ def load_config(
     _var_path=VarPath(),
 ):
     """
-    Creates a new package with root at the parent of the spcified configuration path, and loads the specified configuration path as a module in that package.
+    Creates a new package with root at the parent of the specified configuration path, and loads the specified configuration path as a module in that package.
 
     :param conf_path: The path of the module to load.
     :param package_name: The package name -- defaults to a random string.

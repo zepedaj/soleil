@@ -1,0 +1,3 @@
+from soleil import *
+
+letters = load(".main")

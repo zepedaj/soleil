@@ -6,7 +6,7 @@ Soleil -- Lucid Configurations
 Taming the Curse of *main.py*
 -----------------------------
 
-|soleil|'s main goal is to provide a Python mechanism to assemble complex systems in a way that is
+|soleil|'s main goal is to provide a Python mechanism for machine learning researchers to assemble flexible experiments in a way that is
 
     * *declarative and extensible*,
     * *automatically CLI-invokable*,
