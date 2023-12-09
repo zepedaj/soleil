@@ -137,12 +137,12 @@ the ``train.solconf`` root config could take this form::
   param1 = 1
   param2 = 2
 
-Invoking |solex| on this script will first instantiate the ``Experiment`` class and then invoke the ``as_run`` member on the resulting instance -- the ``as_run`` member in turn calls the train method on the built ``Experiment`` instance.
+Invoking |solex| on this script will first instantiate the ``Experiment`` class and then invoke the ``as_run`` member on the resulting instance -- in this case, the ``as_run`` member calls the ``train`` method on the built ``Experiment`` instance.
 
 Other solex options
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The |solex| script includes other useful functionality such as (``--profile``)  the ability to profile the code ran by the script, (``--pdb``) break into a debugger if an exception occurs or (``--show``) explore the configuration without resolving it.
+The |solex| script includes other useful functionality such as (``--profile``)  the ability to profile the code run by the script, (``--pdb``) break into a debugger if an exception occurs or (``--show``) explore the configuration without resolving it.
 
 .. code-block:: bash
 
@@ -168,7 +168,62 @@ The |solex| script includes other useful functionality such as (``--profile``)  
 
 *@solex()* decorator
 ----------------------------
-...
+
+The |@solex| decorator can be used to convert any Python function into a CLI script that takes an object retrieved from a solconf root config as its first argument:
+
+.. testcode:: solex
+
+  from soleil.cli_tools import solex
+  import climax as clx
+
+  @solex()
+  @clx.argument('--my-opt', default=0, type=int, help='My optional argument.')
+  def foo(obj, my_opt):
+      """ Optional doc string will override the default. """
+      ...
+
+  if __name__=='__main__':
+     foo()
+
+While not required, the example above makes use of the excellent |climax| module that provides a convenient |argparse| interface. One can use |@solex| in place of the `@climax.command <https://climax.readthedocs.io/en/latest/quickstart.html#getting-started>`_ decorator and subsequently decorate the function using any of the composable |climax| decorators -- in the example above we add an optional CLI argument ``--my-opt`` in this way.
+
+One can also make the generated command part of a `command group <https://climax.readthedocs.io/en/latest/quickstart.html#building-command-groups>`__ by specifying
+the climax group in the decorator as follows::
+
+  # /usr/bin/env python
+  # File './my_script'
+
+  import climax
+
+  @climax.group()
+  def main():
+      ...
+
+  @solex(main)
+  def train(obj):
+      ...
+
+  @solex(main)
+  def eval(obj):
+      ...
+
+  if __name__=='__main__':
+     foo()
+
+
+The resulting CLI contains two subcommands that can be invoked as follows (assuming the above sript is named ``my_script``)::
+
+  $ my_script train
+  $ my_script eval
+
+All of the above can also be done using standard |argparse| method calls directly instead of the |climax| interface by retrieving the ``ArgumentParser`` object from the decorated function:
+
+.. doctest:: solex
+
+   >>> foo.parser
+   ArgumentParser(...)
+
+
 
 .. _argparse CLI:
 

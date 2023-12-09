@@ -25,7 +25,7 @@ def solex(
     group: Callable = clx, *, _fxn: Callable = _NotProvided, **solconfarg_kwargs
 ) -> Callable:
     """
-    Decorator that builds a CLI command similar to the |solex| and applies the wrapped callable, if any, to the object resolved from the configuration file.
+    Decorator that builds a CLI command similar to the |solex| script and applies the wrapped callable, if any, to the object resolved from the configuration file.
 
     The returned command exposes a ``parser`` attribute of type `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ that can be used
     to add extra CLI arguments that are passed to the wrapped callable. Depending on the specifications of the ``conf`` argument of type :class:`~soleil.cli_tools.solconfarg.SolConfArg`,

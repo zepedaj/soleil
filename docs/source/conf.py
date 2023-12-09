@@ -82,10 +82,12 @@ todo_include_todos = True
 ##
 rst_prolog = """
 .. |argparse| replace:: `argparse <https://docs.python.org/3/library/argparse.html>`__
+.. |climax| replace:: `climax <https://climax.readthedocs.io/en/latest/>`__
 .. |SolConfArg| replace:: :class:`~soleil.cli_tools.solconfarg.SolConfArg`
 .. |ast| replace:: `AST <https://docs.python.org/3/library/ast.html>`__
 .. |solex| replace:: :ref:`solex <solex>`
-.. |@solex| replace:: :ref:`@solex <@solex>`
+.. |@solex| replace:: :func:`@solex <soleil.cli_tools.solex_decorator.solex>`
+.. |@solex doc| replace:: :ref:`@solex decorator <@solex>`
 .. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
 .. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
 .. |visible| replace:: :meth:`~soleil.resolvers.module_resolver.modifiers.visible`
