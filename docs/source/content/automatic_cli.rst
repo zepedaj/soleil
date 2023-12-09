@@ -174,4 +174,63 @@ The |solex| script includes other useful functionality such as (``--profile``)  
 
 *argparse* parsers
 -----------------------------
-...
+
+Soleil supports adding described objects to Python argument parsers of type ``argparse.ArgumentParser``. Such objects will be instantiated from
+the description of a solconf root config. Supplying overrides is likewise supported.
+
+Given a standard Python parser:
+
+
+.. testsetup:: SolConfArg
+
+   import argparse
+   import soleil
+   from pathlib import Path
+   soleil_examples = Path(soleil.__file__).parent.parent / 'soleil_examples'
+
+   import conf
+
+   conf.fix_dict_order()
+
+.. doctest:: SolConfArg
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> import argparse
+   >>> parser = argparse.ArgumentParser()
+
+
+An argument whose value will be obtained by resolving a |soleil| root config can be added by setting the ``type`` keyword of that new argument an instance of |SolConfArg|:
+
+.. doctest:: SolConfArg
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> from soleil.cli_tools import SolConfArg
+   >>> parser.add_argument("new_arg", type=SolConfArg())
+   ReduceAction(...)
+
+In this case, the source config will need to be specified from the CLI:
+
+.. doctest:: SolConfArg
+
+   >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf"])
+   Namespace(new_arg={'a': 1, 'b': 2, 'c': 3})
+
+Alternatively, we can specify the source config when adding the new argument
+
+.. doctest:: SolConfArg
+   :options: +NORMALIZE_WHITESPACE
+
+   >>> parser = argparse.ArgumentParser()
+   >>> parser.add_argument("new_arg", type=SolConfArg(soleil_examples/"vanilla/main.solconf"))
+   ReduceAction(...)
+   >>> parser.parse_args([])
+   Namespace(new_arg={'a': 1, 'b': 2, 'c': 3})
+
+In either case, any extra CLI arguments will be interpreted as overrides:
+
+.. doctest:: SolConfArg
+
+   >>> parser.parse_args(["a=10", "c=30"])
+   Namespace(new_arg={'a': 10, 'b': 2, 'c': 30})
+
+See the documentation of |SolConfArg| for more information.

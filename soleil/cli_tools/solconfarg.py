@@ -1,7 +1,8 @@
 """
 """
 
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Union
 from uuid import uuid4
 from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve
@@ -16,6 +17,10 @@ from ._argparse_patches import ReduceAction
 class SolConfArg:
     """
     Enables adding soleil configured objects as arguments in |argparse| CLIs.
+
+    :param config_source: The path to the configuration file to load. If not specified, will be required as a CLI argument.
+    :param resolve: Whether ``ArgumentParser.parse_args`` (equivalently, :meth:`__call__`) returns the resolved or unresolved object.
+    :param load_kwargs: Any extra keyword arguments to pass internally to |load_config|.
 
     Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation).
 
@@ -72,22 +77,49 @@ class SolConfArg:
       >>> from soleil.cli_tools import SolConfArg
 
       >>> parser = ArgumentParser()
-      >>> parser.add_argument('sc', type=SolConfArg(soleil_examples / 'vanilla/main.solconf'))
+      >>> parser.add_argument('my_obj', type=SolConfArg(soleil_examples / 'vanilla/main.solconf'))
       ReduceAction(...)
       >>> parser.parse_args([])
-      Namespace(sc={'a': 1, 'b': 2, 'c': 3})
+      Namespace(my_obj={'a': 1, 'b': 2, 'c': 3})
 
     .. _argparse patches note:
 
     .. note::
 
-      .. rubric:: Patching of Python builtin module |argparse|
+      .. rubric:: Monkey-patching of |argparse|
 
-      |SolConfArg| integration with the Python builtin module |argparse| requires that patches be applied to the :class:`ArgumentParser` class of that module. The patches should not affect normal operation of that module.
+      |SolConfArg| monkey-patches the built-in |argparse| module in order to support having a |SolConfArg|-typed argument consume multiple command line overrides and reduce
+      them to a *single* parsed element (as opposed to a list with one entry per override).
 
-      Patches are only applied once :mod:`soleil.cli_tools` (or a member) is imported and hence all :class:`ArgumentParser` instances that will take |SolConfArg| argument types must be instantiated after importing :mod:`soleil.cli_tools`.
+      The applied patch should not affect normal operation of |argparse| and is only applied once module :mod:`soleil.cli_tools` (or one of its member) is imported.
 
-      See the source code in :mod:`soleil.cli_tools._argparse_patches` for the actual patches.
+      The source code for theses patches is in module :mod:`soleil.cli_tools._argparse_patches`.
+
+
+    .. rubric:: Under the hood
+
+    Using a |SolConfArg| instance as the type of a parser argument implicitly sets the default value of the ``nargs`` and ``action`` arguments::
+
+      parser = ArgumentParser()
+      parser.add_argument(
+        ...
+        type=SolConfArg(...),
+        action=<defaults to ReduceAction()>,
+        nargs=<defaults to '+' or '*'>,
+        ...
+      )
+      parser.parse_args([...])
+
+    The ``action`` keyword is set to an instance of ``ReduceAction()`` that is responsible for gathering all the CLI arguments corresponding to the ``SolConfArg()`` parser
+    entry as overrides and  resolving the described object with these overrides included by means of a call to :meth:`SolConfArg.__call__`.
+
+    Accordingly, the object returned for the argument added in the code above can also be obtained as follows::
+
+      sc = SolConfArg(...)
+      sc([...])
+
+    .. note:: For conciseness, we use the above syntax in examples below.
+
 
     .. _number of consumed cli arguments:
 
@@ -100,7 +132,7 @@ class SolConfArg:
 
     Any extra CLI arguments besides ``config_source`` are treated as :ref:`CLI overrides`.
 
-    This behavior is implemented by internally setting the default keyword arguments
+    This behavior is implemented by internally setting the default value of keyword argument ``nargs`` using
 
      * ``nargs='+'`` or ``nargs='*'``, respectively,
 
@@ -118,102 +150,58 @@ class SolConfArg:
 
       Even when :class:`SolConfArg` is instantiated with a ``config_source`` argument, the value of ``config_source`` can be overriden from the command line using a :ref:`source clobber <source clobber>` override.
 
-    .. rubric:: CLI overrides
+    .. doctest:: SolConfArg
 
-    Extra CLI arguments passed to an |argparse| argument of type |SolConfArg| specify overrides that change the values in the loaded resolvable. Override specifiers can be of three types:
+      # Option 1: Path must be provided with argparse arguments
+      >>> sca1 = SolConfArg()
+      >>> sca1([soleil_examples/'vanilla/main.solconf', "typing_a=c++", "typing_b=c++"])
+      {'a': 1, 'b': 2, 'c': 3}
 
-        * **Value assignment (=)**: Valid if the target is a :class:`~soleil.solconf.nodes.ParsedNode`, in which case the assignment replaces the :attr:`~soleil.solconf.nodes.ParsedNode.raw_value` of the :class:`~soleil.solconf.nodes.ParsedNode` with the new value.
-        * **Clobber assignment (*=)**: Create a new node (or node sub-tree) from the provided raw content. The target node, if any, is discarded, and the new node added.
-        * **Source clobber (**=)**: Sets or replaces the ``config_source`` argument of the ``SolConfArg`` object. See :ref:`below <source clobber>`.
+      # Option 2: Path provided with argument definition
+      >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
+      >>> sca2(["a=10", "c=30"])
+      ...'a': 10...
+
+
+    .. _source clobber:
+
+    .. rubric:: Source clobber
+
+    In the case where a path is specified in the initializer, it can still be overriden using a  **source clobber** override:
+
+    .. doctest:: SolConfArg
+
+      # Source clobber assignment must be the first argument in the overrides list
+
+      >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
+      >>> sca2([f"**={soleil_examples/'vanilla/nested.solconf'}"])
+      {'letters': {'a': 1, 'b': 2, 'c': 3}}
+
+    Note that the source clobber override must be the first item in the overrides list.
+
+
+    .. rubric:: Deeper overrides
+
+    The target of an override provided to the left of the override assignment operator can consist of any valid :ref:`variable name path <variable name paths>`:
+
+    .. doctest:: SolConfArg
+       :options: +NORMALIZE_WHITESPACE
+
+       >>> sca = SolConfArg(soleil_examples/'vanilla/nested.solconf')
+       >>> sca() ##
+       {'letters': {'a': 1, 'b': 2, 'c': 3}}
+       >>> sca(['letters.b=20'])
+       {'letters': {'a': 1, 'b': 20, 'c': 3}}
 
     """
 
-    def __init__(self, config_source: str = None, resolve=True, **load_kwargs):
-        """
-
-        :param config_source: The path to the configuration file to load.
-        :param resolve: Whether :meth:`__call__` returns the resolved content, or the un-modified and un-resolved :class:`SolConfArg` object (after applying any overrides).
-
-        .. doctest:: SolConfArg
-
-          # Option 1: Path must be provided with argparse arguments
-          >>> sca1 = SolConfArg()
-          >>> sca1([soleil_examples/'vanilla/main.solconf', "typing_a=c++", "typing_b=c++"])
-          {'a': 1, 'b': 2, 'c': 3}
-
-          # Option 2: Path provided with argument definition
-          >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
-          >>> sca2(["a=10", "c=30"])
-          ...'a': 10...
-
-
-        .. _source clobber:
-
-        .. rubric:: Source clobber
-
-        In the case where a path is specified in the initializer, it can still be overriden using a  **source clobber** override:
-
-        .. doctest:: SolConfArg
-
-          # Source clobber assignment must be the first argument in the overrides list
-
-          >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
-          >>> sca2([f"**={soleil_examples/'vanilla/nested.solconf'}"])
-          {'letters': {'a': 1, 'b': 2, 'c': 3}}
-
-        Note that the source clobber override must be the first item in the overrides list.
-
-
-        .. rubric:: Deeper overrides
-
-        The target of an override provided to the left of the override assignment operator can consist of any valid :ref:`variable name path <variable name paths>`:
-
-        .. doctest:: SolConfArg
-           :options: +NORMALIZE_WHITESPACE
-
-           >>> sca = SolConfArg(soleil_examples/'vanilla/nested.solconf')
-           >>> sca() ##
-           {'letters': {'a': 1, 'b': 2, 'c': 3}}
-           >>> sca(['letters.b=20'])
-           {'letters': {'a': 1, 'b': 20, 'c': 3}}
-
-
-        .. rubric:: Usage with ``argparse`` parsers
-
-        .. doctest:: SolConfArg
-
-          >>> import argparse
-          >>> import soleil.cli_tools # *** Must be done before ArgumentParser instantiation ***
-          >>> parser = argparse.ArgumentParser()
-
-          # Setting type=SolConfArg() implicitly sets nargs='+' and action=ReduceAction by default.
-          >>> parser.add_argument('arg1', type=SolConfArg())
-          ReduceAction(option_strings=[], dest='arg1', nargs='+', ... type=<...SolConfArg...>, ...)
-
-          # Path required since SolConfArg initialized with no arguments!
-          >>> parser.parse_args([])
-          Traceback (most recent call last):
-              ...
-          SystemExit: 2
-
-          # With no overrides
-          >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf"])
-          Namespace(arg1={'a': 1, 'b': 2, 'c': 3})
-
-          # With overrides
-          >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf", "a=10", "c=30"])
-          Namespace(arg1={'a': 10, 'b': 2, 'c': 30})
-
-        .. note::
-
-          *Help! I'm getting the error message* ``AttributeError: 'str' object has no attribute 'pop'`` *!*
-
-          There are two possible reasons for this error:
-
-            #. The :class:`ArgumentParser` class from the |argparse| module was instantiated before :mod:`soleil.solconf.cli_tools` was imported. See the :ref:`related note <argparse patches note>` on |argparse| patches.
-            #. Using :class:`SolConfArg` argument instances as the ``type`` keyword argument  in a ``ArgumentParser.add_argument`` call requires that the ``action=ReduceAction``  keyword-value pair be used as well. This keyword pair is used by default when ``type`` is a :class:`SolConfArg` instance. Have you explicitly set the ``action`` keyword argument to a different value?
-
-        """
+    def __init__(
+        self,
+        config_source: Optional[Union[Path, str]] = None,
+        resolve=True,
+        **load_kwargs,
+    ):
+        """ """
 
         self._config_source = config_source
         self._resolve = resolve
@@ -232,17 +220,7 @@ class SolConfArg:
 
     def __call__(self, overrides: Optional[List[str]] = None):
         """
-        If the object was initialized without specifying a ``config_source``, then the first entry of ``overrides`` must contain it.
-
-        .. rubric:: Workflow:
-
-        1) Load the configuration file specified by ``config_source`` to create a :class:`SolConf` object. Do not apply modifiers during :class:`SolConf` initialization..
-        2) For each override:
-
-          1) For consistency with :class:`SolConf.load` any input value is first loaded using ``yaml.safe_load`` -- this does some interpretation. For example strings that represent integers, booleans or null are converted to an integer, boolean and ``None``, respectively. The resulting value is the **raw content**.
-          2) Apply all modifiers of the path implicit in the reference string (except for the last component) -- this is done implicitly with :meth:`Node.__getitem__`. Doing so enables e..g, modifying nodes that are load targets. Because of this application of modifiers, the order in which overrides are provided is important.
-          3) Assign the override value depending on the :ref:`override type <CLI overrides>`.
-
+        Resolves the argument, applying all input overrides.
         """
 
         self.overrides = list(overrides or [])

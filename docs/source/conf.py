@@ -94,3 +94,46 @@ rst_prolog = """
 .. |as_type| replace:: ``as_type``
 .. |as_run| replace:: ``as_type``
 """
+
+
+######### Utilities
+import sys, os
+
+sys.path.insert(0, os.path.abspath("."))
+
+from soleil.cli_tools import SolConfArg
+
+
+def sort_dicts(d):
+    if isinstance(d, dict):
+        return dict((k, sort_dicts(v)) for k, v in sorted(d.items()))
+    else:
+        return d
+
+
+def fix_dict_order():
+    # Patch SolConfArg.__call__
+
+    global _orig_sca_call
+    _orig_sca_call = SolConfArg.__call__
+
+    def __call__(self, *args, **kwargs):
+        out = sort_dicts(_orig_sca_call(self, *args, **kwargs))
+        return out
+
+    SolConfArg.__call__ = __call__
+
+    # Patch parser
+    from argparse import ArgumentParser
+
+    global _orig_parse_args
+    _orig_parse_args = ArgumentParser.parse_args
+
+    def parse_args(self, *args, **kwargs):
+        out = _orig_parse_args(self, *args, **kwargs)
+        for key in vars(out):
+            setattr(out, key, sort_dicts(getattr(out, key)))
+
+        return out
+
+    ArgumentParser.parse_args = parse_args
