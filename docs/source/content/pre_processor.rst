@@ -1,6 +1,11 @@
 
-Soleil Pre-processor
+Soleil Pre-Processor
 ===========================
+
+.. figure:: ../images/soleil_pre_proc.jpg
+
+           Image generated with |DALLE|
+
 
 Various functionalities provided by |soleil| rely on Python language modifications carried out by the **|soleil| pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
 
@@ -29,10 +34,10 @@ the pre-processor will automatically inject the target name keyword argument to 
 This makes it possible to compute |var name paths| to support CLI overrides.
 
 
-:func:`promoted`
+:attr:`promoted`
 ^^^^^^^^^^^^^^^^^
 
-See the documentation for :func:`promoted`. Promoted members are skipped when building :ref:`variable name paths` and thus the name of the promoted module member needs to be known before the module executes. Extracting this name is part of the job the pre-processor does.
+See the documentation for :attr:`promoted`. Promoted members are skipped when building :ref:`variable name paths` and thus the name of the promoted module member needs to be known before the module executes. Extracting this name is part of the job the pre-processor does.
 
 
 Converting assignments to override checks
@@ -65,4 +70,4 @@ The pre-processor also checks whether any imports are done within a solconf modu
 
   os:visible = 'new value' # os is now visible
 
-Explicitly annotating the member with |visible|, as shown above, overrides the implicit hidden annotation.
+Explicitly annotating the member with :attr:`visible`, as shown above, overrides the implicit hidden annotation.

@@ -10,6 +10,7 @@ transform = transforms.Compose(
 
 
 ## Declaring unresolved templates
+@hidden
 class dataset:
     type: as_type = "torchvision.datasets:CIFAR10"
     root = "/tmp/soleil_examples/cifar"
@@ -18,6 +19,7 @@ class dataset:
     transform = transform
 
 
+@hidden
 class dataloader:
     type: as_type = "torch.utils.data:DataLoader"
     dataset = req()

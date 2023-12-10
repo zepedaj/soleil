@@ -6,16 +6,33 @@ Automatic CLI
 
 .. figure:: ../images/solex/mission_cut.jpg
 
+           Image generated with |DALLE|
+
 
 Soleil offers three main ways to create CLIs from solconf files:
 
-    * by means of the builtin |solex| script that enables calling any solconf file directly,
-    * by means of the |@solex| decorator that turns any function into a CLI,
-    * or by adding an argument of type |SolConfArg| to a standard |argparse| Python parser.
+    #. by means of the builtin |solex| script that enables calling any solconf file directly,
+    #. by means of the |@solex| decorator that turns any function into a CLI,
+    #. or by adding an argument of type |SolConfArg| to a standard |argparse| Python parser.
 
-All of these methods support overriding values within the solconf package directly from the command line using override strings in familiar Python syntax.
+All of these methods support overriding values within the solconf package directly from the command line using override strings in familiar Python syntax, for example:
 
-Besides this, solconf files can also be loaded directly from Python scripts and overriden using dictionaries of Python object.
+.. code-block:: bash
+
+  $ solex ./my_conf.solconf a=1 b=2
+
+The second and third method further support mixing solconf objects with standard argparse command line options:
+
+.. code-block:: bash
+
+    $ my_script --opt1 \
+    > --solconf-arg-1 ./my_conf1.solconf a=1 b=2 \
+    > --solconf-arg-2 ./my_conf2.solconf a=1 b=2
+
+Besides this, solconf files can also be loaded directly from Python scripts and overriden using dictionaries of Python objects::
+
+  >>> from soleil import load_config
+  >>> obj = load_config('./my_conf.solconf', overrides=[{'a':1, 'b':2}])
 
 .. _solex:
 
@@ -57,7 +74,7 @@ Optionally, we can override the values of any of the variables accessible from t
 
     $ solex ./train.solconf optimizer.lr=1e-4 data.dataloader.batch_size=8
 
-The overrides must be valid python statements that are first interpreted by the bash interpreter. So, to assign a string, we would have to include two sets of enclosing quotation marks, for example:
+The overrides must be valid Python statements that are first interpreted by the bash interpreter. So, to assign a string, we could use two sets of enclosing quotation marks, for example:
 
 .. code-block:: bash
 
@@ -70,7 +87,7 @@ See the :ref:`Overriding Configurations` section for other override options.
 Available variables
 ^^^^^^^^^^^^^^^^^^^^
 
-The |solex| script includes an experimental ``--show`` flag that skips object resolution and instead displays all the variables accessible from the root configutation:
+The |solex| script includes an experimental ``--show`` flag that skips object resolution and instead displays all the variables accessible from the root configuration:
 
 .. code-block:: bash
 
@@ -100,7 +117,7 @@ The |solex| script includes an experimental ``--show`` flag that skips object re
 
         ...
 
-
+The output produced with this ``--show`` will be improved in later versions.
 
 .. note:: Like |solex|-based CLI invokations, |soleil| CLIs built with the :ref:`@solex() decorator <@solex>` or using a :class:`~soleil.cli_tools.solconfarg.SolConfArg` type in a Python |argparse| parser all suport CLI overrides. Overrides with non-string values can also be specified when loading a module with |load_config| from a Python script. See :ref:`Overriding Configurations` for more information.
 
@@ -108,7 +125,9 @@ The |solex| script includes an experimental ``--show`` flag that skips object re
 Running a method
 ^^^^^^^^^^^^^^^^^^
 
-Sometimes, we might want to invoke a method of an object built by the |as_type| member of a solconf module. For example, given a Python package ``experiment`` with class ``Experiment``::
+Sometimes, we might want to invoke a method of an object built by the |as_type| member of a solconf module. For example, given a Python package ``experiment`` containing class ``Experiment``,
+
+.. code-block::
 
   # experiment/__init__.py
 
@@ -124,7 +143,7 @@ Sometimes, we might want to invoke a method of an object built by the |as_type| 
         ...
 
 
-the ``train.solconf`` root config could take this form::
+we might be interested in calling its ``train()`` method. The |solex| script supports doing so by  means of the  ``as_run`` modifier::
 
   # train.solconf
 
@@ -211,12 +230,12 @@ the climax group in the decorator as follows::
      foo()
 
 
-The resulting CLI contains two subcommands that can be invoked as follows (assuming the above sript is named ``my_script``)::
+The resulting CLI contains two subcommands that can be invoked as follows (assuming the path of the above script is *./my_script*)::
 
-  $ my_script train
-  $ my_script eval
+  $ ./my_script train
+  $ ./my_script eval
 
-All of the above can also be done using standard |argparse| method calls directly instead of the |climax| interface by retrieving the ``ArgumentParser`` object from the decorated function:
+All of the above can also be done using standard |argparse| method calls directly instead of the |climax| interface by retrieving the |ArgumentParser| object from the decorated function:
 
 .. doctest:: solex
 
@@ -230,7 +249,7 @@ All of the above can also be done using standard |argparse| method calls directl
 *argparse* parsers
 -----------------------------
 
-Soleil supports adding described objects to Python argument parsers of type ``argparse.ArgumentParser``. Such objects will be instantiated from
+Soleil supports adding described objects as Python |ArgumentParser| arguments. Such objects will be instantiated from
 the description of a solconf root config. Supplying overrides is likewise supported.
 
 Given a standard Python parser:
@@ -254,7 +273,7 @@ Given a standard Python parser:
    >>> parser = argparse.ArgumentParser()
 
 
-An argument whose value will be obtained by resolving a |soleil| root config can be added by setting the ``type`` keyword of that new argument an instance of |SolConfArg|:
+An argument whose value will be obtained by resolving a |soleil| root config can be added by setting the ``type`` keyword of that new argument to an instance of |SolConfArg|:
 
 .. doctest:: SolConfArg
    :options: +NORMALIZE_WHITESPACE
@@ -263,14 +282,14 @@ An argument whose value will be obtained by resolving a |soleil| root config can
    >>> parser.add_argument("new_arg", type=SolConfArg())
    ReduceAction(...)
 
-In this case, the source config will need to be specified from the CLI:
+When |SolConfArg| is initialized with no arguments, the source config will need to be specified from the CLI:
 
 .. doctest:: SolConfArg
 
    >>> parser.parse_args([f"{soleil_examples}/vanilla/main.solconf"])
    Namespace(new_arg={'a': 1, 'b': 2, 'c': 3})
 
-Alternatively, we can specify the source config when adding the new argument
+Alternatively, we can specify the source config in the |SolConfArg| initialization
 
 .. doctest:: SolConfArg
    :options: +NORMALIZE_WHITESPACE
@@ -281,7 +300,7 @@ Alternatively, we can specify the source config when adding the new argument
    >>> parser.parse_args([])
    Namespace(new_arg={'a': 1, 'b': 2, 'c': 3})
 
-In either case, any extra CLI arguments will be interpreted as overrides:
+In either case, any extra CLI arguments will be interpreted as an override:
 
 .. doctest:: SolConfArg
 

@@ -3,6 +3,10 @@
 Getting Started
 ================
 
+.. figure:: ../images/rising_sun_cut.jpg
+
+           Image generated with |DALLE|
+
 As an example of how to use |soleil|, we will build a system to train a basic classifier. The approach presented is a |soleil| porting of the `CIFAR classification example in the PyTorch website <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html>`_.
 
 .. note:: An installable Python package with code for this example can be found in ``<soleil code root>/soleil_examples``. You can install these examples as follows:
@@ -51,7 +55,7 @@ train.solconf
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
                     :linenos:
-                    :caption: solconf/train.solconf
+                    :caption: soleil_examples/cifar/solconf/train.solconf
 
 
 .. note:: Solconf package **root configurations** are ``*.solconf`` files within the package that are intended to be loaded by the user using |load_config|. All ``*.solconf`` files can be root
@@ -73,7 +77,7 @@ routine by means of the line:
 
 
 
-The ``as_type`` annotation on the ``type`` member indicates to |soleil| that *1)* the member will contain a callable that will resolve the module and that *2)* all other non-hidden module members will be gathered, resolved and passed  to this callable as keyword arguments. If, as in this case, the member's value is a string with format ``<module>:<entity>``,  the ``as_type`` modifier will furhter  retrieve the actual callable and assign it the the ``as_type`` member. Note that this is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
+The ``as_type`` annotation on the ``type`` member indicates to |soleil| that *1)* the member will contain a callable that will resolve the module and that *2)* all other non-hidden module members will be gathered, resolved and passed  to this callable as keyword arguments. If, as in this case, the member's value is a string with format ``<module>:<entity>``,  the ``as_type`` modifier will further  retrieve the actual callable and assign it the the ``as_type`` member. Note that this is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
 
   from soleil_examples.cifar.train import train
 
@@ -150,7 +154,7 @@ This tells |soleil| not to pass in the ``data`` member to the module's ``as_type
 
    _param:visible = ...
 
-Alternatively, a different name can be used for the member and the ``as_type`` keyword argument by means of the :attr:`~soleil.resolvers.modifiers.name` modifier that specifies the ``as-type`` keyword argument name::
+Alternatively, a different name can be used for the member and the ``as_type`` keyword argument by means of the :attr:`~soleil.resolvers.modifiers.name` modifier that specifies the ``as_type`` keyword argument name::
 
   param:name('_param') = ...
 
@@ -166,7 +170,7 @@ Since a description of the data used to train and test the model is complex and 
                     :end-at: data: hidden = load(".data.default")
                     :lineno-match:
 
-The path provided to the |load| function follows rules similar to module paths provided to Python ``import`` statements. The main difference is that absolute paths will refer to top-level sub-modules within the same package. In this case, since the root config ``"train.solconf"`` is at the root of the package, then ``load(".data.default")`` and ``load("data.default")`` would both load the same sub-module.
+The path provided to the |load| function follows rules similar to module paths provided to Python ``import`` statements. The main difference is that absolute paths will refer to top-level sub-modules within the same package. In this case, since the *data* sub-package and the root config *train.solconf* are both at the root of the package, then ``load(".data.default")`` and ``load("data.default")`` would both load the same sub-module.
 
 
 
@@ -175,17 +179,22 @@ Inheriting descriptions
 
 The data description solconf module ``"data.default"`` contains the following code:
 
+
+.. _default.solconf:
+
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/data/default.solconf
                     :linenos:
+                    :caption: soleil_examples/cifar/solconf/data/default.solconf
 
-The module contains two base descriptions -- ``dataset`` and ``dataloader`` -- that will be derived by the training and testing datasets and dataloader descriptions. These base descriptions on their own cannot be resolved because they contain unspecified required members::
+The module contains two template descriptions -- ``dataset`` and ``dataloader`` -- that will be derived by the training and testing dataset and dataloader descriptions. These template descriptions on their own cannot be resolved because they contain unspecified required members::
 
+  @hidden
   class dataset:
     ...
     train = req()
     ...
 
-
+  @hidden
   class dataloader:
     ...
     dataset = req()
@@ -208,7 +217,8 @@ The training and testing datasets inherit all the non-required members and overl
       dataset = trainset
       shuffle = False
 
-.. rubric:: Differentiating instantiations
+Differentiating instantiations
+-------------------------------
 
 A given |soleil| resolvable (e.g., ``trainset`` above) always resolves to the same instance of the description::
 

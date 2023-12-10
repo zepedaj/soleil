@@ -82,6 +82,7 @@ todo_include_todos = True
 ##
 rst_prolog = """
 .. |argparse| replace:: `argparse <https://docs.python.org/3/library/argparse.html>`__
+.. |ArgumentParser| replace:: `ArgumentParser <https://docs.python.org/3/library/argparse.html#argumentparser-objects>`__
 .. |climax| replace:: `climax <https://climax.readthedocs.io/en/latest/>`__
 .. |SolConfArg| replace:: :class:`~soleil.cli_tools.solconfarg.SolConfArg`
 .. |ast| replace:: `AST <https://docs.python.org/3/library/ast.html>`__
@@ -95,6 +96,7 @@ rst_prolog = """
 .. |soleil| replace:: Soleil
 .. |as_type| replace:: ``as_type``
 .. |as_run| replace:: ``as_type``
+.. |DALLE| replace:: `DALL-E <https://openai.com/research/dall-e>`__
 """
 
 
