@@ -92,6 +92,7 @@ rst_prolog = """
 .. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
 .. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
 .. |submodule| replace:: :meth:`~soleil.overrides.overridable.submodule`
+.. |choices| replace:: :meth:`~soleil.overrides.overridable.choices`
 .. |visible| replace:: :meth:`~soleil.resolvers.module_resolver.modifiers.visible`
 .. |var name paths| replace:: variable name paths
 .. |soleil| replace:: Soleil

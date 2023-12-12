@@ -13,7 +13,7 @@ class _:
     # `net`, `optimizer`, `criterion`, `trainloader` and `path`.
 
     class net:
-        type: as_type = "soleil_examples.cifar.model:Net"
+        type: as_type = "soleil_examples.cifar.conv_model:Net"
 
     global _params
     _params = resolved(net).parameters()

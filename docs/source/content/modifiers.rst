@@ -2,12 +2,12 @@
 Modifier syntax
 ----------------------
 
-:class:`~soleil.resolvers.modifiers.Modifiers` are special dictionary sub-classes that are used as annotations in |soleil| object descriptions to change member behaviors.
+:class:`~soleil.resolvers.modifiers.Modifiers` are special dictionary sub-classes that are used to annotate members of resolvable classes and modules and thus change their behavior.
 
-Chaining, decoration and inheritance
+Composing, decoration and inheritance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Modifiers can be chained using a tuple:
+Modifiers can be composed using a tuple:
 
 .. testcode::
 
@@ -16,7 +16,7 @@ Modifiers can be chained using a tuple:
    class A:
        a:(hidden,name('__a__'),cast(int)) = '3'
 
-Most modifiers can also be applied to classes using the following syntax:
+They can also be applied to member classes (and any to-be-defined variable) using the following syntax:
 
 .. testcode::
 
@@ -27,21 +27,37 @@ Most modifiers can also be applied to classes using the following syntax:
    class A:
        ...
 
-Modifiers are automatically inherited but can be overriden in derived classes, while still inheriting the value:
+Alternatively, most modifiers support usage as a class decorator. The previous example could hence be rewritten as follows:
+
+.. testcode::
+
+   from soleil.solconf import *
+
+   @hidden
+   class A:
+       ...
+
+Modifiers are automatically inherited but can be overriden in derived classes, while still inheriting the parent's value:
 
 .. testcode::
 
    from soleil.solconf import *
 
    class A:
-       a:hidden = 1
+        type: as_type = lambda a: a+1
+        a:visible = 1
 
    class B(A):
-       a:visible # TODO: need to implement a 'squash' version of merge where old values get overwritten if available.
+        type: as_type = lambda : 2
+        a:hidden
+
+    assert B.a == 1
+
+This can come in handy when we wish to hide inherited values in a derived class, as shown in the example above.
+
+
 
 Available modifiers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The modifiers below can be used in different contexts. For convenience they are all included in the base :mod:`soleil.solconf` module and included automatically with ``from soleil.solconf import *``.
-
-(See :ref:`modifiers` for a list of all available modifiers)
+For convenience, we have included all available modifiers in module  :mod:`soleil.solconf` -- a full list can be seen in the :ref:`modifiers` section of the :ref:`cheatsheet`.

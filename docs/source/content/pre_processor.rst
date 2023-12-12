@@ -7,7 +7,7 @@ Soleil Pre-Processor
            Image generated with |DALLE|
 
 
-Various functionalities provided by |soleil| rely on Python language modifications carried out by the **Soleil pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
+Various functionalities provided by |soleil| rely on Python language modifications carried out by the **Soleil pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file before the tree is compiled and executed (see :class:`soleil.loader.ConfigLoader`). While these code modifications should be transparent to the user, it is useful to know what they are.
 
 
 
@@ -32,6 +32,8 @@ the pre-processor will automatically inject the target name keyword argument to 
     a = load('.option', _target='a')
 
 This makes it possible to compute |var name paths| to support CLI overrides.
+
+.. todo:: Add support for overrides with more complex load operations like ``a = load('.option').a.b``.
 
 
 :attr:`promoted`

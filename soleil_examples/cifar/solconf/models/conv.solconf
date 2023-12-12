@@ -1,0 +1,6 @@
+from soleil.solconf import *
+
+
+@promoted
+class net:
+    type: as_type = "soleil_examples.cifar.model:Net"

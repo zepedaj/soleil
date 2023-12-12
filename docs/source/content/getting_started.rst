@@ -27,12 +27,12 @@ Note that, as is common, the train and eval routines share some commone paramete
 
 .. note:: |soleil| assumes that modules with components such as these are installed (or at least in the Python path) and accessible with standard Python import statements.
 
-.. literalinclude:: ../../../soleil_examples/cifar/model.py
+.. literalinclude:: ../../../soleil_examples/cifar/conv_model.py
                     :linenos:
                     :start-at: class Net(nn.Module):
                     :end-at: def __init__(self):
                     :lineno-match:
-                    :caption: soleil_examples/cifar/model.py
+                    :caption: soleil_examples/cifar/conv_model.py
 
 
 .. literalinclude:: ../../../soleil_examples/cifar/train.py
@@ -95,19 +95,7 @@ The ``as_type`` annotation on the ``type`` member indicates to |soleil| that *1)
   type: as_type = train
 
 
-.. note:: Annotations such as ``as_type`` are called :ref:`modifiers <Modifiers>` in |soleil| parlance. Other common modifiers include ``hidden`` and ``promoted``. Note that modifiers can be applied to non-declared variables and classes and follow standard Python annotation inheritance rules::
-
-          undefined_var:hidden
-
-          UndefinedClass:hidden # The class is only defined starting in the next line
-          class UndefinedClass:
-             b = 1
-
-          @hidden
-          class MyDerivedClass(UndefinedClass): # The hidden modifier is not inherited
-             b:hidden # The inherited `b` is hidden in the derived class
-
-       As shown in the example for ``MyDerivedClass``, as a convenience, modifiers can also be applied to classes by using them as class decorators. Note that derived classes can hide inherited members without changing their value.
+.. note:: Annotations such as ``as_type`` are called :ref:`modifiers <Modifiers>` in |soleil| parlance.
 
 
 
@@ -118,7 +106,7 @@ The next two members (``net`` and ``optimizer``) also include a nested ``as_type
 Description attributes vs. instance attributes
 -----------------------------------------------------
 
-Continuing our analysis of :ref:`train.solconf`, the second member -- ``optimizier`` -- describes an instance of PyTorch's `torch.optim:SGD <https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD>`_ optimizer. This description
+Continuing our analysis of :ref:`train.solconf`, the second member -- ``optimizer`` -- describes an instance of PyTorch's `torch.optim:SGD <https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD>`_ optimizer. This description
 poses a problem since instantiating the optimizer requires a call to ``net.parameters()`` to let the optimizer know what parameters we will optimize. But at this point we only have ``net``'s description and not the actual instance, so we cannot call ``net.parameters()``. We hence create a special object ``resolved(net)`` that will lazily evaluate all nested attributes, subscripts and calls  to ``net``, resolving these until the entire solconf module is resolved:
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
@@ -261,7 +249,44 @@ This can also be done with the convenience method ``derive``::
 
   assert obj1 is not obj2
 
-.. _eval.solconf:
+
+
+The *submodule* and *choices* overridables
+--------------------------------------------------------
+
+One common situation in machine learning experiments it the need to swap out one component -- the model
+
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
+                    :linenos:
+                    :start-at: class net:
+                    :end-at: type: as_type = "soleil_examples.cifar.conv_model:Net"
+                    :lineno-match:
+
+for example --  by a new variant. Doing so without modifying existing solconf files is useful, and |submodule| offers a way to do so: One first creates a new `*.solconf` file for the new variant and places all such variants in the same subpackage.
+
+For example, we can place two model descriptions *models/conv.solconf* and *models/fc.solconf* inside sub-package  *models/*. Using the special load variant |submodule| in
+
+.. code-block::
+
+   net = submodule('.models', 'conv')
+
+tells soleil to load the model description in soleil module ``.models.conv`` if no override is provided, and to otherwise use the override value as the module name. As example, one could load the fully connected variant of the model using
+
+.. code-block:: bash
+
+   $ solex train.solc net='"fc"'
+
+Another useful function similarly providing special overridable abilities is |choices| -- it works like |submodule| but lets you explicitly provide the value for each string key as opposed to requiring these to be names of sub-modules in a specific sub-package.
+
+As an example, we can rewrite the |submodule|-based model selection mechanism above with |choices| as follows:
+
+.. code-block::
+
+   net = choices(
+           {'conv': load('.models.conv'), 'fc': load('.models.fc')},
+           'conv'
+         )
+
 
 **train2.solconf**
 -----------------------
@@ -284,11 +309,21 @@ The **@promoted** decorator applied to this class (see the first two highlighted
 
    load_config("./train2.solconf")
 
-the returned value continues to be whatever object was described in the module -- in this case the output of function ``train(...)`` -- as opposed to the dictionary ``{'_':train(...)}``. This promotion also makes the override syntax more natural and the output of sub-modules loaded within solconf files more intuitive.
+the returned value continues to be whatever object was described in the module -- in this case the output of function ``train(...)`` -- as opposed to the dictionary ``{'_':train(...)}``.
+
+Similarly, when loading a submodule within a solconf file,
+
+.. code-block::
+
+   train_class = load("./train2.solconf")
+
+will return the promoted class "_" as opposed to the the solconf module of type :class:`~soleil.resolvers.module_resolver.SolConfModule`.
+
+In general, promotion will make the syntax for CLI overrides more natural and the output of sub-modules loaded within solconf files more intuitive.
 
 .. note:: It is good practice to always wrap the members of a module in a promoted class. Doing so makes it possible to derive that module to create new root configurations and improves override syntax. Note that all module members outside the class are in effect hidden.
 
-Wrapping the contents of the module in a class created the following problem: the local context of the nested ``optimizer`` class can no longer see the ``net`` variable defined in the local context of the containing class ``_``. We address that problem by defining a global variable ``_params`` (implicitly hidden due to the underscore prefix -- and because it is part of the globals and not the class's locals) in the parent local context, where ``net`` is visible, and using that in the nested class (see the last three highlighted lines in |train2.solconf|).
+Going back to our example in |train2.solconf|, wrapping the contents of the module in a class created the following problem: the local context of the nested ``optimizer`` class can no longer see the ``net`` variable defined in the local context of the containing class ``_``. We address that problem by defining a global variable ``_params`` (implicitly hidden due to the underscore prefix -- and because it is part of the globals and not the class's locals) in the parent local context, where ``net`` is visible, and using that in the nested class (see the last three highlighted lines in |train2.solconf|).
 
 **eval.solconf**
 ------------------------------

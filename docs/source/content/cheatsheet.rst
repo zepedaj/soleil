@@ -3,7 +3,7 @@
 Cheatsheet
 ------------------------
 
-As a convenience, all modifiers, utility functions and overridables that are used within `*.solconf` are gathered inside module :mod:`soleil.solconf` and linked here below.
+As a convenience, all modifiers, utility functions and overridables that are useful within `*.solconf` files are gathered inside module :mod:`soleil.solconf` and linked in the tables below.
 
 
 

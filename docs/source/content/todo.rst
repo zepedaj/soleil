@@ -1,6 +1,8 @@
 Wish List
 -------------
 
+The following are various pending tasks looking for contributors:
+
 .. todolist::
 
 .. todo::

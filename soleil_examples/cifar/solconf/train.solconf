@@ -12,7 +12,7 @@ type: as_type = "soleil_examples.cifar.train:train"
 
 
 class net:
-    type: as_type = "soleil_examples.cifar.model:Net"
+    type: as_type = "soleil_examples.cifar.conv_model:Net"
 
 
 class optimizer:
