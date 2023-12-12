@@ -89,11 +89,13 @@ Variable name paths for *loaded members* are formed accordingly by dot-joining t
                     :end-at: data: hidden = load(".data.default")
                     :lineno-match:
 
-the member *root* of class *dataset*(defined in loaded file :ref:`data/default.solconf <default.solconf>`) can be overriden with the following overrides::
+the member *root* of class *dataset* (defined in loaded file :ref:`data/default.solconf <default.solconf>`) can be overriden with the following overrides::
 
   "data.dataset.root='/my/new/root'"
   {'data.dataset.root': '/my/new/root'}
 
+
+.. _eval time and context:
 
 Evaluation time and context
 ------------------------------------

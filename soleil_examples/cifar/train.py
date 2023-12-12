@@ -1,7 +1,9 @@
 # soleil_examples.cifar.train
 
+import torch
 
-def train(net, trainloader, optimizer, criterion):
+
+def train(net, trainloader, optimizer, criterion, path):
     for epoch in range(2):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -22,5 +24,7 @@ def train(net, trainloader, optimizer, criterion):
             if i % 2000 == 1999:  # print every 2000 mini-batches
                 print(f"[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}")
                 running_loss = 0.0
+
+    torch.save(net.state_dict(), path)
 
     print("Finished Training")

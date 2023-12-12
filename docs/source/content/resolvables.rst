@@ -1,6 +1,11 @@
 Resolvables
 ===================
 
+.. figure:: ../images/resolvable_cut.png
+
+           Image generated with |DALLE|
+
+
 .. testsetup::
 
    from soleil import as_type, resolve, hidden, visible, name, cast
@@ -109,6 +114,8 @@ Dictionaries, lists, tuples, sets
 
 .. warning:: Currently, container resolution does not preserve resolved instance uniqueness. The non-container members of resolved containers, however, will preserve uniqueness.
 
+.. todo:: Builtins (dict, set, tuple, list) do not resolve to unique instances because they do not support adding an extra attribute (i.e., ``__soleil_resolved__``). Fix this by having the pre-processor output a soleil-specific shim that derives from the container and supports adding extra attributes. The resolver for these shims should output the parent container.
+
 Uniqueness of Resolution
 ---------------------------------
 
@@ -130,32 +137,3 @@ For the case of resolvable classes, this can be overriden by deriving from a giv
 
     assert resolve(RslvblB) is not resolve(RslvblA)
 
-
-Modifiers
------------
-
-Modifiers can be chained using a tuple:
-
-.. testcode::
-
-   class A:
-       a:(hidden,name('__a__'),cast(int)) = '3' 
-
-Modifiers can  can also be applied to classes using the following syntax:
-
-.. testcode::
-
-    A:hidden
-    
-    class A:
-        ...
-        
-Modifiers are automatically inherited but can be overriden in derived classes, while still inheriting the value:
-
-.. testcode::
-
-    class A:
-        a:hidden = 1
-        
-    class B(A):
-        a:visible # TODO: need to implement a 'squash' version of merge where old values get overwritten if available.

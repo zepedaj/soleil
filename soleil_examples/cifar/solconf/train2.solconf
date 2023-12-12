@@ -1,0 +1,34 @@
+# soleil_examples/cifar/solconf/train2.solconf
+
+from soleil import *
+from torch import nn
+
+
+@promoted
+class _:
+    # The callable that resolves this module
+    type: as_type = "soleil_examples.cifar.train:train"
+
+    # The parameters of the as_type member, declared below, are
+    # `net`, `optimizer`, `criterion`, `trainloader` and `path`.
+
+    class net:
+        type: as_type = "soleil_examples.cifar.model:Net"
+
+    global _params
+    _params = resolved(net).parameters()
+
+    class optimizer:
+        type: as_type = "torch.optim:SGD"
+        params = _params
+        lr = 0.001
+        momentum = 0.9
+
+    criterion = nn.CrossEntropyLoss()
+
+    # `data` is hidden -- it is not passed to the as_type callable
+    data: hidden = load(".data.default")
+
+    trainloader = data.trainloader
+
+    path = "/tmp/soleil_cifar_example"

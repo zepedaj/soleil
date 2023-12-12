@@ -1,3 +1,4 @@
+""" Soleil: Lucid configurations """
 # Core
 from soleil.loader.loader import load_config
 from soleil.resolvers.base import resolve

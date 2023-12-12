@@ -24,6 +24,9 @@ Annotates a variable containing a class or callable (or the fully qualified name
 that will be used to instantiate the meta object.
 """
 as_args = Modifiers(as_args=True, hidden=False)
+"""
+The member is a list or tuple containing variable un-named args to pass to the |as_type| member.
+"""
 
 
 class DisplayableFromClassResolver(UserDict):

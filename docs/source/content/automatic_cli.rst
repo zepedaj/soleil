@@ -11,9 +11,9 @@ Automatic CLI
 
 Soleil offers three main ways to create CLIs from solconf files:
 
-    #. by means of the builtin |solex| script that enables calling any solconf file directly,
-    #. by means of the |@solex| decorator that turns any function into a CLI,
-    #. or by adding an argument of type |SolConfArg| to a standard |argparse| Python parser.
+#. by means of the builtin |solex| script that enables calling any solconf file directly,
+#. by means of the |@solex| decorator that turns any function into a CLI,
+#. or by adding an argument of type |SolConfArg| to a standard |argparse| Python parser.
 
 All of these methods support overriding values within the solconf package directly from the command line using override strings in familiar Python syntax, for example:
 

@@ -1,0 +1,12 @@
+from soleil import *
+
+
+@promoted
+class _(_train := spawn(".train2")):
+    type: as_type = "soleil_examples.cifar.eval:eval"
+
+    optimizer: hidden
+    criterion: hidden
+    trainloader: hidden
+
+    testloader = _train.data.testloader

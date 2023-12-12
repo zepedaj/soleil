@@ -9,36 +9,45 @@ Getting Started
 
 As an example of how to use |soleil|, we will build a system to train a basic classifier. The approach presented is a |soleil| porting of the `CIFAR classification example in the PyTorch website <https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html>`_.
 
-.. note:: An installable Python package with code for this example can be found in ``<soleil code root>/soleil_examples``. You can install these examples as follows:
+.. note:: An installable Python package with code for this example can be found in source sub-directory *<soleil code root>/soleil_examples*. You can install these examples as follows:
 
           .. code-block:: bash
 
             cd <soleil code root>/soleil_examples
             pip install .
 
-          For convenience, ``solconf`` directories are placed inside each example module directory -- note that these do not need to be installed but assume that the *soleil_examples*
-          Python package is installed.
+          For convenience, `./solconf` sub-directories are placed inside each example module directory.
 
-Model and training routine
-----------------------------
+Model, and train/eval routines
+-------------------------------------------------------
 
-One advantage of Soleil is that it allows you to better separate
+The CIFAR classifier example consists of three main components, *1)* the model, *2)* the training routine and *3)* the evaluation routine. We show the function and initializer signatures for these components below -- the details of the implementation beyond the parameter names are not necessary when building solconf modules.
 
-* the code for the various components of your system (e.g., your model) from
-* the code that assembles these components into a single system.
+Note that, as is common, the train and eval routines share some commone parameters.
 
-For our CIFAR classifier example, there are two main components, *1)* the model and *2)* the training routine. We include the two modules containing these below, although the actual implementation beyond function and class initialization parameters is not important for this example.
-
-Note that |soleil| assumes that modules with components such as these are installed (or at least in the Python path) and accessible with standard Python import statements.
+.. note:: |soleil| assumes that modules with components such as these are installed (or at least in the Python path) and accessible with standard Python import statements.
 
 .. literalinclude:: ../../../soleil_examples/cifar/model.py
                     :linenos:
+                    :start-at: class Net(nn.Module):
+                    :end-at: def __init__(self):
+                    :lineno-match:
                     :caption: soleil_examples/cifar/model.py
 
 
 .. literalinclude:: ../../../soleil_examples/cifar/train.py
                     :linenos:
+                    :start-at: def train(net, trainloader, optimizer, criterion, path):
+                    :end-at: def train(net, trainloader, optimizer, criterion, path):
+                    :lineno-match:
                     :caption: soleil_examples/cifar/train.py
+
+.. literalinclude:: ../../../soleil_examples/cifar/eval.py
+                    :linenos:
+                    :start-at: def eval(testloader, net, path):
+                    :end-at: def eval(testloader, net, path):
+                    :caption: soleil_examples/cifar/eval.py
+
 
 
 The solconf package
@@ -50,8 +59,10 @@ Since our aim is to create a training system, we will create a root configuratio
 
 .. _train.solconf:
 
-train.solconf
----------------
+**train.solconf**
+------------------------------
+
+.. _file train.solconf:
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
                     :linenos:
@@ -250,6 +261,56 @@ This can also be done with the convenience method ``derive``::
 
   assert obj1 is not obj2
 
-Module inheritance with *promoted* and *spawn*
+.. _eval.solconf:
+
+**train2.solconf**
+-----------------------
+
+In order to run evaluations on the trained model, we need to build an `eval.solconf` configuration. Since the :func:`eval` and :func:`train` functions both share common parameters, it makes sense to inherit some of these parameters from the train configuration when building the eval configuration. To support this, we will modify our |train.solconf| configuration, wrapping all the parameters in a class that we can later inherit from (the lines modified relative to |train.solconf| are highlighted):
+
+.. _file train2.solconf:
+
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/train2.solconf
+                    :linenos:
+                    :caption: soleil_examples/cifar/solconf/train2.solconf
+                    :emphasize-lines: 7,8,18,19,23
+
+Promoted module classes
+------------------------------
+
+The **@promoted** decorator applied to this class (see the first two highlighted lines in |train2.solconf|) is a syntactic convenience that ensures that, when loading ``train2.solconf`` using, e.g.,
+
+.. code-block::
+
+   load_config("./train2.solconf")
+
+the returned value continues to be whatever object was described in the module -- in this case the output of function ``train(...)`` -- as opposed to the dictionary ``{'_':train(...)}``. This promotion also makes the override syntax more natural and the output of sub-modules loaded within solconf files more intuitive.
+
+.. note:: It is good practice to always wrap the members of a module in a promoted class. Doing so makes it possible to derive that module to create new root configurations and improves override syntax. Note that all module members outside the class are in effect hidden.
+
+Wrapping the contents of the module in a class created the following problem: the local context of the nested ``optimizer`` class can no longer see the ``net`` variable defined in the local context of the containing class ``_``. We address that problem by defining a global variable ``_params`` (implicitly hidden due to the underscore prefix -- and because it is part of the globals and not the class's locals) in the parent local context, where ``net`` is visible, and using that in the nested class (see the last three highlighted lines in |train2.solconf|).
+
+**eval.solconf**
+------------------------------
+
+We can now use |train2.solconf| as a base to build an eval configuration:
+
+.. _file eval.solconf:
+
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/eval.solconf
+                    :linenos:
+                    :caption: soleil_examples/cifar/solconf/eval.solconf
+
+Module inheritance with *spawn*
 ------------------------------------------------------
-Pending
+
+The configuration consists of a promoted class that derives from a ``spawned`` module:
+
+.. literalinclude:: ../../../soleil_examples/cifar/solconf/eval.solconf
+                    :linenos:
+                    :start-at: @promoted
+                    :end-at: class _(_train := spawn(".train2")):
+
+The spawn :func:`~soleil.utils.spawn` assumes that it receives a path to a module with a promoted class. It will then create a new package and load spawned module in that package, passing in the process any overrides that were specified within the source package. The returned class is hence part of a new package and will be a different class than if the spawned module were instead loaded (e.g., using ``load(".train2")``). Using spawn as opposed to ``load``  allows overrides to be specified more naturally, while ensuring that overrides continue to be applied at :ref:`variable definition time <eval time and context>`.
+
+.. todo:: Add a ``+=`` assignment operator that allows overrides to be applied *after* the target description (read ``class`` or module) is created. This will not support links to dependent variable.

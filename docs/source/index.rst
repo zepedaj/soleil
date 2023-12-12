@@ -16,6 +16,7 @@
    content/overrides
    content/pre_processor
    content/resolvables
+   content/modifiers
    content/modules
    content/todo
 

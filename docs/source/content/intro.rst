@@ -1,13 +1,7 @@
-Soleil -- Lucid Configurations
+Soleil: Lucid Configurations
 ===================================
 
-|soleil| is a Python object configuration mechanism inspired by `Meta's Hydra <https://hydra.cc/>`_. It's main goal is to provide a Python mechanism for machine learning researchers to assemble flexible experiments in a way that is
-
-    * *declarative and inheritable*,
-    * *automatically CLI-invokable* and
-    * *intuitively overridable*,
-
-while fostering  *reusability, code DRYness and separation of concerns*.
+|soleil| is a Python object configuration mechanism inspired by `Meta's Hydra <https://hydra.cc/>`_. It's main goal is to provide a Python mechanism for machine learning researchers to assemble flexible experiments in a way that is **declarative**, **inheritable**, **automatically CLI-invokable** and **intuitively overridable**.
 
 
 Taming the Curse of *main.py*
@@ -23,14 +17,19 @@ Usually, all of these components are hard-coded into a single *main.py* file wit
 
 |soleil|'s approach is comprised of the following:
 
-* **Familiar Python Syntax:** |soleil| configuration files (`*.solconf` files) use familiar Python syntax and can describe any installed function call, Python object, or composition thereof.
-* **Inheritable Object Descriptions:** The description of an object instance or function call in a configuration file takes the form of a class declaration -- object descriptions hence benefit from standard Python inheritance mechanisms.
-* **Portable Package Organization:** |soleil| configuration files can be organized into portable, Python-like packages.
-* **Automatic, Flexible CLI:** Any |soleil| configuration file can be run as an executable directly using the built-in |solex| tool -- a fully fledged, extensible command line utility that plays nicely with the builtin :mod:`argparse` module. Usage as a decorator (see |@solex|) or within a standard :mod:`argparse` parser is also supported (See :ref:`Automatic CLI`).
-* **Sandboxed Overridability:** CLI calls (through |solex| or :ref:`argparse <argparse CLI>`) involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
+Familiar Python Syntax
+	 |soleil| configuration files (`*.solconf` files) use familiar Python syntax and can describe any installed function call, Python object, or composition thereof.
+Inheritable Object Descriptions
+	 The description of an object instance or function call in a configuration file takes the form of a class declaration -- object descriptions hence benefit from standard Python inheritance mechanisms.
+Portable Package Organization
+	 |soleil| configuration files can be organized into portable, Python-like packages. Sub-packages can be made to correspond to system components (e.g., models) that can be easily swapped by loading (see |load| and |submodule|).
+Automatic, Flexible CLI
+	 Any |soleil| configuration file can be run as an executable directly using the built-in |solex| tool -- a fully fledged, extensible command line utility that plays nicely with the builtin |argparse| module. Usage as a decorator (see |@solex|) or within a standard |argparse| parser is also supported (See :ref:`Automatic CLI`).
+Sandboxed Overridability
+	 CLI calls (through |solex| or :ref:`argparse <argparse CLI>`) involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
 
 
 .. warning:: Soleil configurations are in effect Python programs -- only run configurations that you trust.
 
 
-.. note:: The |soleil| logo and other images in this documentation were produced using a free version of |DALLE|
+.. note:: The |soleil| logo and other images in this documentation were produced using a free version of |DALLE|.

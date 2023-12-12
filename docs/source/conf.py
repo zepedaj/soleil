@@ -53,11 +53,11 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
-html_logo = "images/soleil_transparent.png"
+html_theme = "sphinx_book_theme"
+html_logo = "images/soleil1.png"
 html_theme_options = {
     #    "logo_only": True,
-    "display_version": True,
+    # "display_version": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -91,12 +91,16 @@ rst_prolog = """
 .. |@solex doc| replace:: :ref:`@solex decorator <@solex>`
 .. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
 .. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
+.. |submodule| replace:: :meth:`~soleil.overrides.overridable.submodule`
 .. |visible| replace:: :meth:`~soleil.resolvers.module_resolver.modifiers.visible`
 .. |var name paths| replace:: variable name paths
 .. |soleil| replace:: Soleil
 .. |as_type| replace:: ``as_type``
 .. |as_run| replace:: ``as_type``
 .. |DALLE| replace:: `DALL-E <https://openai.com/research/dall-e>`__
+.. |train.solconf| replace:: :ref:`train.solconf <file train.solconf>`
+.. |train2.solconf| replace:: :ref:`train2.solconf <file train2.solconf>`
+.. |eval.solconf| replace:: :ref:`eval.solconf <file eval.solconf>`
 """
 
 

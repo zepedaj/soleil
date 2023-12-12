@@ -7,7 +7,7 @@ Soleil Pre-Processor
            Image generated with |DALLE|
 
 
-Various functionalities provided by |soleil| rely on Python language modifications carried out by the **|soleil| pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
+Various functionalities provided by |soleil| rely on Python language modifications carried out by the **Soleil pre-processor**. The pre-processor exploits Python's |ast| module to modify the parsed abstract syntax tree extracted from each solconf file. While these code modifications should be transparent to the user, it is useful to know what they are.
 
 
 
