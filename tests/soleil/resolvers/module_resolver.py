@@ -104,7 +104,7 @@ class TestSolConfModule:
     def test_single_promoted(self):
         with solconf_file(
             """
-from soleil import *
+from soleil.solconf import *
 A:resolves = 1
 B:promoted = 2
 """

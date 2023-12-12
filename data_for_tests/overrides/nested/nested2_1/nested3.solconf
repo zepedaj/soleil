@@ -1,4 +1,5 @@
-from soleil import *
+from soleil.solconf import *
+
 e = 5
 f = e + 1
 g = f + 1

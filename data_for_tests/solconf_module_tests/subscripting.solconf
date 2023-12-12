@@ -1,2 +1,3 @@
-from soleil import *
+from soleil.solconf import *
+
 content: promoted = ["a", "b", "c", "d"]

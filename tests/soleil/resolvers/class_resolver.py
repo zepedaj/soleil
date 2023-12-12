@@ -1,5 +1,6 @@
 from soleil.resolvers import class_resolver as mdl
-from soleil import *
+from soleil import resolve
+from soleil.solconf import *
 from soleil.resolvers.modifiers import merge_modifiers
 
 

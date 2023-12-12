@@ -1,2 +1,1 @@
-from soleil import *
-
+from soleil.solconf import *

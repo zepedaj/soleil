@@ -1,6 +1,6 @@
 # soleil_examples/cifar/solconf/train.solconf
 
-from soleil import *
+from soleil.solconf import *
 from torch import nn
 
 # The callable that resolves this module

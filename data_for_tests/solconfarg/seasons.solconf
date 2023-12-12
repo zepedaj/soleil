@@ -1,4 +1,5 @@
-from soleil import *
+from soleil.solconf import *
+
 winter = 0
 spring = 1
 summer = 2

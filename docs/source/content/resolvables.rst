@@ -8,7 +8,8 @@ Resolvables
 
 .. testsetup::
 
-   from soleil import as_type, resolve, hidden, visible, name, cast
+   from soleil.solconf import as_type, hidden, visible, name, cast
+
 
 SolConf Modules
 -----------------
@@ -126,14 +127,15 @@ For the case of resolvable classes, this can be overriden by deriving from a giv
 
 .. testcode::
 
-    class RslvblA:
-        type:as_type = lambda **x: x
-        a = 1
-        b = 2
+   from soleil import resolve
 
-    assert resolve(RslvblA) is resolve(RslvblA)
+   class RslvblA:
+       type:as_type = lambda **x: x
+       a = 1
+       b = 2
 
-    class RslvblB(RslvblA): pass
+   assert resolve(RslvblA) is resolve(RslvblA)
 
-    assert resolve(RslvblB) is not resolve(RslvblA)
+   class RslvblB(RslvblA): pass
 
+   assert resolve(RslvblB) is not resolve(RslvblA)

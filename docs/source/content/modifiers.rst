@@ -13,7 +13,7 @@ Modifiers can be chained using a tuple:
 
 .. testcode::
 
-   from soleil import *
+   from soleil.solconf import *
 
    class A:
        a:(hidden,name('__a__'),cast(int)) = '3'
@@ -22,7 +22,7 @@ Most modifiers can also be applied to classes using the following syntax:
 
 .. testcode::
 
-   from soleil import *
+   from soleil.solconf import *
 
    A:hidden
 
@@ -33,7 +33,7 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
 
 .. testcode::
 
-   from soleil import *
+   from soleil.solconf import *
 
    class A:
        a:hidden = 1
@@ -44,7 +44,7 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
 Available modifiers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The modifiers below can be used in different contexts. For convenience they are all included in the base :mod:`soleil` module and included automatically with ``from soleil import *``.
+The modifiers below can be used in different contexts. For convenience they are all included in the base :mod:`soleil` module and included automatically with ``from soleil.solconf import * ``.
 
 .. rubric:: Modifers for class and module members
 

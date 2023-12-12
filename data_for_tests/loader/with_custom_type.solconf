@@ -1,4 +1,4 @@
-from soleil import *
+from soleil.solconf import *
 
 # Adding extra unused vars to check that the loader sets them to invisible.
 import soleil

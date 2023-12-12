@@ -104,7 +104,7 @@ All overrides make use of |AST| magic to ensure that the override is applied **a
 
 Currently, the **globals** dictionary used when evaluating the value of the override is empty. This means that only constants can be assigned as override values. Some extra flexibility is added by means of the special overrideables :class:`~soleil.overrides.overridable.submodule` and :class:`~soleil.overrides.overridable.choices`.
 
-.. todo:: 1) Inject ``from soleil import *`` into to overrides evaluation globals. 2) Add a ``ref(<var path>)`` method that resolves to the description of a given path. Resolved attributes can be accessed using ``resolved(ref(<var path>))``.
+.. todo:: 1) Inject ``from soleil.solconf import * `` into to overrides evaluation globals. 2) Add a ``ref(<var path>)`` method that resolves to the description of a given path. Resolved attributes can be accessed using ``resolved(ref(<var path>))``.
 
 .. _Mechanism:
 

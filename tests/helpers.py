@@ -6,7 +6,7 @@ from typing import Dict, Generator
 
 @contextmanager
 def solconf_file(
-    contents: str, header="from soleil import *"
+    contents: str, header="from soleil.solconf import * "
 ) -> Generator[Path, None, None]:
     """
     Return a path to a solconf file
@@ -19,7 +19,7 @@ def solconf_file(
 
 @contextmanager
 def solconf_package(
-    contents: Dict[str, str], header="from soleil import *"
+    contents: Dict[str, str], header="from soleil.solconf import * "
 ) -> Generator[Path, None, None]:
     """
     Creates a solconf package and returns a path to a solconf package.

@@ -1,4 +1,5 @@
-from soleil import *
+from soleil.solconf import *
+
 r = 1
 x = r
 

@@ -1,3 +1,4 @@
-from soleil import *
+from soleil.solconf import *
+
 country = "France"
 city = submodule(".city", "paris")

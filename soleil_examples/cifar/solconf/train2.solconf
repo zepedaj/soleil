@@ -1,6 +1,6 @@
 # soleil_examples/cifar/solconf/train2.solconf
 
-from soleil import *
+from soleil.solconf import *
 from torch import nn
 
 

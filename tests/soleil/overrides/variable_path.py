@@ -4,13 +4,13 @@ from soleil.loader.loader import GLOBAL_LOADER, load_config
 from soleil.overrides import variable_path as mdl
 from soleil.resolvers.module_resolver import SolConfModule
 from tests.helpers import solconf_package
-from soleil import noid, hidden
+from soleil.solconf import noid, hidden
 
 package_with_header = partial(
     solconf_package,
     header="\n".join(
         [
-            "from soleil import *",
+            "from soleil.solconf import * ",
             "from soleil.overrides.variable_path import VarPath",
         ]
     ),

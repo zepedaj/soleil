@@ -1,4 +1,4 @@
-from soleil import *
+from soleil.solconf import *
 
 symbol: noid = "Omega"
 color = submodule(".color", "red")

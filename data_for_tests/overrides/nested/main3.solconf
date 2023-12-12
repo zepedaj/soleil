@@ -1,4 +1,5 @@
-from soleil import *
+from soleil.solconf import *
+
 a = 1
 b = a + 1
 m = load(".nested2_3.nested3")

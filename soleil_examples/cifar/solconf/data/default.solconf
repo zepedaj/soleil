@@ -1,6 +1,6 @@
 # soleil_examples/cifar/solconf/data/default.solconf
 
-from soleil import *
+from soleil.solconf import *
 import torchvision.transforms as transforms
 
 
