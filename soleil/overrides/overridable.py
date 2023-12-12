@@ -33,24 +33,23 @@ class submodule(Overridable):
     def __init__(self, *args, reqs=None):
         """
 
-        Options:
+        Loads, from a sub-package, a submodule with an overridable name. The sub-package can be explicitly provided or inferred from the target variable name.
 
-        #. ``target = submodule(parent_module, overridable_submodule)``
+        For example, the *.colors.red* package can be loaded using either of
 
-        #. ``target = submodule(overridable_submodule)`` In this case, the the parent
-        module name is deduced from the target name -- e.g., this is equivalent to ``target = submodule('.target', overridable_submodule)``
 
         .. code-block::
 
-            # Load module .color.red.
-            # Can CLI-override 'red' by e.g,. 'green'
-            # with "color='green'"
-            color = submodule('.color', 'red')
-
-            # The module .color containing the options can be
-            # infered from the target variable if it is the same name
+            color = submodule('.colors', 'red')
             color = submodule('red')
 
+        As an overridable, ``submodule`` supports interpreting the override string as a new submodule name. Using
+
+        .. code-block:: bash
+
+            $ solex main.solconf color='"green"'
+
+        for example, will assign the load value of *.color.green* to *color*.
 
         """
         self.containing_module = infer_solconf_module()
@@ -98,10 +97,9 @@ class choices(Overridable):
 
         # main.solconf
         a:as_type = choices({'A':'submod1:A', 'B':'symbod2:B'}, 'A')
-        color = choices({'red':[1,0,0], 'green':[0,1,0]}, 'blue':[0,0,1], 'red')
+        color = choices({'red':[1,0,0], 'green':[0,1,0], 'blue':[0,0,1]}, 'red')
 
     .. code-block:: bash
-
 
         bash:~$ solex ./main a='"B"' color='"green"'
 

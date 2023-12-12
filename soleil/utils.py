@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Type
+from typing import Type, List
 
 from pglib.rentemp import RenTempDir, RenTempDirExists
 from soleil.loader.loader import GLOBAL_LOADER, load_config
@@ -21,18 +21,30 @@ temp_dir = temp_dir
 
 
 def derive(*parents, **new_vars):
+    """
+    Derives the specified class, overloading the supplied indicated members. Example::
+
+        class Source:
+            a = 1
+            b = 2
+
+        b3 = derive(Source, b=3)
+    """
     # TODO: How does this play with overrides?
     return type(f"<{','.join(x.__name__ for x in parents)} derived>", parents, new_vars)
 
 
 def root_stem(root_config=None) -> str:
     """
-    Returns the stem of the filename name of the root configuration
+    Returns the stem of the filename name of the root configuration.
     """
     return (root_config or infer_root_config()).__file__.stem
 
 
-def package_overrides(as_source=True):
+def package_overrides(as_source=True) -> List:
+    """
+    Returns a list of all supplied package overrides.
+    """
     overrides = GLOBAL_LOADER.package_overrides[infer_solconf_package()]
     if as_source:
         overrides = [ovr.source for ovr in overrides]

@@ -17,6 +17,7 @@
    content/pre_processor
    content/resolvables
    content/modifiers
+   content/cheatsheet
    content/modules
    content/todo
 

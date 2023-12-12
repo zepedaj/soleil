@@ -1,8 +1,6 @@
 
-.. _Modifiers:
-
-Modifiers
------------
+Modifier syntax
+----------------------
 
 :class:`~soleil.resolvers.modifiers.Modifiers` are special dictionary sub-classes that are used as annotations in |soleil| object descriptions to change member behaviors.
 
@@ -44,25 +42,6 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
 Available modifiers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The modifiers below can be used in different contexts. For convenience they are all included in the base :mod:`soleil` module and included automatically with ``from soleil.solconf import * ``.
+The modifiers below can be used in different contexts. For convenience they are all included in the base :mod:`soleil.solconf` module and included automatically with ``from soleil.solconf import *``.
 
-.. rubric:: Modifers for class and module members
-
-.. autosummary::
-
-   soleil.resolvers.modifiers.hidden
-   soleil.resolvers.modifiers.visible
-   soleil.resolvers.modifiers.name
-   soleil.resolvers.modifiers.cast
-   soleil.resolvers.modifiers.noid
-   soleil.resolvers.class_resolver.as_type
-   soleil.resolvers.class_resolver.as_args
-
-
-.. rubric:: Modifers for module members
-
-.. autosummary::
-
-   soleil.resolvers.module_resolver.as_run
-   soleil.resolvers.module_resolver.promoted
-   soleil.resolvers.module_resolver.resolves
+(See :ref:`modifiers` for a list of all available modifiers)
