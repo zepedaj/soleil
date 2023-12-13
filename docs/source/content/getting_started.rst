@@ -18,7 +18,7 @@ As an example of how to use |soleil|, we will build a system to train a basic cl
 
           For convenience, `./solconf` sub-directories are placed inside each example module directory.
 
-Model, and train/eval routines
+Model and train/eval routines
 -------------------------------------------------------
 
 The CIFAR classifier example consists of three main components, *1)* the model, *2)* the training routine and *3)* the evaluation routine. We show the function and initializer signatures for these components below -- the details of the implementation beyond the parameter names are not necessary when building solconf modules.

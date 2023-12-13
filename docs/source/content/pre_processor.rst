@@ -11,13 +11,13 @@ Various functionalities provided by |soleil| rely on Python language modificatio
 
 
 
-Pre-processor Directives
+Pre-processor directives
 ---------------------------
 
 :func:`load`
 ^^^^^^^^^^^^^^
 
-When used as a simple assignment such as
+When the |load| function is used in a simple assignment such as
 
 
 .. code-block::
@@ -36,10 +36,10 @@ This makes it possible to compute |var name paths| to support CLI overrides.
 .. todo:: Add support for overrides with more complex load operations like ``a = load('.option').a.b``.
 
 
-:attr:`promoted`
+|promoted|
 ^^^^^^^^^^^^^^^^^
 
-See the documentation for :attr:`promoted`. Promoted members are skipped when building :ref:`variable name paths` and thus the name of the promoted module member needs to be known before the module executes. Extracting this name is part of the job the pre-processor does.
+:attr:`Promoted <soleil.resolvers.module_resolver.promoted>` members are skipped over when building :ref:`variable name paths` and thus the name of the promoted module member needs to be known before the module executes. Extracting this name is part of the job the pre-processor does.
 
 
 Converting assignments to override checks

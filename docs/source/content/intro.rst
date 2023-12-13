@@ -20,13 +20,13 @@ Usually, all of these components are hard-coded into a single *main.py* file wit
 Familiar Python Syntax
 	 |soleil| configuration files (`*.solconf` files) use familiar Python syntax and can describe any installed function call, Python object, or composition thereof.
 Inheritable Object Descriptions
-	 The description of an object instance or function call in a configuration file takes the form of a class declaration -- object descriptions hence benefit from standard Python inheritance mechanisms.
+	 The description of an object instance or function call in a configuration file takes the form of a class declaration -- object descriptions hence benefit from standard Python inheritance mechanisms. Class declarations can be nested to support descriptions of input parameters.
 Portable Package Organization
 	 |soleil| configuration files can be organized into portable, Python-like packages. Sub-packages can be made to correspond to system components (e.g., models) that can be easily swapped by loading (see |load| and |submodule|).
 Automatic, Flexible CLI
 	 Any |soleil| configuration file can be run as an executable directly using the built-in |solex| tool -- a fully fledged, extensible command line utility that plays nicely with the builtin |argparse| module. Usage as a decorator (see |@solex|) or within a standard |argparse| parser is also supported (See :ref:`Automatic CLI`).
 Sandboxed Overridability
-	 CLI calls (through |solex| or :ref:`argparse <argparse CLI>`) involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
+	 Soleil-enabled CLI calls involving soleil-configured objects can be modified or overriden from the command line using a subset of the Python syntax that is sandboxed through |ast| magic.
 
 
 .. warning:: Soleil configurations are in effect Python programs -- only run configurations that you trust.

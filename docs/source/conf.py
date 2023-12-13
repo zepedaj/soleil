@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
+    "sphinx_favicon",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,6 +60,13 @@ html_theme_options = {
     #    "logo_only": True,
     # "display_version": True,
 }
+
+# for D in 16 32 128; do convert soleil1.png -resize $Dx$D soleil1_$Dx$D.png; done;
+favicons = [
+    "images/soleil1_16.png",
+    "images/soleil1_32.png",
+    "images/soleil1_128.png",
+]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -102,6 +110,7 @@ rst_prolog = """
 .. |train.solconf| replace:: :ref:`train.solconf <file train.solconf>`
 .. |train2.solconf| replace:: :ref:`train2.solconf <file train2.solconf>`
 .. |eval.solconf| replace:: :ref:`eval.solconf <file eval.solconf>`
+.. |promoted| replace:: :attr:`~soleil.resolvers.module_resolver.promoted`
 """
 
 
