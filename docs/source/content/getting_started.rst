@@ -46,6 +46,7 @@ Note that, as is common, the train and eval routines share some commone paramete
                     :linenos:
                     :start-at: def eval(testloader, net, path):
                     :end-at: def eval(testloader, net, path):
+                    :lineno-match:
                     :caption: soleil_examples/cifar/eval.py
 
 
@@ -53,9 +54,12 @@ Note that, as is common, the train and eval routines share some commone paramete
 The solconf package
 ---------------------
 
-A solconf package is just a directory hierarchy containing ``*.solconf`` files that is analogous to a Python package containing modules and nested sub-packages. Unlike a Python package, solconf packages do not need to be installed.
+A solconf package is a directory hierarchy containing `*.solconf` files that is analogous to a Python package containing modules and nested sub-packages. When loaded, the package's `*.solconf` files will be instantiated as :class:`~soleil.resolvers.module_resolver.SolConfModule` objects. Unlike a Python package, solconf packages do not need to be installed -- their **root configurations** can be loaded by file path using |load_config|.
 
-Since our aim is to create a training system, we will create a root configuration called ``train.solconf`` inside our solconf package folder:
+.. note:: Soleil package **root configurations** are `*.solconf` files within the package that are intended to be loaded by the user using |load_config|. All `*.solconf` files can be root
+          configurations if they resolve (i.e., if overrides for all :func:`~soleil.overrides.req.req` members are supplied when loading).
+
+Since our aim is to create a training system, we will create a root configuration called `train.solconf` inside our solconf package folder:
 
 .. _train.solconf:
 
@@ -67,10 +71,6 @@ Since our aim is to create a training system, we will create a root configuratio
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/train.solconf
                     :linenos:
                     :caption: soleil_examples/cifar/solconf/train.solconf
-
-
-.. note:: Solconf package **root configurations** are ``*.solconf`` files within the package that are intended to be loaded by the user using |load_config|. All ``*.solconf`` files can be root
-          configurations if they resolve (i.e., if any missing :func:`~soleil.overrides.req.req` members are supplied when loading).
 
 
 The *as_type* member
@@ -88,16 +88,14 @@ routine by means of the line:
 
 
 
-The ``as_type`` annotation on the ``type`` member indicates to |soleil| that *1)* the member will contain a callable that will resolve the module and that *2)* all other non-hidden module members will be gathered, resolved and passed  to this callable as keyword arguments. If, as in this case, the member's value is a string with format ``<module>:<entity>``,  the ``as_type`` modifier will further  retrieve the actual callable and assign it the the ``as_type`` member. Note that this is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
+The ``as_type`` annotation on the ``type`` member indicates to |soleil| that *1)* the member will contain a callable that will resolve the module and that *2)* all other non-**hidden** module members will be gathered, resolved and passed  to this callable as keyword arguments. If, as in this case, the member's value is a string with format ``<module>:<entity>``,  the ``as_type`` modifier will further  retrieve the actual callable and assign it the the ``as_type`` member. Note that this is only a convenience, and one could also assign to the ``as_type`` member the actual callable directly::
 
   from soleil_examples.cifar.train import train
 
   type: as_type = train
 
 
-.. note:: Annotations such as ``as_type`` are called :ref:`modifiers <Modifiers>` in |soleil| parlance.
-
-
+.. note:: Annotations such as ``as_type`` and ``hidden`` are called **modifiers** in |soleil| parlance and change the behavior of the member they annotate. See the :ref:`modifier syntax` section for more details on their usage or the :ref:`cheatsheet's modifiers <modifiers>` section for a full list of available modifiers.
 
   
 The next two members (``net`` and ``optimizer``) also include a nested ``as_type``-annotated member. The first member describes an instance of the

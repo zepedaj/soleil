@@ -1,11 +1,18 @@
 
+.. _modifier syntax:
+
 Modifier syntax
 ----------------------
 
 :class:`~soleil.resolvers.modifiers.Modifiers` are special dictionary sub-classes that are used to annotate members of resolvable classes and modules and thus change their behavior.
 
-Composing, decoration and inheritance
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. note::
+
+   For convenience, all available modifiers can be imported from module  :mod:`soleil.solconf` -- a table with documentation for all of these can be found in the :ref:`cheatsheet's modifiers <modifiers>` section.
+
+
+Composing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Modifiers can be composed using a tuple:
 
@@ -16,7 +23,10 @@ Modifiers can be composed using a tuple:
    class A:
        a:(hidden,name('__a__'),cast(int)) = '3'
 
-They can also be applied to member classes (and any to-be-defined variable) using the following syntax:
+Usage as class decorators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Modifirs can be applied to member classes (and any to-be-defined variable) using the following syntax:
 
 .. testcode::
 
@@ -37,6 +47,9 @@ Alternatively, most modifiers support usage as a class decorator. The previous e
    class A:
        ...
 
+Inheritance
+^^^^^^^^^^^^^^^
+
 Modifiers are automatically inherited but can be overriden in derived classes, while still inheriting the parent's value:
 
 .. testcode::
@@ -56,8 +69,3 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
 This can come in handy when we wish to hide inherited values in a derived class, as shown in the example above.
 
 
-
-Available modifiers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For convenience, we have included all available modifiers in module  :mod:`soleil.solconf` -- a full list can be seen in the :ref:`modifiers` section of the :ref:`cheatsheet`.

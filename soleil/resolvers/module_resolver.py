@@ -35,7 +35,7 @@ loading a module (without resolving) containing a ``resolves``-annoted member wi
 
 
 class SolConfModule(ModuleType):
-    """Soleil configuration modules will be of this type."""
+    """The class used to represent `*.solconf` modules."""
 
     __is_solconf_module__: bool
     """ Marker to detect soleil modules """
