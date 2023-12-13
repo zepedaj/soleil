@@ -8,6 +8,13 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
+clean: myclean
+
+myclean:
+	rm -rf 'source/content/_stubs'
+	rm -rf 'source/content/content/_stubs' # TODO: Not sure why this is where _stubs are saved...
+
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
