@@ -7,7 +7,7 @@ from soleil.resolvers.modifiers import Modifiers, from_annotation, merge_modifie
 from soleil._utils import Unassigned, get_all_annotations
 from .base import Resolver, displayable, resolve
 from typing import Any, Callable, Dict, Optional
-from pglib.py import entity_from_name
+from jztools.py import entity_from_name
 
 
 def type_cast(value):

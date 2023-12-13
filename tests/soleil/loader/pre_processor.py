@@ -17,7 +17,7 @@ from tests.helpers import solconf_file
 def code_with_imports():
     return """
 import os
-import pglib.validation
+import jztools.validation
 from sys import *
 class A:
     import os as Aos
@@ -64,7 +64,7 @@ class TestGetImportedNames:
         import sys
 
         assert set(snv.imported_names) == set(
-            chain(["pglib", "os", "Aos"], list(vars(sys)))
+            chain(["jztools", "os", "Aos"], list(vars(sys)))
         )
 
 

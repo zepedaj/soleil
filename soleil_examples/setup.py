@@ -9,6 +9,6 @@ setup(
     version="0.1.0",
     description="",
     scripts=[],
-    install_requires=["pglib", "soleil"],
+    install_requires=["jztools", "soleil"],
     author="Joaquin Zepeda",
 )

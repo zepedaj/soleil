@@ -2,7 +2,7 @@ import ast
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, List, Optional, Tuple, Type
-from pglib.py import strict_zip
+from jztools.py import strict_zip
 from soleil._utils import Unassigned
 from .variable_path import VarPath, Attribute, Subscript
 

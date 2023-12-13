@@ -1,7 +1,7 @@
 import abc
 from typing import Dict, Any, List, Set, Type
 from numbers import Number
-from pglib.py import entity_name
+from jztools.py import entity_name
 from .modifiers import Modifiers
 
 __registered_resolvers__: Set[Type["Resolver"]] = set()

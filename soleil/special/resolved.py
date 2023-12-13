@@ -1,4 +1,4 @@
-from pglib.reference_sequence2 import RefSeq, base_get, base_set, getter, setter
+from jztools.reference_sequence import RefSeq, base_get, base_set, getter, setter
 from soleil.resolvers.base import TypeResolver, resolve
 
 

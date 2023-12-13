@@ -1,6 +1,6 @@
 from collections import Counter
 from typing import Any, Dict, List, Optional, Union
-from pglib.validation import NoItem, checked_get_single
+from jztools.validation import NoItem, checked_get_single
 from soleil._utils import (
     infer_solconf_package,
     Unassigned,

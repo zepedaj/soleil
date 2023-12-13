@@ -1,4 +1,4 @@
-from pglib.validation import NoItem, checked_get_single
+from jztools.validation import NoItem, checked_get_single
 from soleil.overrides.overrides import deduce_soleil_var_path
 from soleil.resolvers.base import Resolver
 from soleil._utils import Unassigned, infer_solconf_module, get_global_loader

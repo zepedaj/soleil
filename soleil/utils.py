@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Type, List
 
-from pglib.rentemp import RenTempDir, RenTempDirExists
+from jztools.rentemp import RenTempDir, RenTempDirExists
 from soleil.loader.loader import GLOBAL_LOADER, load_config
 from soleil.rstr import RStr
 from ._utils import (
