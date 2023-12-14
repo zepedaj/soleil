@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Type, List
+from typing import Optional, Type, List
 
 from jztools.rentemp import RenTempDir, RenTempDirExists
-from soleil.loader.loader import GLOBAL_LOADER, load_config
+from soleil.loader.loader import GLOBAL_LOADER, UnusedOverrides, load_config
+from soleil.overrides.overrides import OverrideSpec, eval_overrides, merge_overrides
 from soleil.rstr import RStr
 from ._utils import (
     infer_solconf_package,
@@ -134,11 +135,15 @@ def sub_dir(root: Path, create=True):
     return str(new_sub_dir)
 
 
-def spawn(rel_module_name, pass_overrides=True, var_path=None) -> Type:
+def spawn(
+    rel_module_name,
+    use_package_overrides=True,
+    default_overrides: Optional[List[OverrideSpec]] = None,
+    var_path=None,
+) -> Type:
     """
-    Takes the name of a target module (relative to the calling module, if dot-prefixed, or the current package
-    otherwise) that promotes a class, and loads it in a new package, providing the calling package's overrides
-    as possible overrides.
+    Takes the name of a target module that promotes a class, and loads it in a new package (the spawned package), by default
+    providing the calling package's overrides as possible overrides in the spawned package.
 
     The target module must expose a promoted class that will then be returned with the specified overrides
     applied (those that are compatible).
@@ -149,7 +154,7 @@ def spawn(rel_module_name, pass_overrides=True, var_path=None) -> Type:
     For correct transference of overrides to the parent class, the child class must also be promoted
     in the calling module or the ``var_path`` parameter must be set to the child class's ``__qualname__`` attribute.
 
-    For example, assuming file ``'main.solconf'`` promotes a class:
+    For example, assuming file `main.solconf` promotes a class:
 
     .. code-block::
 
@@ -161,19 +166,42 @@ def spawn(rel_module_name, pass_overrides=True, var_path=None) -> Type:
 
     Note that one can optionally access the parent class's attributes by assigning it to a local variable
 
+    :param rel_module_name: The module name relative to the calling module, if dot-prefixed, or the current package
+        otherwise.
+    :param use_package_overrides: [``True``] Whether to let the spawned package inherit the calling package's overrides. Note that the calling package
+        will still be able to process its overrides (e.g., if a a member with the corresponding variable path exists in only the calling package
+        or in both the calling package and the spawned package).
+    :param default_overrides: Any default overrides to apply to the spawned package.
+    :param var_path: When deriving a spawned class, if the child class is not promoted, set this  to the child class's expected ``__qualname__`` attribute.
+
+    .. todo:: Make :func:`spawn` work for chained and/or multiple inheritance, add unit tests.
+
     """
 
     calling_package = infer_solconf_package()
     target_module_name = abs_mod_name(infer_solconf_module(), rel_module_name)
     target_module_path = GLOBAL_LOADER.get_sub_module_path(target_module_name)
 
-    return load_config(
+    user_overrides = (
+        []
+        if not use_package_overrides
+        else GLOBAL_LOADER.package_overrides[calling_package]
+    )
+    default_overrides = eval_overrides(default_overrides or [])
+    overrides = merge_overrides(default_overrides, user_overrides)
+
+    out = load_config(
         target_module_path,
-        overrides=(
-            []
-            if not pass_overrides
-            else GLOBAL_LOADER.package_overrides[calling_package]
-        ),
+        overrides=overrides,
         resolve=False,
         _var_path=var_path,
     )
+
+    if any(
+        unused_defaults := [
+            x for x in default_overrides if x in overrides and x.used == 0
+        ]
+    ):
+        raise UnusedOverrides(unused_defaults, prefix="Unused spawn default overrides")
+
+    return out

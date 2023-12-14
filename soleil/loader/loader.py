@@ -14,6 +14,13 @@ from soleil.resolvers.base import resolve as call_resolve
 DEFAULT_EXTENSION = ".solconf"
 
 
+class UnusedOverrides(ValueError):
+    def __init__(self, unused_ovrds, prefix="Unused overrides"):
+        super().__init__(
+            f"{prefix} {', '.join(_x.source or _x.target.as_str() for _x in unused_ovrds)}"
+        )
+
+
 def load_config(
     conf_path: PathSpec,
     package_name=None,
@@ -45,7 +52,7 @@ def load_config(
         module_name, resolve=resolve, promoted=promoted, _var_path=_var_path
     )
 
-    # Check that all overrides were used
+    # Check that all non-user-overriden default overrides were used
     if resolve and (
         unused_ovrds := [
             _ovr
@@ -53,9 +60,7 @@ def load_config(
             if not _ovr.used
         ]
     ):
-        raise ValueError(
-            f"Unused overrides {', '.join(_x.source or _x.target.as_str() for _x in unused_ovrds)}"
-        )
+        raise UnusedOverrides(unused_ovrds)
 
     return out
 

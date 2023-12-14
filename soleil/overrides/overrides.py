@@ -88,14 +88,17 @@ def eval_overrides(
     check_unique=True,
 ) -> List[PreCompOverride]:
     """
-    Computes the value of all input overrides.
+    Computes the value of all input overrides and returns overrides in pre-computed form. If an
+    entry is already an override in pre-computed form, that same object is returned for that entry.
     """
     globals_ = globals_ or {}
     locals_ = locals_ or {}
     if not isinstance(overrides, List):
         overrides = [overrides]
     out = [
-        PreCompOverride.from_override(_ovr, globals_, locals_)
+        _ovr
+        if isinstance(_ovr, PreCompOverride)
+        else PreCompOverride.from_override(_ovr, globals_, locals_)
         for _ovr in cast_overrides(overrides)
     ]
 
@@ -113,7 +116,9 @@ def eval_overrides(
 def merge_overrides(
     overrides: List[PreCompOverride], new_overrides: List[PreCompOverride]
 ):
-    """ """
+    """
+    Takes a given set of overrides and updates them with a new set of overrides.
+    """
 
     new_targets = {x.target.as_str(): x for x in new_overrides}
 
