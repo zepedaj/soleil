@@ -54,15 +54,15 @@ Modifiers are automatically inherited but can be overriden in derived classes, w
 
 .. testcode::
 
-   from soleil.solconf import *
+    from soleil.solconf import *
 
-   class A:
-        type: as_type = lambda a: a+1
-        a:visible = 1
+    class A:
+         type: as_type = lambda a: a+1
+         a:visible = 1
 
-   class B(A):
-        type: as_type = lambda : 2
-        a:hidden
+    class B(A):
+         type: as_type = lambda : 2
+         a:hidden
 
     assert B.a == 1
 
