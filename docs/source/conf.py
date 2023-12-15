@@ -97,7 +97,7 @@ rst_prolog = """
 .. |solex| replace:: :ref:`solex <solex>`
 .. |@solex| replace:: :func:`@solex <soleil.cli_tools.solex_decorator.solex>`
 .. |@solex doc| replace:: :ref:`@solex decorator <@solex>`
-.. |load_config| replace:: :func:`~soleil.loader.loader.load_config`
+.. |load_solconf| replace:: :func:`~soleil.loader.loader.load_solconf`
 .. |load| replace:: :meth:`~soleil.resolvers.module_resolver.SolConfModule.load`
 .. |submodule| replace:: :meth:`~soleil.overrides.overridable.submodule`
 .. |choices| replace:: :meth:`~soleil.overrides.overridable.choices`

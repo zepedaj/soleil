@@ -1,9 +1,9 @@
 """ Soleil: Lucid configurations """
 # Core
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from soleil.resolvers.base import resolve
 
-__all__ = ["load_config", "resolve"]
+__all__ = ["load_solconf", "resolve"]
 
 
 # # Modifiers

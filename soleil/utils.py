@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional, Type, List
 
 from jztools.rentemp import RenTempDir, RenTempDirExists
-from soleil.loader.loader import GLOBAL_LOADER, UnusedOverrides, load_config
+from soleil.loader.loader import GLOBAL_LOADER, UnusedOverrides, load_solconf
 from soleil.overrides.overrides import OverrideSpec, eval_overrides, merge_overrides
 from soleil.rstr import RStr
 from ._utils import (
@@ -190,7 +190,7 @@ def spawn(
     default_overrides = eval_overrides(default_overrides or [])
     overrides = merge_overrides(default_overrides, user_overrides)
 
-    out = load_config(
+    out = load_solconf(
         target_module_path,
         overrides=overrides,
         resolve=False,

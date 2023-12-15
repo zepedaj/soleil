@@ -1,5 +1,5 @@
 import pytest
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from soleil.resolvers.base import resolve
 from tests.helpers import solconf_file
 
@@ -17,4 +17,4 @@ a:promoted = submodule('abc', 'def')
                 "- either use `resolves` instead of `promoted` or `load` instead of "
                 "`submodule`.",
             ):
-                resolve(load_config(fl))
+                resolve(load_solconf(fl))

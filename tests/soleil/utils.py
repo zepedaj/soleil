@@ -1,6 +1,6 @@
 import pytest
 from soleil import utils as mdl
-from soleil import load_config
+from soleil import load_solconf
 from soleil.loader.loader import UnusedOverrides
 from soleil.resolvers.base import resolve
 from tests import load_test_data
@@ -47,11 +47,13 @@ d = 3
             }
         ) as root:
             #
-            rslvd = load_config(root / "main.solconf")
+            rslvd = load_solconf(root / "main.solconf")
             assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main"
 
             #
-            rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"])
+            rslvd = load_solconf(
+                root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"]
+            )
             assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,b.d=4"
 
     def test_base(self):
@@ -70,11 +72,13 @@ d = 3
             }
         ) as root:
             #
-            rslvd = load_config(root / "main.solconf")
+            rslvd = load_solconf(root / "main.solconf")
             assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main"
 
             #
-            rslvd = load_config(root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"])
+            rslvd = load_solconf(
+                root / "main.solconf", overrides=["a=2", "b.c=3;b.d=4"]
+            )
             assert rslvd["id_str_0"] == rslvd["id_str_1"] == "main,a=2,d=4"
 
     def test_spawn(self):
@@ -105,19 +109,19 @@ class _(spawn('.main', default_overrides=[{'x':20}])):
 """,
             }
         ) as root:
-            rslvd = load_config(root / "main2.solconf")
+            rslvd = load_solconf(root / "main2.solconf")
             assert rslvd == {"a": 1, "b": 2, "c": 3, "d": 4}
 
-            rslvd = load_config(root / "main2.solconf", overrides=["a=10"])
+            rslvd = load_solconf(root / "main2.solconf", overrides=["a=10"])
             assert rslvd == {"a": 10, "b": 2, "c": 3, "d": 4}
 
-            rslvd = load_config(root / "main3.solconf")
+            rslvd = load_solconf(root / "main3.solconf")
             assert rslvd == {"a": 1, "b": 20, "c": 3, "d": 4}
 
-            rslvd = load_config(root / "main3.solconf", overrides=["a=10; b=200"])
+            rslvd = load_solconf(root / "main3.solconf", overrides=["a=10; b=200"])
             assert rslvd == {"a": 10, "b": 200, "c": 3, "d": 4}
 
             with pytest.raises(
                 UnusedOverrides, match="Unused spawn default overrides x"
             ):
-                rslvd = load_config(root / "fails.solconf")
+                rslvd = load_solconf(root / "fails.solconf")

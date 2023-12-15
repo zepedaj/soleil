@@ -1,4 +1,4 @@
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from tests.helpers import solconf_package
 
 
@@ -14,8 +14,8 @@ b = req()
 """,
             }
         ) as temp_dir:
-            val = load_config(temp_dir / "main.solconf")
+            val = load_solconf(temp_dir / "main.solconf")
             assert val["a"]["b"] == 2
 
-            val = load_config(temp_dir / "main.solconf", overrides=["a.b=3"])
+            val = load_solconf(temp_dir / "main.solconf", overrides=["a.b=3"])
             assert val["a"]["b"] == 3

@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from functools import partial
-from soleil.loader.loader import GLOBAL_LOADER, load_config
+from soleil.loader.loader import GLOBAL_LOADER, load_solconf
 from soleil.overrides import variable_path as mdl
 from soleil.resolvers.module_resolver import SolConfModule
 from tests.helpers import solconf_package
@@ -31,7 +31,7 @@ c:noid = 2
 """,
             }
         ) as path:
-            ldm = load_config(path / "main.solconf", resolve=False)
+            ldm = load_solconf(path / "main.solconf", resolve=False)
             main = ldm
             sub1_sm1 = GLOBAL_LOADER.modules[".".join([ldm.__package__, "sub1.sm1"])]
 
@@ -76,7 +76,7 @@ class B:
 """,
             }
         ) as path:
-            ldm = load_config(path / "main.solconf", resolve=False)
+            ldm = load_solconf(path / "main.solconf", resolve=False)
             main = GLOBAL_LOADER.modules[ldm.__module__]
             A = main.A
             sub1_sm1 = GLOBAL_LOADER.modules[".".join([main.__package__, "sub1.sm1"])]

@@ -7,7 +7,7 @@ from typing import Any
 from soleil.loader import pre_processor as mdl
 from itertools import chain
 import ast
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from soleil.resolvers.base import resolve
 
 from tests import load_test_data
@@ -157,7 +157,7 @@ class TestProtectKeyword:
                         f'Attempted to redefine soleil keyword `{keyword}` - File "{path}", line 1'
                     ),
                 ):
-                    load_config(path)
+                    load_solconf(path)
 
 
 class TestGetPromotedName:
@@ -169,7 +169,7 @@ class TestGetPromotedName:
                 + ".*"
                 + re.escape('main.solconf", line 3'),
             ):
-                load_config(path)
+                load_solconf(path)
 
     def test_non_root_promoted_fails(self):
         with solconf_file("class A:\n\ta:promoted=1") as path:
@@ -179,7 +179,7 @@ class TestGetPromotedName:
                     f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
                 ),
             ):
-                load_config(path)
+                load_solconf(path)
 
     def test_non_root_promoted_fails__decorator(self):
         with solconf_file("class A:\n\ta:promoted=1") as path:
@@ -189,4 +189,4 @@ class TestGetPromotedName:
                     f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
                 ),
             ):
-                load_config(path)
+                load_solconf(path)

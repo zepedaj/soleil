@@ -1,4 +1,4 @@
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from soleil.resolvers import modifiers as mdl
 import pytest, re
 
@@ -29,7 +29,7 @@ class A:
     a = 1
 """
         with solconf_file(contents) as fl:
-            mdl = load_config(fl, resolve=False)
+            mdl = load_solconf(fl, resolve=False)
             assert mdl.__annotations__["A"] == mdl.visible
             assert mdl.A.a == 1
 
@@ -41,6 +41,6 @@ class A:
     a = 1
 """
         with solconf_file(contents) as fl:
-            mdl = load_config(fl, resolve=False)
+            mdl = load_solconf(fl, resolve=False)
             assert mdl.__annotations__["A"] == (mdl.noid, mdl.hidden)
             assert mdl.A.a == 1

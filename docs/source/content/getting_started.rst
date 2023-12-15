@@ -54,9 +54,9 @@ Note that, as is common, the train and eval routines share some commone paramete
 The solconf package
 ---------------------
 
-A solconf package is a directory hierarchy containing `*.solconf` files that is analogous to a Python package containing modules and nested sub-packages. When loaded, the package's `*.solconf` files will be instantiated as :class:`~soleil.resolvers.module_resolver.SolConfModule` objects. Unlike a Python package, solconf packages do not need to be installed -- their **root configurations** can be loaded by file path using |load_config|.
+A solconf package is a directory hierarchy containing `*.solconf` files that is analogous to a Python package containing modules and nested sub-packages. When loaded, the package's `*.solconf` files will be instantiated as :class:`~soleil.resolvers.module_resolver.SolConfModule` objects. Unlike a Python package, solconf packages do not need to be installed -- their **root configurations** can be loaded by file path using |load_solconf|.
 
-.. note:: Soleil package **root configurations** are `*.solconf` files within the package that are intended to be loaded by the user using |load_config|. All `*.solconf` files can be root
+.. note:: Soleil package **root configurations** are `*.solconf` files within the package that are intended to be loaded by the user using |load_solconf|. All `*.solconf` files can be root
           configurations if they resolve (i.e., if overrides for all :func:`~soleil.overrides.req.req` members are supplied when loading).
 
 Since our aim is to create a training system, we will create a root configuration called `train.solconf` inside our solconf package folder:
@@ -305,7 +305,7 @@ The **@promoted** decorator applied to this class (see the first two highlighted
 
 .. code-block::
 
-   load_config("./train2.solconf")
+   load_solconf("./train2.solconf")
 
 the returned value continues to be whatever object was described in the module -- in this case the output of function ``train(...)`` -- as opposed to the dictionary ``{'_':train(...)}``.
 

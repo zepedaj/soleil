@@ -8,11 +8,11 @@ Overriding Configurations
            Image generated with |DALLE|
 
 
-Whether a soleil described object is loaded from a Python script or resolved following a :ref:`CLI <Automatic CLI>` command, under the hood, the processing is carried out by a call to |load_config| of the form
+Whether a soleil described object is loaded from a Python script or resolved following a :ref:`CLI <Automatic CLI>` command, under the hood, the processing is carried out by a call to |load_solconf| of the form
 
 .. code-block::
 
-   resolved_obj = load_config('./root_config.solconf', overrides=[...])
+   resolved_obj = load_solconf('./root_config.solconf', overrides=[...])
 
 The value provided to the *overrides* parameter is always a list that admits target **variable name path**/value pairs in multiple possible formats (see :class:`~soleil.overrides.overrides.OverrideSpec`).
 
@@ -129,15 +129,15 @@ into a call to a special function :func:`_soleil_override`, as follows:
    class B:
         b = _soleil_override('b', 2)
 
-When the module executes during a call to :func:`load_config`, the call to :func:`_soleil_override` first checks whether an override was specified for that
+When the module executes during a call to :func:`load_solconf`, the call to :func:`_soleil_override` first checks whether an override was specified for that
 variable and returns that override value if so, or the original value otherwise. To do so, :func:`_soleil_override`
 matches a variable name path computed for each variable to the names specified in the CLI override strings or keys.
-Note that these variable name paths specify the position of each variable relative to root configuration loaded with :func:`load_config`.
+Note that these variable name paths specify the position of each variable relative to root configuration loaded with :func:`load_solconf`.
 
 Variable name paths are computed using the first argument to :func:`_soleil_override` and the name a given module was loaded to, which is
 contained in module-level variable :attr:`__soleil_qualname__`.
 
-For example, the variable paths for all variables are given in the comments below when calling ``load_config('<path>/main.solconf')``
+For example, the variable paths for all variables are given in the comments below when calling ``load_solconf('<path>/main.solconf')``
 
 .. code-block::
 

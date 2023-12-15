@@ -1,7 +1,7 @@
 from uuid import uuid4
 import pytest
 from soleil.loader import GLOBAL_LOADER
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from tests import TEST_DATA_ROOT, load_test_data
 from soleil import resolve
 from soleil.resolvers.base import displayable
@@ -113,4 +113,4 @@ B:promoted = 2
                 ValueError,
                 match="Solconf modules cannot have both `promoted` and `resolves` members",
             ):
-                resolve(load_config(fl))
+                resolve(load_solconf(fl))

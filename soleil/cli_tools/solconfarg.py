@@ -4,7 +4,7 @@
 from pathlib import Path
 from typing import List, Optional, Union
 from uuid import uuid4
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from soleil.resolvers.base import resolve
 import re
 
@@ -20,7 +20,7 @@ class SolConfArg:
 
     :param config_source: The path to the configuration file to load. If not specified, will be required as a CLI argument.
     :param resolve: Whether ``ArgumentParser.parse_args`` (equivalently, :meth:`__call__`) returns the resolved or unresolved object.
-    :param load_kwargs: Any extra keyword arguments to pass internally to |load_config|.
+    :param load_kwargs: Any extra keyword arguments to pass internally to |load_solconf|.
 
     Instances of this object can be passed as a value for the ``type`` keyword argument when calling :meth:`argparse.ArgumentParser.add_argument` (see the  |argparse| documentation).
 
@@ -162,7 +162,6 @@ class SolConfArg:
       >>> sca2(["a=10", "c=30"])
       {'a': 10, 'b': 2, 'c': 30}
 
-
     .. _source clobber:
 
     .. rubric:: Source clobber
@@ -253,7 +252,7 @@ class SolConfArg:
         config_source, overrides = self.get_config_source()
 
         # Load module -- add a random package name
-        loaded = load_config(
+        loaded = load_solconf(
             config_source,
             resolve=False,
             overrides=overrides,

@@ -5,6 +5,7 @@ from soleil.overrides.overrides import (
     OverrideSpec,
     deduce_soleil_var_path,
     _soleil_override,
+    eval_overrides,
 )
 from soleil.overrides.parser import Override
 from soleil.overrides.variable_path import VarPath

@@ -1,4 +1,4 @@
-from soleil.loader.loader import load_config
+from soleil.loader.loader import load_solconf
 from tests.helpers import solconf_file
 
 
@@ -14,4 +14,4 @@ mode:promoted = resolved(fl).mode
 
 """
         ) as fl:
-            assert (x := load_config(fl)) == "w+"
+            assert (x := load_solconf(fl)) == "w+"

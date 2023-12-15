@@ -21,7 +21,7 @@ class UnusedOverrides(ValueError):
         )
 
 
-def load_config(
+def load_solconf(
     conf_path: PathSpec,
     package_name=None,
     overrides: Optional[List[OverrideSpec]] = None,
@@ -76,7 +76,7 @@ class ConfigLoader:
     """ Contains the roots of solconf pacakges """
 
     def __init__(self):
-        """See the documentation for :func:`load_config`."""
+        """See the documentation for :func:`load_solconf`."""
         self.modules = {}
         self.package_roots = {}
         self.package_overrides = {}

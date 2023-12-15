@@ -13,15 +13,15 @@ Resolvables
 
 SolConf Modules
 -----------------
-Solconf modules are regular python modules augmented with extra functionality and stored in solconf package directory hierarchies containing files having ``'.solconf'`` extensions. To load a solconf package, use :func:`soleil.load_config` to load any of the modules in the package root:
+Solconf modules are regular python modules augmented with extra functionality and stored in solconf package directory hierarchies containing files having ``'.solconf'`` extensions. To load a solconf package, use :func:`soleil.load_solconf` to load any of the modules in the package root:
 
 .. code-block::
 
-   module = load_config('/path/to/package/root/module.solconf')
+   module = load_solconf('/path/to/package/root/module.solconf')
 
-.. note:: You can also create a package without explicitly loading a module by passing the package root only: ``load_config('/path/to/package/root')``
+.. note:: You can also create a package without explicitly loading a module by passing the package root only: ``load_solconf('/path/to/package/root')``
 
-By default, calling :func:`load_config` will first create a package with default name ``solconf`` and then create a module within that package using the file's stem name:
+By default, calling :func:`load_solconf` will first create a package with default name ``solconf`` and then create a module within that package using the file's stem name:
 
 .. code-block::
 
@@ -39,7 +39,7 @@ Any sub-directory within the package root can be loaded from within a solconf mo
 
    submodule = load('.module.submodule')
 
-.. todo:: Make ``load_config`` and ``load`` the same function, deducing whether a module name or filename is passed in based on the string format. Make it possible to call ``load`` from
+.. todo:: Make ``load_solconf`` and ``load`` the same function, deducing whether a module name or filename is passed in based on the string format. Make it possible to call ``load`` from
           regular python modules.
 
 
@@ -77,7 +77,7 @@ will resolve to that member :
    gamma = 3
 
    # main.py
-   assert load_config('package/config.solconf') == 2
+   assert load_solconf('package/config.solconf') == 2
 
 Loading a module containing a promoted member will return that member by default:
 

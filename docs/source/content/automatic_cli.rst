@@ -31,8 +31,8 @@ The second and third method further support mixing solconf objects with standard
 
 Besides this, solconf files can also be loaded directly from Python scripts and overriden using dictionaries of Python objects::
 
-  >>> from soleil import load_config
-  >>> obj = load_config('./my_conf.solconf', overrides=[{'a':1, 'b':2}])
+  >>> from soleil import load_solconf
+  >>> obj = load_solconf('./my_conf.solconf', overrides=[{'a':1, 'b':2}])
 
 .. _solex:
 
@@ -119,7 +119,7 @@ The |solex| script includes an experimental ``--show`` flag that skips object re
 
 The output produced with this ``--show`` will be improved in later versions.
 
-.. note:: Like |solex|-based CLI invokations, |soleil| CLIs built with the :ref:`@solex() decorator <@solex>` or using a :class:`~soleil.cli_tools.solconfarg.SolConfArg` type in a Python |argparse| parser all suport CLI overrides. Overrides with non-string values can also be specified when loading a module with |load_config| from a Python script. See :ref:`Overriding Configurations` for more information.
+.. note:: Like |solex|-based CLI invokations, |soleil| CLIs built with the :ref:`@solex() decorator <@solex>` or using a :class:`~soleil.cli_tools.solconfarg.SolConfArg` type in a Python |argparse| parser all suport CLI overrides. Overrides with non-string values can also be specified when loading a module with |load_solconf| from a Python script. See :ref:`Overriding Configurations` for more information.
 
 
 Running a method

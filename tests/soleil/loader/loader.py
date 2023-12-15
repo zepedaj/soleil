@@ -6,7 +6,7 @@ from tests import TEST_DATA_ROOT
 
 class TestConfigLoader:
     def load(self, sub_path, resolve=False):
-        return mdl.load_config(
+        return mdl.load_solconf(
             (TEST_DATA_ROOT / sub_path).with_suffix(".solconf"), resolve=resolve
         )
 
