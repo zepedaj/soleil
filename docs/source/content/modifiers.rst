@@ -39,7 +39,7 @@ Modifirs can be applied to member classes (and any to-be-defined variable) using
 
 Alternatively, most modifiers support usage as a class decorator. The previous example could hence be rewritten as follows:
 
-.. testcode::
+.. code-block::
 
    from soleil.solconf import *
 

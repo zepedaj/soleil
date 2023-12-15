@@ -154,13 +154,13 @@ class SolConfArg:
 
       # Option 1: Path must be provided with argparse arguments
       >>> sca1 = SolConfArg()
-      >>> sca1([soleil_examples/'vanilla/main.solconf', "typing_a=c++", "typing_b=c++"])
+      >>> sca1([soleil_examples/'vanilla/main.solconf'])
       {'a': 1, 'b': 2, 'c': 3}
 
       # Option 2: Path provided with argument definition
       >>> sca2 = SolConfArg(soleil_examples/'vanilla/main.solconf')
       >>> sca2(["a=10", "c=30"])
-      ...'a': 10...
+      {'a': 10, 'b': 2, 'c': 30}
 
 
     .. _source clobber:
@@ -232,8 +232,10 @@ class SolConfArg:
         """
         overrides = list(self.overrides)
 
-        if overrides and (
-            root_clobber := re.match(r"^\*\*\=(?P<path>.*$)", overrides[0])
+        if (
+            overrides
+            and isinstance(overrides[0], str)
+            and (root_clobber := re.match(r"^\*\*\=(?P<path>.*$)", overrides[0]))
         ):
             # Check for source clobber
             overrides.pop(0)
