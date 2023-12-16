@@ -48,9 +48,9 @@ def package_overrides(as_source=True) -> List:
     """
     overrides = GLOBAL_LOADER.package_overrides[infer_solconf_package()]
     if as_source:
-        overrides = [ovr.source for ovr in overrides]
-        if any(ovr is None for ovr in overrides):
-            raise ValueError(f"Could not retrieve the source for override {ovr}")
+        no_source = [ovr for ovr in overrides if ovr.source is None]
+        if no_source:
+            raise ValueError(f"Could not retrieve the source for overrides {no_source}")
     return overrides
 
 

@@ -301,7 +301,7 @@ In order to run evaluations on the trained model, we need to build an `eval.solc
 Promoted module classes
 ------------------------------
 
-The **@promoted** decorator applied to this class (see the first two highlighted lines in |train2.solconf|) is a syntactic convenience that ensures that, when loading ``train2.solconf`` using, e.g.,
+The |@promoted| decorator applied to this class (see the first two highlighted lines in |train2.solconf|) is a syntactic convenience that ensures that, when loading ``train2.solconf`` using, e.g.,
 
 .. code-block::
 
@@ -337,13 +337,13 @@ We can now use |train2.solconf| as a base to build an eval configuration:
 Module inheritance with *spawn*
 ------------------------------------------------------
 
-The configuration consists of a promoted class that derives from a ``spawned`` module:
+The configuration in |eval.solconf| consists of a |@promoted|-decorated class that derives from a ``spawned`` module:
 
 .. literalinclude:: ../../../soleil_examples/cifar/solconf/eval.solconf
                     :linenos:
                     :start-at: @promoted
                     :end-at: class _(_train := spawn(".train2")):
 
-The spawn :func:`~soleil.utils.spawn` assumes that it receives a path to a module with a promoted class. It will then create a new package and load spawned module in that package, passing in the process any overrides that were specified within the source package. The returned class is hence part of a new package and will be a different class than if the spawned module were instead loaded (e.g., using ``load(".train2")``). Using spawn as opposed to ``load``  allows overrides to be specified more naturally, while ensuring that overrides continue to be applied at :ref:`variable definition time <eval time and context>`.
+Function :func:`~soleil.utils.spawn` assumes that it receives a path to a module that likewise contains a promoted class. It will then create a new package and load spawned module in that package, passing in the process any overrides that were specified within the source package. The returned class is hence part of a new package and will be a different class than if the spawned module were instead loaded (e.g., using ``load(".train2")``). Using spawn as opposed to ``load``  allows overrides to be specified more naturally, while ensuring that overrides continue to be applied at :ref:`variable definition time <eval time and context>`.
 
 .. todo:: Add a ``+=`` assignment operator that allows overrides to be applied *after* the target description (read ``class`` or module) is created. This will not support links to dependent variable.

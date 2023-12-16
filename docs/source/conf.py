@@ -111,6 +111,7 @@ rst_prolog = """
 .. |train2.solconf| replace:: :ref:`train2.solconf <file train2.solconf>`
 .. |eval.solconf| replace:: :ref:`eval.solconf <file eval.solconf>`
 .. |promoted| replace:: :attr:`~soleil.resolvers.module_resolver.promoted`
+.. |@promoted| replace:: :attr:`@promoted <soleil.resolvers.module_resolver.promoted>`
 """
 
 
