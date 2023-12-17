@@ -197,11 +197,16 @@ def spawn(
         _var_path=var_path,
     )
 
+    user_override_targets = [x.target for x in user_overrides]
     if any(
         unused_defaults := [
-            x for x in default_overrides if x in overrides and x.used == 0
+            x
+            for x in default_overrides
+            if x.target not in user_override_targets and x.used == 0
         ]
     ):
-        raise UnusedOverrides(unused_defaults, prefix="Unused spawn default overrides")
+        raise UnusedOverrides(
+            unused_defaults, prefix="Unused spawn default override(s)"
+        )
 
     return out
