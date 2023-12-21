@@ -41,6 +41,7 @@ Utility functions
 
 
     soleil.utils.id_str
+    soleil.utils.root
     soleil.utils.root_stem
     soleil.utils.sub_dir
     soleil.utils.derive

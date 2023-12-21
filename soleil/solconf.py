@@ -23,6 +23,7 @@ __all__ += [
 # Utilities
 from soleil.utils import (
     id_str,
+    root,
     root_stem,
     sub_dir,
     derive,
@@ -36,6 +37,7 @@ from soleil.special.resolved import resolved
 __all__ += [
     "id_str",
     "root_stem",
+    "root",
     "sub_dir",
     "derive",
     "temp_dir",

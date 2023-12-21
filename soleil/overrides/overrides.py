@@ -113,12 +113,13 @@ def eval_overrides(
     return out
 
 
-def merge_overrides(
-    overrides: List[PreCompOverride], new_overrides: List[PreCompOverride]
-):
+def merge_overrides(overrides: List[OverrideSpec], new_overrides: List[OverrideSpec]):
     """
     Takes a given set of overrides and updates them with a new set of overrides.
     """
+
+    overrides = eval_overrides(overrides)
+    new_overrides = eval_overrides(new_overrides)
 
     new_targets = {x.target.as_str(): x for x in new_overrides}
 

@@ -11,7 +11,8 @@ class req(Overridable):
     """
 
     _value = Unassigned
-    var_path_str = "<unknown path>"
+    _unknown_path = "<unknown path>"
+    var_path_str = _unknown_path
 
     @property
     def missing(self):
@@ -50,4 +51,12 @@ class reqResolver(Resolver):
         return isinstance(value, req)
 
     def compute_resolved(self):
-        raise ValueError(f"Missing required variable `{self.resolvable.var_path_str}`.")
+        error_msg = f"Missing required variable `{self.resolvable.var_path_str}`."
+        if self.resolvable.var_path_str == req._unknown_path:
+            error_msg = " ".join(
+                [
+                    error_msg,
+                    "Did you use req() as a modifier (`var:req()`) and not as an assigned value (`var = req()`)?",
+                ]
+            )
+        raise ValueError(error_msg)

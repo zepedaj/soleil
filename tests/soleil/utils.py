@@ -122,6 +122,6 @@ class _(spawn('.main', default_overrides=[{'x':20}])):
             assert rslvd == {"a": 10, "b": 200, "c": 3, "d": 4}
 
             with pytest.raises(
-                UnusedOverrides, match="Unused spawn default overrides x"
+                UnusedOverrides, match=r"Unused spawn default override\(s\) x"
             ):
                 rslvd = load_solconf(root / "fails.solconf")

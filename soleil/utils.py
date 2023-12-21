@@ -35,11 +35,18 @@ def derive(*parents, **new_vars):
     return type(f"<{','.join(x.__name__ for x in parents)} derived>", parents, new_vars)
 
 
-def root_stem(root_config=None) -> str:
+def root_stem(root_config=None) -> Path:
     """
     Returns the stem of the filename name of the root configuration.
     """
     return (root_config or infer_root_config()).__file__.stem
+
+
+def root() -> Path:
+    """
+    Returns the path to the root config
+    """
+    return (infer_root_config()).__file__
 
 
 def package_overrides(as_source=True) -> List:
