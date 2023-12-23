@@ -134,6 +134,8 @@ class ValueVerifier(_RestrictedNodeVisitor):
         ast.Tuple,
         ast.List,
         ast.Load,  # Required for tuples, lists.
+        ast.UnaryOp,
+        ast.USub,
     )
 
 
