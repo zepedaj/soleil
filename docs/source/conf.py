@@ -120,8 +120,6 @@ import sys, os
 
 sys.path.insert(0, os.path.abspath("."))
 
-from soleil.cli_tools import SolConfArg
-
 
 def sort_dicts(d):
     if isinstance(d, dict):
@@ -132,6 +130,8 @@ def sort_dicts(d):
 
 def fix_dict_order():
     # Patch SolConfArg.__call__
+
+    from soleil.cli_tools import SolConfArg
 
     global _orig_sca_call
     _orig_sca_call = SolConfArg.__call__
