@@ -20,3 +20,4 @@ _auto/
 .emacs.desktop.lock
 *.so
 _untracked_*/
+dist/
