@@ -2,6 +2,8 @@
 
 from setuptools import setup, find_packages
 
+test_requires = ["freezegun"]
+
 setup(
     name="soleil",
     # Use `./soleil_examples/setup.py` to install the soleil examples
@@ -9,6 +11,6 @@ setup(
     version="0.1.0",
     description="Soleil: Lucid Configurations",
     scripts=["scripts/solex"],
-    install_requires=["jztools"],
+    install_requires=["jztools", "climax", "rich"] + test_requires,
     author="Joaquin Zepeda",
 )

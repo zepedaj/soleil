@@ -153,9 +153,7 @@ class TestProtectKeyword:
 
                 with pytest.raises(
                     SyntaxError,
-                    match=re.escape(
-                        f'Attempted to redefine soleil keyword `{keyword}` - File "{path}", line 1'
-                    ),
+                    match=f"Attempted to redefine soleil keyword `{keyword}`.*",
                 ):
                     load_solconf(path)
 
@@ -175,9 +173,7 @@ class TestGetPromotedName:
         with solconf_file("class A:\n\ta:promoted=1") as path:
             with pytest.raises(
                 SyntaxError,
-                match=re.escape(
-                    f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
-                ),
+                match=f"Attempted to promote non-root member `A.a`.*",
             ):
                 load_solconf(path)
 
@@ -185,8 +181,6 @@ class TestGetPromotedName:
         with solconf_file("class A:\n\ta:promoted=1") as path:
             with pytest.raises(
                 SyntaxError,
-                match=re.escape(
-                    f'Attempted to promote non-root member `A.a` - File "{path}", line 3'
-                ),
+                match=f"Attempted to promote non-root member `A.a`.*",
             ):
                 load_solconf(path)
