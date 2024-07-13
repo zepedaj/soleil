@@ -73,6 +73,8 @@ favicons = [
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_extra_path = ["google_verification/googlea66c13eba0e18d7a.html"]
+
 # -- Extension configuration -------------------------------------------------
 #
 autoclass_content = "both"
